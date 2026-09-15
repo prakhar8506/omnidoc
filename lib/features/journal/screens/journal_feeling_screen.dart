@@ -5,6 +5,7 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/state/app_state.dart';
 import '../../../core/widgets/glass_container.dart';
 import '../../ai_assistant/widgets/ai_chat_sheet.dart';
+import '../widgets/journal_entry_sheet.dart';
 
 class JournalFeelingScreen extends StatefulWidget {
   final AppState appState;
@@ -387,30 +388,293 @@ class _JournalFeelingScreenState extends State<JournalFeelingScreen> with Single
               ],
             ),
           ),
-          const SizedBox(height: 16),
-
-          // Action prompt: Discuss with AI
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.primaryContainer,
-                side: BorderSide(
-                  color: AppColors.primaryContainer.withValues(alpha: 0.3),
-                  width: 1.2,
+          // Primary Actions: New Reflection & Correlate with AI
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryContainer,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    elevation: 0,
+                  ),
+                  icon: const Icon(Icons.edit_note_rounded, size: 20),
+                  label: const Text(
+                    'New Reflection',
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                  ),
+                  onPressed: () => JournalEntrySheet.show(context, widget.appState),
                 ),
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
-                backgroundColor: Colors.white.withValues(alpha: 0.7),
               ),
-              icon: const Icon(Icons.auto_awesome_rounded, size: 18),
-              label: Text(
-                'Correlate ${activeMood['title']} state with AI Copilot',
-                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+              const SizedBox(width: 10),
+              Expanded(
+                child: OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.primaryContainer,
+                    side: BorderSide(
+                      color: AppColors.primaryContainer.withValues(alpha: 0.3),
+                      width: 1.2,
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    backgroundColor: Colors.white.withValues(alpha: 0.7),
+                  ),
+                  icon: const Icon(Icons.auto_awesome_rounded, size: 18),
+                  label: const Text(
+                    'AI Insights',
+                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                  ),
+                  onPressed: () => AiChatSheet.show(context, widget.appState),
+                ),
               ),
-              onPressed: () => AiChatSheet.show(context, widget.appState),
-            ),
+            ],
           ),
+          const SizedBox(height: 28),
+
+          // Section 1: Serene Autonomic & Sleep Correlations
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('Health Correlations', style: AppTypography.titleMd),
+              Text(
+                'Live Telemetry',
+                style: AppTypography.labelSm.copyWith(color: AppColors.primaryContainer),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ...widget.appState.getJournalCorrelations().map((corr) {
+            final icon = corr['icon'] as IconData;
+            final color = corr['color'] as Color;
+            return Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.75),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.9)),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x08000000),
+                    blurRadius: 16,
+                    offset: Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.14),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Icon(icon, color: color, size: 20),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              corr['title'] as String,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: color.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: Text(
+                                corr['metric'] as String,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: color,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          corr['insight'] as String,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: AppColors.textSecondary,
+                            height: 1.35,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+          const SizedBox(height: 24),
+
+          // Section 2: Reflections Timeline
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('Reflections Timeline', style: AppTypography.titleMd),
+              Text(
+                '${widget.appState.journalEntries.length} entries',
+                style: AppTypography.labelSm.copyWith(color: AppColors.textTertiary),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (widget.appState.journalEntries.isEmpty)
+            Container(
+              padding: const EdgeInsets.all(28),
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.6),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: const Column(
+                children: [
+                  Icon(Icons.auto_stories_rounded, size: 36, color: AppColors.textTertiary),
+                  SizedBox(height: 8),
+                  Text('No reflections recorded yet', style: AppTypography.titleMd),
+                  SizedBox(height: 4),
+                  Text(
+                    'Tap "+ New Reflection" above to begin your private clinical journal.',
+                    textAlign: TextAlign.center,
+                    style: AppTypography.labelSm,
+                  ),
+                ],
+              ),
+            )
+          else
+            ...widget.appState.journalEntries.map((entry) {
+              final date = entry['timestamp'] as DateTime;
+              final prompt = entry['prompt'] as String;
+              final content = entry['content'] as String;
+              final mood = entry['mood'] as String? ?? 'Calm';
+              final hasAudio = entry['audioRecorded'] == true;
+              final hasPhoto = entry['photoPath'] != null;
+
+              return Container(
+                margin: const EdgeInsets.only(bottom: 14),
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.82),
+                  borderRadius: BorderRadius.circular(22),
+                  border: Border.all(color: Colors.white),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x09000000),
+                      blurRadius: 18,
+                      offset: Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: AppColors.primaryContainer.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: Text(
+                                mood,
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.primaryContainer,
+                                ),
+                              ),
+                            ),
+                            if (hasAudio) ...[
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFEF2F2),
+                                  borderRadius: BorderRadius.circular(999),
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.mic_rounded, size: 12, color: Color(0xFFEF4444)),
+                                    SizedBox(width: 4),
+                                    Text(
+                                      'Voice Memo',
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w600,
+                                        color: Color(0xFFEF4444),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                        Text(
+                          '${date.day}/${date.month} • ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}',
+                          style: const TextStyle(fontSize: 11, color: AppColors.textTertiary),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      prompt,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      content,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: AppColors.textPrimary,
+                        height: 1.4,
+                      ),
+                    ),
+                    if (hasPhoto) ...[
+                      const SizedBox(height: 10),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          height: 120,
+                          width: double.infinity,
+                          color: AppColors.surfaceContainerHigh,
+                          child: const Center(
+                            child: Icon(Icons.image_rounded, size: 36, color: AppColors.textTertiary),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              );
+            }),
         ],
       ),
     );

@@ -94,11 +94,211 @@ class AppState extends ChangeNotifier {
     },
   ];
 
-  // 3. Women's Health
+  // 3. Journal Reflections & Holistic Timeline (Part 2)
+  final List<Map<String, dynamic>> journalEntries = [
+    {
+      'id': 'entry-1',
+      'timestamp': DateTime.now().subtract(const Duration(hours: 3)),
+      'prompt': "What's on your mind today?",
+      'content':
+          'Morning sunlight walk and breathing exercises lowered my resting pulse to 64 bpm. Mind feels calm, clear, and energized for clinical work.',
+      'mood': 'Calm',
+      'audioRecorded': true,
+      'photoPath': null,
+      'tags': ['Mindfulness', 'Heart Rate', 'Morning'],
+    },
+    {
+      'id': 'entry-2',
+      'timestamp': DateTime.now().subtract(const Duration(days: 1, hours: 2)),
+      'prompt': "What's one thing that went well today?",
+      'content':
+          'Completed 30 minutes of low-impact cycling. Rested well last night (7h 45m) and noticed no brain fog in the afternoon.',
+      'mood': 'Energetic',
+      'audioRecorded': false,
+      'photoPath': null,
+      'tags': ['Movement', 'Recovery', 'Sleep'],
+    },
+    {
+      'id': 'entry-3',
+      'timestamp': DateTime.now().subtract(const Duration(days: 3, hours: 6)),
+      'prompt': 'Body scan & autonomic sensations',
+      'content':
+          'Felt slight neck tightness around 4 PM after long desk posture. Did 5 minutes of physiological sigh breathing which noticeably relaxed my shoulders.',
+      'mood': 'Relaxed',
+      'audioRecorded': false,
+      'photoPath': null,
+      'tags': ['Vagal Nerve', 'Posture'],
+    },
+  ];
+
+  // 4. Women's Health & Menstrual Cycle Tracking (Part 3)
+  bool isMenstrualTrackingEnabled = true;
   int cycleDay = 14;
   String cyclePhase = 'Ovulatory Phase';
-  bool isPregnancyMode = false;
+  int averageCycleLength = 28;
+  int averagePeriodDuration = 5;
+  DateTime lastPeriodStartDate = DateTime.now().subtract(const Duration(days: 14));
   final List<String> cycleSymptoms = ['Mild Cramps', 'High Energy', 'Good Mood'];
+  final List<Map<String, dynamic>> menstrualCycleLogs = [
+    {
+      'date': DateTime.now().subtract(const Duration(days: 14)),
+      'flow': 'Heavy',
+      'symptoms': ['Cramps', 'Fatigue'],
+      'notes': 'Day 1 of cycle',
+    },
+    {
+      'date': DateTime.now().subtract(const Duration(days: 13)),
+      'flow': 'Medium',
+      'symptoms': ['Mild Cramps'],
+      'notes': 'Restorative tea helped',
+    },
+    {
+      'date': DateTime.now().subtract(const Duration(days: 12)),
+      'flow': 'Light',
+      'symptoms': ['High Energy'],
+      'notes': 'Energy returning',
+    },
+    {
+      'date': DateTime.now().subtract(const Duration(days: 11)),
+      'flow': 'Spotting',
+      'symptoms': ['Clear Mind'],
+      'notes': 'Cycle ending',
+    },
+  ];
+
+  // 5. Pregnancy Mode (Part 4)
+  bool isPregnancyMode = false;
+  DateTime pregnancyDueDate = DateTime.now().add(const Duration(days: 196)); // ~12 weeks in
+  double prePregnancyWeightKg = 62.0;
+  double currentPregnancyWeightKg = 64.8;
+  final List<Map<String, dynamic>> pregnancyWeightLogs = [
+    {
+      'date': DateTime.now().subtract(const Duration(days: 28)),
+      'weightKg': 62.5,
+      'week': 8,
+    },
+    {
+      'date': DateTime.now().subtract(const Duration(days: 14)),
+      'weightKg': 63.8,
+      'week': 10,
+    },
+    {
+      'date': DateTime.now().subtract(const Duration(days: 2)),
+      'weightKg': 64.8,
+      'week': 12,
+    },
+  ];
+  final List<Map<String, dynamic>> kickCounterLogs = [
+    {
+      'timestamp': DateTime.now().subtract(const Duration(hours: 5)),
+      'kicks': 10,
+      'durationMinutes': 18,
+      'status': 'Healthy active pattern',
+    },
+    {
+      'timestamp': DateTime.now().subtract(const Duration(days: 1, hours: 4)),
+      'kicks': 10,
+      'durationMinutes': 22,
+      'status': 'Healthy active pattern',
+    },
+  ];
+  final List<Map<String, dynamic>> prenatalScans = [
+    {
+      'id': 'scan-1',
+      'title': 'First Trimester Dating & Viability Scan',
+      'gestationalWeek': 'Week 8',
+      'date': DateTime.now().subtract(const Duration(days: 28)),
+      'findings': 'Single intrauterine gestational sac with fetal heart rate 158 bpm. Crown-rump length matches dates.',
+      'doctorName': 'Dr. Elena Rostova, OB-GYN',
+      'imagePath': null,
+    },
+    {
+      'id': 'scan-2',
+      'title': 'Nuchal Translucency & Early Anatomy',
+      'gestationalWeek': 'Week 12',
+      'date': DateTime.now().subtract(const Duration(days: 2)),
+      'findings': 'Normal nuchal translucency (1.4 mm). Normal nasal bone present. Low risk profile.',
+      'doctorName': 'Dr. Elena Rostova, OB-GYN',
+      'imagePath': null,
+    },
+  ];
+
+  // 6. Universal Smartwatch Recovery Engine (Part 6)
+  int recoveryScore = 84; // 0-100%
+  String recoveryStatus = 'Primed for Movement';
+  double dailyStrainScore = 9.8; // 0-21 scale
+  int sleepPerformanceScore = 88; // 0-100%
+
+  // 7. Today's Movement & Fitness (Part 5)
+  final List<Map<String, dynamic>> completedWorkouts = [
+    {
+      'id': 'wo-1',
+      'title': 'Zone 2 Aerobic Jog',
+      'category': 'Cardio',
+      'duration': '32 min',
+      'caloriesBurned': 240,
+      'timestamp': DateTime.now().subtract(const Duration(hours: 4)),
+      'avgHr': 132,
+    },
+    {
+      'id': 'wo-2',
+      'title': 'Parasympathetic Yoga & Mobility',
+      'category': 'Recovery',
+      'duration': '20 min',
+      'caloriesBurned': 65,
+      'timestamp': DateTime.now().subtract(const Duration(days: 1, hours: 3)),
+      'avgHr': 78,
+    },
+  ];
+
+  final List<Map<String, dynamic>> curatedExerciseLibrary = const [
+    {
+      'id': 'ex-1',
+      'title': 'Brisk Incline Walking',
+      'category': 'Low Impact Cardio',
+      'intensity': 'Moderate',
+      'duration': '30-45 min',
+      'targetHr': '115-130 bpm',
+      'benefit': 'Promotes mitochondrial density without excessive central nervous fatigue.',
+      'medicalWarning': null,
+    },
+    {
+      'id': 'ex-2',
+      'title': 'Functional Bodyweight Circuit',
+      'category': 'Strength & Core',
+      'intensity': 'Moderate-High',
+      'duration': '25-35 min',
+      'targetHr': '125-145 bpm',
+      'benefit': 'Improves muscular endurance and stabilizes fasting glucose absorption.',
+      'medicalWarning': 'Avoid heavy valsalva maneuvers if resting BP is elevated.',
+    },
+    {
+      'id': 'ex-3',
+      'title': 'Restorative Yin Yoga & Deep Breathing',
+      'category': 'Autonomic Restoration',
+      'intensity': 'Gentle',
+      'duration': '20-30 min',
+      'targetHr': '65-85 bpm',
+      'benefit': 'Downregulates sympathetic nervous tone and elevates heart rate variability (HRV).',
+      'medicalWarning': null,
+    },
+    {
+      'id': 'ex-4',
+      'title': 'Zone 2 Cycling Cadence',
+      'category': 'Cardiovascular Base',
+      'intensity': 'Moderate',
+      'duration': '40 min',
+      'targetHr': '120-135 bpm',
+      'benefit': 'Builds capillary density and enhances lactate clearance efficiency.',
+      'medicalWarning': null,
+    },
+  ];
+
+  // 8. Onboarding Baseline Data (Part 7)
+  double? userHeightCm = 170.0;
+  double? userWeightKg = 63.5;
+  String? baselineProgressPhotoPath;
+  bool isOnboardingBaselineCompleted = true;
 
   // 4. Chronic Condition Companion (Diabetes & Hypertension)
   int bloodGlucoseMgDl = 102;
@@ -523,6 +723,300 @@ class AppState extends ChangeNotifier {
     });
     _recalculateBalance();
     _persistCurrentUserData();
+    notifyListeners();
+  }
+
+  // --- PART 2: Journal Methods & Holistic Correlations ---
+  void addJournalEntry({
+    required String content,
+    String? prompt,
+    String? mood,
+    String? photoPath,
+    bool audioRecorded = false,
+    List<String>? tags,
+  }) {
+    final entry = {
+      'id': 'entry-${DateTime.now().millisecondsSinceEpoch}',
+      'timestamp': DateTime.now(),
+      'prompt': prompt ?? "What's on your mind today?",
+      'content': content,
+      'mood': mood ?? selectedMood,
+      'photoPath': photoPath,
+      'audioRecorded': audioRecorded,
+      'tags': tags ?? ['Reflection', mood ?? selectedMood],
+    };
+    journalEntries.insert(0, entry);
+    if (mood != null) {
+      selectedMood = mood;
+    }
+    _recalculateBalance();
+    _persistCurrentUserData();
+    notifyListeners();
+  }
+
+  void deleteJournalEntry(String id) {
+    journalEntries.removeWhere((e) => e['id'] == id);
+    notifyListeners();
+  }
+
+  List<Map<String, dynamic>> getJournalCorrelations() {
+    return [
+      {
+        'title': 'Sleep & Mood Harmony',
+        'metric': '7h 45m Restful Sleep',
+        'insight':
+            'When sleep duration exceeds 7.5 hours, your daily mood score averages "Energetic" with optimal HRV (58ms).',
+        'icon': Icons.bedtime_rounded,
+        'color': const Color(0xFF818CF8),
+      },
+      {
+        'title': 'Autonomic Stability',
+        'metric': '64 bpm Resting Pulse',
+        'insight':
+            'Days logged as "Calm" or "Relaxed" show a 5 bpm lower resting heart rate and stable cardiovascular load.',
+        'icon': Icons.favorite_rounded,
+        'color': const Color(0xFF38BDF8),
+      },
+      {
+        'title': 'Cycle Phase Vitality',
+        'metric': 'Ovulatory Phase (Day 14)',
+        'insight':
+            'Peak estrogen levels correlate with high cognitive clarity and increased natural physical endurance.',
+        'icon': Icons.flare_rounded,
+        'color': const Color(0xFFFB7185),
+      },
+    ];
+  }
+
+  // --- PART 3: Menstrual Cycle Tracking Methods ---
+  void toggleMenstrualTracking(bool enabled) {
+    isMenstrualTrackingEnabled = enabled;
+    notifyListeners();
+  }
+
+  DateTime get predictedNextPeriod =>
+      lastPeriodStartDate.add(Duration(days: averageCycleLength));
+
+  DateTime get predictedOvulationDate =>
+      lastPeriodStartDate.add(Duration(days: (averageCycleLength / 2).round()));
+
+  void logPeriodDay({
+    required DateTime date,
+    required String flow,
+    List<String> symptoms = const [],
+    String notes = '',
+  }) {
+    menstrualCycleLogs.insert(0, {
+      'date': date,
+      'flow': flow,
+      'symptoms': symptoms,
+      'notes': notes,
+    });
+    lastPeriodStartDate = date;
+    cycleDay = 1;
+    cyclePhase = 'Menstrual Phase';
+    notifyListeners();
+  }
+
+  // --- PART 4: Pregnancy Mode Methods ---
+  void setPregnancyMode(bool enabled) {
+    isPregnancyMode = enabled;
+    _persistCurrentUserData();
+    notifyListeners();
+  }
+
+  void setPregnancyDueDate(DateTime date) {
+    pregnancyDueDate = date;
+    notifyListeners();
+  }
+
+  int get gestationalWeeks {
+    final conceptionEst = pregnancyDueDate.subtract(const Duration(days: 280));
+    final daysPassed = DateTime.now().difference(conceptionEst).inDays;
+    return (daysPassed / 7).floor().clamp(1, 42);
+  }
+
+  int get gestationalDaysRemainder {
+    final conceptionEst = pregnancyDueDate.subtract(const Duration(days: 280));
+    final daysPassed = DateTime.now().difference(conceptionEst).inDays;
+    return (daysPassed % 7).clamp(0, 6);
+  }
+
+  String get pregnancyTrimester {
+    final weeks = gestationalWeeks;
+    if (weeks <= 13) return '1st Trimester';
+    if (weeks <= 26) return '2nd Trimester';
+    return '3rd Trimester';
+  }
+
+  Map<String, dynamic> get currentBabyDevelopment {
+    final week = gestationalWeeks;
+    if (week <= 8) {
+      return {
+        'sizeComparison': 'Raspberry (~1.6 cm)',
+        'milestone': 'Baby is forming tiny fingers and toes. The heart is beating at around 150 bpm.',
+        'careAdvice': 'Continue prenatal vitamins with folate. Stay hydrated to mitigate mild nausea.',
+      };
+    } else if (week <= 14) {
+      return {
+        'sizeComparison': 'Lime (~5.4 cm)',
+        'milestone': "Baby's vocal cords and reflexes are developing. Fingers can curl and toes can wiggle.",
+        'careAdvice': 'Energy typically improves heading into the second trimester. Great time for gentle walking.',
+      };
+    } else if (week <= 20) {
+      return {
+        'sizeComparison': 'Banana (~16.4 cm)',
+        'milestone': 'Baby can hear muffled sounds from the outside world. Sleep and wake cycles are beginning.',
+        'careAdvice': 'Anatomy ultrasound scan is scheduled around week 20 to review organ development.',
+      };
+    } else {
+      return {
+        'sizeComparison': 'Eggplant (~28 cm)',
+        'milestone': 'Lungs and brain are maturing rapidly. Baby is active with perceptible kick routines.',
+        'careAdvice': 'Track daily kick counts when resting on your side.',
+      };
+    }
+  }
+
+  void logPregnancyWeight(double weightKg) {
+    currentPregnancyWeightKg = weightKg;
+    pregnancyWeightLogs.insert(0, {
+      'date': DateTime.now(),
+      'weightKg': weightKg,
+      'week': gestationalWeeks,
+    });
+    notifyListeners();
+  }
+
+  void logKickSession({required int kicks, required int durationMinutes}) {
+    kickCounterLogs.insert(0, {
+      'timestamp': DateTime.now(),
+      'kicks': kicks,
+      'durationMinutes': durationMinutes,
+      'status': kicks >= 10 ? 'Optimal active movement' : 'Continue observation',
+    });
+    notifyListeners();
+  }
+
+  void addPrenatalScan({
+    required String title,
+    required String gestationalWeek,
+    required String findings,
+    required String doctorName,
+    String? imagePath,
+  }) {
+    prenatalScans.insert(0, {
+      'id': 'scan-${DateTime.now().millisecondsSinceEpoch}',
+      'title': title,
+      'gestationalWeek': gestationalWeek,
+      'date': DateTime.now(),
+      'findings': findings,
+      'doctorName': doctorName,
+      'imagePath': imagePath,
+    });
+    notifyListeners();
+  }
+
+  // --- PART 5 & 6: Recovery Engine & Personalized Movement ---
+  void recalculateRecoveryEngine() {
+    int score = 50;
+    if (restingHeartRate <= 65) {
+      score += 20;
+    } else if (restingHeartRate <= 72) {
+      score += 10;
+    }
+
+    if (hrvMs >= 55) {
+      score += 20;
+    } else if (hrvMs >= 45) {
+      score += 10;
+    }
+
+    if (sleepDuration.contains('7h') || sleepDuration.contains('8h')) {
+      score += 15;
+    }
+
+    recoveryScore = score.clamp(35, 98);
+    if (recoveryScore >= 75) {
+      recoveryStatus = 'Primed for Movement';
+    } else if (recoveryScore >= 55) {
+      recoveryStatus = 'Moderate Recovery';
+    } else {
+      recoveryStatus = 'Recovery Needed';
+    }
+
+    dailyStrainScore = (dailySteps / 900).clamp(3.0, 18.5);
+    notifyListeners();
+  }
+
+  Map<String, dynamic> getTodaysMovementSuggestion() {
+    if (recoveryScore >= 75) {
+      return {
+        'title': 'Zone 2 Cardio & Steady State',
+        'subtitle': 'Optimal for Endurance & Mitochondria',
+        'recommendedDuration': '35-45 min',
+        'intensity': 'Moderate Aerobic (HR 120-135 bpm)',
+        'reasoning':
+            'Your Recovery Score is high ($recoveryScore%) with an elevated HRV ($hrvMs ms) and resting pulse of $restingHeartRate bpm. Your autonomic system is primed for aerobic adaptation without overtraining risk.',
+        'exerciseId': 'ex-1',
+        'caution': null,
+      };
+    } else if (recoveryScore >= 55) {
+      return {
+        'title': 'Brisk Walking & Mobility Flow',
+        'subtitle': 'Active Recovery & Circulation',
+        'recommendedDuration': '25-30 min',
+        'intensity': 'Low Impact (HR 100-115 bpm)',
+        'reasoning':
+            'Moderate recovery ($recoveryScore%). A low-intensity walk supports venous blood flow, lymphatic drainage, and gentle stress relief without taxing glycogen reserves.',
+        'exerciseId': 'ex-1',
+        'caution': null,
+      };
+    } else {
+      return {
+        'title': 'Restorative Yoga & Breathwork',
+        'subtitle': 'Parasympathetic Nervous Recharge',
+        'recommendedDuration': '15-20 min',
+        'intensity': 'Gentle / Restorative',
+        'reasoning':
+            'Recovery Score is lower ($recoveryScore%). Prioritizing parasympathetic tone with diaphragmatic breathing and gentle yoga will restore neuromuscular readiness.',
+        'exerciseId': 'ex-3',
+        'caution': 'Avoid high-intensity sprints or heavy loading today.',
+      };
+    }
+  }
+
+  void logWorkout({
+    required String title,
+    required String category,
+    required String duration,
+    required int caloriesBurned,
+    int? avgHr,
+  }) {
+    completedWorkouts.insert(0, {
+      'id': 'wo-${DateTime.now().millisecondsSinceEpoch}',
+      'title': title,
+      'category': category,
+      'duration': duration,
+      'caloriesBurned': caloriesBurned,
+      'timestamp': DateTime.now(),
+      'avgHr': avgHr ?? activeHeartRate,
+    });
+    recalculateRecoveryEngine();
+    _recalculateBalance();
+    notifyListeners();
+  }
+
+  // --- PART 7: Onboarding Baseline Data ---
+  void saveBaselineData({
+    double? heightCm,
+    double? weightKg,
+    String? photoPath,
+  }) {
+    if (heightCm != null) userHeightCm = heightCm;
+    if (weightKg != null) userWeightKg = weightKg;
+    if (photoPath != null) baselineProgressPhotoPath = photoPath;
+    isOnboardingBaselineCompleted = true;
     notifyListeners();
   }
 

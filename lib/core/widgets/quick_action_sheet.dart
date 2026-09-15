@@ -6,6 +6,8 @@ import '../state/app_state.dart';
 import '../../features/lab_reports/widgets/upload_report_modal.dart';
 import '../../features/appointments/widgets/book_appointment_modal.dart';
 import '../../features/ai_assistant/widgets/ai_chat_sheet.dart';
+import '../../features/womens_health/screens/womens_health_screen.dart';
+import '../../features/onboarding/screens/onboarding_baseline_screen.dart';
 
 class QuickActionSheet extends StatelessWidget {
   final AppState appState;
@@ -133,6 +135,38 @@ class QuickActionSheet extends StatelessWidget {
                 const SizedBox(height: 12),
                 _buildActionItem(
                   context,
+                  icon: Icons.directions_run_rounded,
+                  title: "Today's Movement & Recovery",
+                  subtitle: 'Recovery score (${appState.recoveryScore}%) & personalized exercises',
+                  color: const Color(0xFF10B981),
+                  onTap: () {
+                    Navigator.pop(context);
+                    appState.setTabIndex(3); // Fitness tab
+                    appState.setAppointmentSegment(0); // Movement segment
+                  },
+                ),
+                const SizedBox(height: 12),
+                _buildActionItem(
+                  context,
+                  icon: Icons.spa_rounded,
+                  title: "Women's Health & Pregnancy",
+                  subtitle: appState.isPregnancyMode
+                      ? 'Week ${appState.gestationalWeeks} • Fetal Kick Counter & Scans'
+                      : 'Day ${appState.cycleDay} • ${appState.cyclePhase} & Period Log',
+                  color: AppColors.accentRose,
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => WomensHealthScreen(appState: appState),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 12),
+                _buildActionItem(
+                  context,
                   icon: Icons.sync_rounded,
                   title: 'Sync Vitals from Apple Health / Watch',
                   subtitle: 'Heart rate, deep REM sleep, daily step count',
@@ -146,6 +180,26 @@ class QuickActionSheet extends StatelessWidget {
                         behavior: SnackBarBehavior.floating,
                         backgroundColor: AppColors.surfaceCardDark,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 12),
+                _buildActionItem(
+                  context,
+                  icon: Icons.assignment_turned_in_rounded,
+                  title: 'Update Baseline Health Data',
+                  subtitle: 'Recent labs, height, weight, and private progress photo',
+                  color: const Color(0xFF8B5CF6),
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => OnboardingBaselineScreen(
+                          appState: appState,
+                          onComplete: () => Navigator.pop(context),
+                        ),
                       ),
                     );
                   },

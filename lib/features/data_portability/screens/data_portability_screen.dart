@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/glass_container.dart';
@@ -21,14 +20,7 @@ class DataPortabilityScreen extends StatefulWidget {
 }
 
 class _DataPortabilityScreenState extends State<DataPortabilityScreen> {
-  String? _fhirJsonPreview;
   bool _isExporting = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _fhirJsonPreview = DataExportService.generateFhirBundle(widget.appState);
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -167,64 +159,104 @@ class _DataPortabilityScreenState extends State<DataPortabilityScreen> {
                     ),
                     const SizedBox(height: 22),
 
-                    // FHIR JSON Standard Section
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'HL7 FHIR Document Bundle',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
-                        ),
-                        BouncingTap(
-                          onTap: () {
-                            if (_fhirJsonPreview != null) {
-                              Clipboard.setData(ClipboardData(text: _fhirJsonPreview!));
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('FHIR JSON bundle copied to clipboard!'),
-                                  backgroundColor: AppColors.accentTeal,
-                                ),
-                              );
-                            }
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.8),
-                              borderRadius: BorderRadius.circular(999),
-                              border: Border.all(color: Colors.white, width: 1),
-                            ),
-                            child: const Row(
-                              children: [
-                                Icon(Icons.copy_rounded, size: 14, color: AppColors.primary),
-                                SizedBox(width: 4),
-                                Text('Copy JSON', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.primary)),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
+                    // Exported Health Package Overview
+                    const Text(
+                      'Included in Your Clinical Export',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                    ),
+                    const SizedBox(height: 12),
+
+                    _buildExportItem(
+                      icon: Icons.monitor_heart_rounded,
+                      title: 'Physiological Vitals Telemetry',
+                      subtitle: 'Resting Heart Rate, Sleep Quality, Blood Oxygen, and Daily Movement trends.',
+                      color: AppColors.watchHeartRate,
                     ),
                     const SizedBox(height: 10),
 
-                    // FHIR Code Viewer
-                    Container(
-                      height: 280,
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF161522),
-                        borderRadius: BorderRadius.circular(22),
-                        border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
-                      ),
-                      child: SingleChildScrollView(
-                        child: Text(
-                          _fhirJsonPreview ?? '// Generating FHIR bundle...',
-                          style: const TextStyle(
-                            fontFamily: 'monospace',
-                            fontSize: 11,
-                            height: 1.45,
-                            color: Color(0xFF81D4FA),
-                          ),
+                    _buildExportItem(
+                      icon: Icons.medication_rounded,
+                      title: 'Prescriptions & Regimen',
+                      subtitle: '${widget.appState.medications.length} active medications with dosing schedule and clinical instructions.',
+                      color: AppColors.primaryContainer,
+                    ),
+                    const SizedBox(height: 10),
+
+                    _buildExportItem(
+                      icon: Icons.biotech_rounded,
+                      title: 'Diagnostic Lab Biomarkers',
+                      subtitle: 'Comprehensive metabolic and liver enzyme panels with clinical reference ranges.',
+                      color: const Color(0xFF8B5CF6),
+                    ),
+                    const SizedBox(height: 10),
+
+                    _buildExportItem(
+                      icon: Icons.calendar_month_rounded,
+                      title: 'Clinical Consultations & Care Plan',
+                      subtitle: '${widget.appState.appointments.length} recorded specialist consultations, clinician instructions, and prep notes.',
+                      color: AppColors.accentTeal,
+                    ),
+                    const SizedBox(height: 10),
+
+                    _buildExportItem(
+                      icon: Icons.emergency_rounded,
+                      title: 'Emergency Medical ID',
+                      subtitle: 'Blood type (${widget.appState.bloodType}), registered emergency contacts, and organ donor registry status.',
+                      color: const Color(0xFFEF4444),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Primary Action: Save to Files
+                    BouncingTap(
+                      onTap: () async {
+                        final messenger = ScaffoldMessenger.of(context);
+                        setState(() => _isExporting = true);
+                        final result = await DataExportService.saveClinicalPdf(widget.appState);
+                        if (mounted) {
+                          setState(() => _isExporting = false);
+                          messenger.showSnackBar(
+                            SnackBar(
+                              content: Text(result != null
+                                  ? 'Clinical Summary PDF saved: ${result.split('/').last}'
+                                  : 'Clinical Summary PDF exported successfully!'),
+                              backgroundColor: AppColors.accentTeal,
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                        }
+                      },
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        decoration: BoxDecoration(
+                          color: AppColors.textPrimary,
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.textPrimary.withValues(alpha: 0.28),
+                              blurRadius: 18,
+                              offset: const Offset(0, 6),
+                            ),
+                          ],
+                        ),
+                        child: Center(
+                          child: _isExporting
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(strokeWidth: 2.2, color: Colors.white),
+                                )
+                              : const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.folder_special_rounded, color: Colors.white, size: 20),
+                                    SizedBox(width: 10),
+                                    Text(
+                                      'Save Clinical Summary to Files',
+                                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white),
+                                    ),
+                                  ],
+                                ),
                         ),
                       ),
                     ),
@@ -235,6 +267,45 @@ class _DataPortabilityScreenState extends State<DataPortabilityScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildExportItem({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Color color,
+  }) {
+    return GlassContainer(
+      padding: const EdgeInsets.all(16),
+      borderRadius: 20,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: color, size: 20),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: TextStyle(fontSize: 12, height: 1.35, color: AppColors.textSecondary.withValues(alpha: 0.95)),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -228,7 +228,13 @@ class _UploadReportModalState extends State<UploadReportModal> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Upload Prescription / Lab', style: AppTypography.titleLg),
+                const Expanded(
+                  child: Text(
+                    'Upload Prescription / Lab',
+                    style: AppTypography.titleLg,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
                 IconButton(
                   icon: const Icon(Icons.close_rounded, color: AppColors.textSecondary),
                   onPressed: () => Navigator.pop(context),
@@ -238,7 +244,7 @@ class _UploadReportModalState extends State<UploadReportModal> {
           ),
           const Divider(height: 1, color: AppColors.surfaceContainerHigh),
           Expanded(
-            child: Padding(
+            child: SingleChildScrollView(
               padding: const EdgeInsets.all(20),
               child: _isProcessing ? _buildProcessing() : _buildPickerOptions(),
             ),

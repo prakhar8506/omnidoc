@@ -4,6 +4,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/state/app_state.dart';
 import '../../../core/widgets/avatar_image.dart';
+import '../../fitness/widgets/todays_movement_panel.dart';
 import '../widgets/book_appointment_modal.dart';
 import '../widgets/family_member_modal.dart';
 
@@ -20,19 +21,22 @@ class AppointmentsScreen extends StatelessWidget {
     return ListenableBuilder(
       listenable: appState,
       builder: (context, _) {
-        final isAppointmentsTab = appState.appointmentSegmentIndex == 0;
+        final currentSegment = appState.appointmentSegmentIndex;
 
         return SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 110),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Segment Pill Switcher
+              // Segment Pill Switcher (3 Tabs: Movement, Visits, Family)
               _buildSegmentPillSwitcher(),
               const SizedBox(height: 18),
 
-              if (isAppointmentsTab) ...[
-                // SECTION 1: APPOINTMENTS VIEW
+              if (currentSegment == 0) ...[
+                // SECTION 1: TODAY'S MOVEMENT & UNIVERSAL RECOVERY
+                TodaysMovementPanel(appState: appState),
+              ] else if (currentSegment == 1) ...[
+                // SECTION 2: APPOINTMENTS VIEW
                 _buildDateStripSelector(),
                 const SizedBox(height: 18),
                 _buildUpcomingConsultationBanner(context),
@@ -41,7 +45,7 @@ class AppointmentsScreen extends StatelessWidget {
                 const SizedBox(height: 14),
                 _buildAppointmentCards(context),
               ] else ...[
-                // SECTION 2: FAMILY SHARING VIEW
+                // SECTION 3: FAMILY SHARING VIEW
                 _buildFamilySharingSection(context),
               ],
             ],
@@ -85,15 +89,15 @@ class AppointmentsScreen extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(
-                      Icons.calendar_today_rounded,
-                      size: 16,
+                      Icons.directions_run_rounded,
+                      size: 15,
                       color: currentIndex == 0 ? Colors.white : AppColors.textSecondary,
                     ),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: 4),
                     Text(
-                      'Upcoming Visits',
+                      'Movement',
                       style: TextStyle(
-                        fontSize: 13,
+                        fontSize: 12,
                         fontWeight: FontWeight.w600,
                         color: currentIndex == 0 ? Colors.white : AppColors.textSecondary,
                       ),
@@ -126,17 +130,58 @@ class AppointmentsScreen extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(
-                      Icons.verified_user_rounded,
-                      size: 16,
+                      Icons.calendar_today_rounded,
+                      size: 15,
                       color: currentIndex == 1 ? Colors.white : AppColors.textSecondary,
                     ),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: 4),
                     Text(
-                      'Family Sharing',
+                      'Upcoming Visits',
                       style: TextStyle(
-                        fontSize: 13,
+                        fontSize: 12,
                         fontWeight: FontWeight.w600,
                         color: currentIndex == 1 ? Colors.white : AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Expanded(
+            child: GestureDetector(
+              onTap: () => appState.setAppointmentSegment(2),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 250),
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                decoration: BoxDecoration(
+                  color: currentIndex == 2 ? AppColors.primaryContainer : Colors.transparent,
+                  borderRadius: BorderRadius.circular(999),
+                  boxShadow: currentIndex == 2
+                      ? [
+                          BoxShadow(
+                            color: AppColors.primaryContainer.withValues(alpha: 0.3),
+                            blurRadius: 10,
+                            offset: const Offset(0, 2),
+                          ),
+                        ]
+                      : null,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.verified_user_rounded,
+                      size: 15,
+                      color: currentIndex == 2 ? Colors.white : AppColors.textSecondary,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Family',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: currentIndex == 2 ? Colors.white : AppColors.textSecondary,
                       ),
                     ),
                   ],

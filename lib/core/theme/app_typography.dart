@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
@@ -6,30 +8,68 @@ import 'app_colors.dart';
 /// Provides const TextStyle constants for zero-overhead const widgets,
 /// along with GoogleFonts newsreader serif typography for Apple editorial headlines.
 class AppTypography {
+  static bool get _isTest => !kIsWeb && Platform.environment.containsKey('FLUTTER_TEST');
+
   // Apple Editorial Serif Headings
-  static TextStyle get editorialLg => GoogleFonts.newsreader(
+  static TextStyle get editorialLg {
+    if (_isTest) {
+      return const TextStyle(
+        fontFamily: 'Georgia',
         fontSize: 32,
         fontWeight: FontWeight.w600,
         height: 1.15,
         letterSpacing: -0.8,
         color: AppColors.textPrimary,
       );
+    }
+    return GoogleFonts.newsreader(
+      fontSize: 32,
+      fontWeight: FontWeight.w600,
+      height: 1.15,
+      letterSpacing: -0.8,
+      color: AppColors.textPrimary,
+    );
+  }
 
-  static TextStyle get editorialMd => GoogleFonts.newsreader(
+  static TextStyle get editorialMd {
+    if (_isTest) {
+      return const TextStyle(
+        fontFamily: 'Georgia',
         fontSize: 26,
         fontWeight: FontWeight.w600,
         height: 1.2,
         letterSpacing: -0.6,
         color: AppColors.textPrimary,
       );
+    }
+    return GoogleFonts.newsreader(
+      fontSize: 26,
+      fontWeight: FontWeight.w600,
+      height: 1.2,
+      letterSpacing: -0.6,
+      color: AppColors.textPrimary,
+    );
+  }
 
-  static TextStyle get editorialSm => GoogleFonts.newsreader(
+  static TextStyle get editorialSm {
+    if (_isTest) {
+      return const TextStyle(
+        fontFamily: 'Georgia',
         fontSize: 20,
         fontWeight: FontWeight.w600,
         height: 1.25,
         letterSpacing: -0.4,
         color: AppColors.textPrimary,
       );
+    }
+    return GoogleFonts.newsreader(
+      fontSize: 20,
+      fontWeight: FontWeight.w600,
+      height: 1.25,
+      letterSpacing: -0.4,
+      color: AppColors.textPrimary,
+    );
+  }
 
   // Const TextStyles for full backwards compatibility and const performance
   static const TextStyle headlineLg = TextStyle(

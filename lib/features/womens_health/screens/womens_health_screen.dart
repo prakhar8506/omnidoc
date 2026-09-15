@@ -6,8 +6,10 @@ import '../../../core/widgets/glass_container.dart';
 import '../../../core/widgets/bouncing_tap.dart';
 import '../../../core/widgets/holographic_background.dart';
 import '../../../core/state/app_state.dart';
+import '../widgets/period_log_modal.dart';
+import 'pregnancy_dashboard_screen.dart';
 
-class WomensHealthScreen extends StatelessWidget {
+class WomensHealthScreen extends StatefulWidget {
   final AppState appState;
 
   const WomensHealthScreen({
@@ -16,10 +18,27 @@ class WomensHealthScreen extends StatelessWidget {
   });
 
   @override
+  State<WomensHealthScreen> createState() => _WomensHealthScreenState();
+}
+
+class _WomensHealthScreenState extends State<WomensHealthScreen> {
+  int _selectedViewIndex = 0; // 0: Cycle Tracking, 1: Pregnancy Mode
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedViewIndex = widget.appState.isPregnancyMode ? 1 : 0;
+  }
+
+  @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: appState,
+      listenable: widget.appState,
       builder: (context, _) {
+        if (_selectedViewIndex == 1 || widget.appState.isPregnancyMode) {
+          return PregnancyDashboardScreen(appState: widget.appState);
+        }
+
         return Scaffold(
           body: HolographicBackground(
             child: SafeArea(
@@ -45,31 +64,126 @@ class WomensHealthScreen extends StatelessWidget {
                             ),
                           ),
                           Text("Women's Health & Cycle", style: AppTypography.editorialSm),
-                          const SizedBox(width: 40),
+                          IconButton(
+                            icon: const Icon(Icons.tune_rounded, color: AppColors.textSecondary),
+                            onPressed: () => _showSettingsSheet(context),
+                          ),
                         ],
+                      ),
+                    ),
+                  ),
+
+                  // Mode Switcher Tab
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.7),
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(color: Colors.white),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: GestureDetector(
+                                onTap: () => setState(() => _selectedViewIndex = 0),
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 200),
+                                  padding: const EdgeInsets.symmetric(vertical: 10),
+                                  decoration: BoxDecoration(
+                                    color: _selectedViewIndex == 0
+                                        ? AppColors.accentRose
+                                        : Colors.transparent,
+                                    borderRadius: BorderRadius.circular(999),
+                                  ),
+                                  alignment: Alignment.center,
+                                  child: Text(
+                                    'Cycle Tracking',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                      color: _selectedViewIndex == 0
+                                          ? Colors.white
+                                          : AppColors.textSecondary,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              child: GestureDetector(
+                                onTap: () {
+                                  widget.appState.setPregnancyMode(true);
+                                  setState(() => _selectedViewIndex = 1);
+                                },
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 200),
+                                  padding: const EdgeInsets.symmetric(vertical: 10),
+                                  decoration: BoxDecoration(
+                                    color: _selectedViewIndex == 1
+                                        ? const Color(0xFFDB2777)
+                                        : Colors.transparent,
+                                    borderRadius: BorderRadius.circular(999),
+                                  ),
+                                  alignment: Alignment.center,
+                                  child: Text(
+                                    'Pregnancy Mode',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                      color: _selectedViewIndex == 1
+                                          ? Colors.white
+                                          : AppColors.textSecondary,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
 
                   // Content Body
                   SliverPadding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                     sliver: SliverList(
                       delegate: SliverChildListDelegate([
-                        // Cycle Hero Card
+                        // 1. Cycle Hero Card
                         _buildCycleHeroCard(context),
+                        const SizedBox(height: 14),
+
+                        // 2. Primary Log Period Button
+                        ElevatedButton.icon(
+                          onPressed: () => PeriodLogModal.show(context, widget.appState),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.accentRose,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            elevation: 0,
+                          ),
+                          icon: const Icon(Icons.water_drop_rounded, size: 20),
+                          label: const Text(
+                            'Log Period & Flow Intensity',
+                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                          ),
+                        ),
                         const SizedBox(height: 18),
 
-                        // Feeling Journal Mood Correlation Card
+                        // 3. Feeling Journal Mood Correlation Card
                         _buildMoodCorrelationCard(context),
                         const SizedBox(height: 18),
 
-                        // Symptoms Logger
-                        _buildSymptomsCard(context),
+                        // 4. Period & Flow History Timeline
+                        _buildFlowHistoryCard(context),
                         const SizedBox(height: 18),
 
-                        // Pregnancy Mode Switcher
-                        _buildPregnancyModeCard(context),
+                        // 5. Symptoms Logger
+                        _buildSymptomsCard(context),
                         const SizedBox(height: 80),
                       ]),
                     ),
@@ -84,9 +198,12 @@ class WomensHealthScreen extends StatelessWidget {
   }
 
   Widget _buildCycleHeroCard(BuildContext context) {
-    const cycleDay = 14;
-    const totalDays = 28;
-    const progress = cycleDay / totalDays;
+    final state = widget.appState;
+    final cycleDay = state.cycleDay;
+    final totalDays = state.averageCycleLength;
+    final progress = (cycleDay / totalDays).clamp(0.05, 1.0);
+    final nextPeriod = state.predictedNextPeriod;
+    final daysUntilNext = nextPeriod.difference(DateTime.now()).inDays.clamp(1, 35);
 
     return GlassContainer(
       padding: const EdgeInsets.all(22),
@@ -115,9 +232,9 @@ class WomensHealthScreen extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 6),
-                  const Text(
-                    'Day 14 of 28',
-                    style: TextStyle(
+                  Text(
+                    'Day $cycleDay of $totalDays',
+                    style: const TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.w800,
                       color: AppColors.textPrimary,
@@ -131,9 +248,9 @@ class WomensHealthScreen extends StatelessWidget {
                       color: AppColors.accentRose.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(999),
                     ),
-                    child: const Text(
-                      'Ovulatory Phase • Peak Vitality',
-                      style: TextStyle(
+                    child: Text(
+                      '${state.cyclePhase} • Peak Vitality',
+                      style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
                         color: AppColors.accentRose,
@@ -148,10 +265,10 @@ class WomensHealthScreen extends StatelessWidget {
                 height: 80,
                 child: CustomPaint(
                   painter: _CycleDialPainter(progress: progress),
-                  child: const Center(
+                  child: Center(
                     child: Text(
-                      'Day 14',
-                      style: TextStyle(
+                      'Day $cycleDay',
+                      style: const TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w800,
                         color: AppColors.textPrimary,
@@ -165,12 +282,12 @@ class WomensHealthScreen extends StatelessWidget {
           const SizedBox(height: 18),
           const Divider(height: 1, color: Color(0x1A1C1A27)),
           const SizedBox(height: 14),
-          const Row(
+          Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _CycleMetricPill(label: 'Next Period', value: 'in 14 days'),
-              _CycleMetricPill(label: 'Fertility Window', value: 'Elevated'),
-              _CycleMetricPill(label: 'Estrogen Peak', value: 'Active'),
+              _CycleMetricPill(label: 'Next Period', value: 'in $daysUntilNext days'),
+              const _CycleMetricPill(label: 'Fertility Window', value: 'Elevated'),
+              const _CycleMetricPill(label: 'Estrogen Peak', value: 'Active'),
             ],
           ),
         ],
@@ -210,12 +327,12 @@ class WomensHealthScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Hormonal Influence on Mood: ${appState.selectedMood}',
-                  style: AppTypography.titleMd.copyWith(fontSize: 15),
+                  'Hormonal Influence on Mood: ${widget.appState.selectedMood}',
+                  style: AppTypography.titleMd,
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'You logged your feeling as "${appState.selectedMood}". During the ovulatory phase, estrogen peak is clinically associated with heightened mental clarity and social drive.',
+                  'You logged your feeling as "${widget.appState.selectedMood}". During the ovulatory phase, estrogen peak is clinically associated with heightened mental clarity, reduced pain sensitivity, and social vitality.',
                   style: TextStyle(
                     fontSize: 12.5,
                     height: 1.4,
@@ -225,6 +342,76 @@ class WomensHealthScreen extends StatelessWidget {
               ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFlowHistoryCard(BuildContext context) {
+    return GlassContainer(
+      padding: const EdgeInsets.all(20),
+      borderRadius: 24,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('Logged Period & Flow History', style: AppTypography.titleMd),
+              Text(
+                '${widget.appState.menstrualCycleLogs.length} logs',
+                style: AppTypography.labelSm.copyWith(color: AppColors.textTertiary),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ...widget.appState.menstrualCycleLogs.take(4).map((log) {
+            final date = log['date'] as DateTime;
+            final flow = log['flow'] as String;
+            final symptoms = (log['symptoms'] as List<dynamic>?)?.join(', ') ?? '';
+
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              child: Row(
+                children: [
+                  Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: AppColors.accentRose.withValues(alpha: 0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.water_drop_rounded, size: 16, color: AppColors.accentRose),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${date.day} ${_getMonth(date.month)} • $flow Flow',
+                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                        ),
+                        if (symptoms.isNotEmpty)
+                          Text(symptoms, style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: AppColors.accentRose.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      flow,
+                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.accentRose),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
         ],
       ),
     );
@@ -257,9 +444,9 @@ class WomensHealthScreen extends StatelessWidget {
             spacing: 8,
             runSpacing: 8,
             children: allSymptoms.map((s) {
-              final isSel = appState.cycleSymptoms.contains(s);
+              final isSel = widget.appState.cycleSymptoms.contains(s);
               return BouncingTap(
-                onTap: () => appState.logCycleSymptom(s),
+                onTap: () => widget.appState.logCycleSymptom(s),
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 180),
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
@@ -288,41 +475,54 @@ class WomensHealthScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildPregnancyModeCard(BuildContext context) {
-    return GlassContainer(
-      padding: const EdgeInsets.all(18),
-      borderRadius: 22,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          const Row(
+  void _showSettingsSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.all(24),
+        decoration: const BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        child: SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(Icons.child_care_rounded, color: AppColors.primary, size: 24),
-              SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Pregnancy Mode',
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
-                  ),
-                  SizedBox(height: 2),
-                  Text(
-                    'Tailor journal and guidance for prenatal health',
-                    style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
-                  ),
-                ],
+              const Text("Women's Health Settings", style: AppTypography.titleLg),
+              const SizedBox(height: 16),
+              SwitchListTile(
+                title: const Text('Menstrual Tracking Enabled', style: AppTypography.titleMd),
+                subtitle: const Text('Show cycle telemetry on home and health dashboard', style: AppTypography.labelSm),
+                value: widget.appState.isMenstrualTrackingEnabled,
+                activeTrackColor: AppColors.accentRose,
+                onChanged: (val) {
+                  widget.appState.toggleMenstrualTracking(val);
+                  Navigator.pop(ctx);
+                },
+              ),
+              SwitchListTile(
+                title: const Text('Pregnancy Mode', style: AppTypography.titleMd),
+                subtitle: const Text('Adapt dashboard for gestational age and prenatal tracking', style: AppTypography.labelSm),
+                value: widget.appState.isPregnancyMode,
+                activeTrackColor: const Color(0xFFDB2777),
+                onChanged: (val) {
+                  widget.appState.setPregnancyMode(val);
+                  setState(() => _selectedViewIndex = val ? 1 : 0);
+                  Navigator.pop(ctx);
+                },
               ),
             ],
           ),
-          Switch.adaptive(
-            value: appState.isPregnancyMode,
-            activeTrackColor: AppColors.accentRose,
-            onChanged: (_) => appState.togglePregnancyMode(),
-          ),
-        ],
+        ),
       ),
     );
+  }
+
+  String _getMonth(int month) {
+    const m = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return m[month - 1];
   }
 }
 
@@ -335,16 +535,22 @@ class _CycleMetricPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
-          style: const TextStyle(fontSize: 11, color: AppColors.textTertiary, fontWeight: FontWeight.w600),
+          style: TextStyle(
+            fontSize: 11,
+            color: AppColors.textSecondary.withValues(alpha: 0.8),
+          ),
         ),
-        const SizedBox(height: 2),
+        const SizedBox(height: 4),
         Text(
           value,
-          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textPrimary,
+          ),
         ),
       ],
     );
@@ -361,29 +567,33 @@ class _CycleDialPainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = size.width / 2 - 6;
 
-    final trackPaint = Paint()
-      ..color = AppColors.accentRose.withValues(alpha: 0.18)
+    final bgPaint = Paint()
+      ..color = const Color(0xFFF3E8FF).withValues(alpha: 0.8)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 7
-      ..strokeCap = StrokeCap.round;
+      ..strokeWidth = 7;
 
-    final progressPaint = Paint()
-      ..color = AppColors.accentRose
+    canvas.drawCircle(center, radius, bgPaint);
+
+    final sweep = 2 * math.pi * progress;
+    final activePaint = Paint()
+      ..shader = const LinearGradient(
+        colors: [Color(0xFFFB7185), AppColors.accentRose],
+      ).createShader(Rect.fromCircle(center: center, radius: radius))
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 7
-      ..strokeCap = StrokeCap.round;
+      ..strokeCap = StrokeCap.round
+      ..strokeWidth = 7;
 
-    canvas.drawCircle(center, radius, trackPaint);
     canvas.drawArc(
       Rect.fromCircle(center: center, radius: radius),
       -math.pi / 2,
-      2 * math.pi * progress,
+      sweep,
       false,
-      progressPaint,
+      activePaint,
     );
   }
 
   @override
-  bool shouldRepaint(covariant _CycleDialPainter oldDelegate) =>
-      oldDelegate.progress != progress;
+  bool shouldRepaint(covariant _CycleDialPainter oldDelegate) {
+    return oldDelegate.progress != progress;
+  }
 }

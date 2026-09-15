@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -151,8 +152,8 @@ class DataExportService {
     return const JsonEncoder.withIndent('  ').convert(fhirBundle);
   }
 
-  /// Generate a clinical PDF document using the `pdf` package
-  static Future<File?> generateClinicalPdf(AppState state) async {
+  /// Generate raw PDF bytes
+  static Future<Uint8List> generatePdfBytes(AppState state) async {
     final pdf = pw.Document();
 
     pdf.addPage(
@@ -283,6 +284,12 @@ class DataExportService {
       ),
     );
 
+    return pdf.save();
+  }
+
+  /// Generate a clinical PDF document using the `pdf` package
+  static Future<File?> generateClinicalPdf(AppState state) async {
+    final bytes = await generatePdfBytes(state);
     if (kIsWeb) {
       return null;
     }
@@ -290,11 +297,42 @@ class DataExportService {
     try {
       final outputDir = await getApplicationDocumentsDirectory();
       final file = File('${outputDir.path}/health_companion_clinical_record.pdf');
-      await file.writeAsBytes(await pdf.save());
+      await file.writeAsBytes(bytes);
       return file;
     } catch (e) {
       debugPrint('Error saving PDF: $e');
       return null;
     }
+  }
+
+  /// Save the PDF using native platform dialog / downloads
+  static Future<String?> saveClinicalPdf(AppState state) async {
+    final bytes = await generatePdfBytes(state);
+    final fileName = 'Health_Companion_Clinical_Summary_${DateTime.now().year}.pdf';
+
+    try {
+      final savedUri = await FilePicker.saveFile(
+        dialogTitle: 'Save Clinical Summary PDF',
+        fileName: fileName,
+        bytes: bytes,
+        mimeType: 'application/pdf',
+        type: FileType.custom,
+        allowedExtensions: ['pdf'],
+      );
+      if (savedUri != null) {
+        return savedUri.path.isNotEmpty ? savedUri.path : fileName;
+      }
+    } catch (_) {}
+
+    if (!kIsWeb) {
+      try {
+        final outputDir = await getApplicationDocumentsDirectory();
+        final file = File('${outputDir.path}/$fileName');
+        await file.writeAsBytes(bytes);
+        return file.path;
+      } catch (_) {}
+    }
+
+    return fileName;
   }
 }

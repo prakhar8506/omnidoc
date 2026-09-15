@@ -159,22 +159,53 @@ class HealthCompanionShell extends StatelessWidget {
           body: HolographicBackground(
             child: Stack(
               children: [
-                // Fluid shared-element-style animated tab switcher
+                // Fluid, ghosting-free tab transition with strict z-ordering and sequential crossfade
                 AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 320),
-                  switchInCurve: Curves.easeOutCubic,
-                  switchOutCurve: Curves.easeInCubic,
-                  transitionBuilder: (child, animation) {
-                    return FadeTransition(
-                      opacity: animation,
-                      child: SlideTransition(
-                        position: Tween<Offset>(
-                          begin: const Offset(0.015, 0),
-                          end: Offset.zero,
-                        ).animate(animation),
-                        child: child,
-                      ),
+                  duration: const Duration(milliseconds: 240),
+                  layoutBuilder: (Widget? currentChild, List<Widget> previousChildren) {
+                    return Stack(
+                      fit: StackFit.expand,
+                      children: <Widget>[
+                        ...previousChildren.map((w) => IgnorePointer(child: w)),
+                        if (currentChild != null) currentChild,
+                      ],
                     );
+                  },
+                  transitionBuilder: (child, animation) {
+                    final keyVal = (child.key is ValueKey<int>)
+                        ? (child.key as ValueKey<int>).value
+                        : null;
+                    final isCurrent = keyVal == currentTab;
+
+                    if (isCurrent) {
+                      // Incoming screen fades and slides in smoothly after outgoing has dropped
+                      final inFade = CurvedAnimation(
+                        parent: animation,
+                        curve: const Interval(0.25, 1.0, curve: Curves.easeOutCubic),
+                      );
+                      final inSlide = Tween<Offset>(
+                        begin: const Offset(0.015, 0.0),
+                        end: Offset.zero,
+                      ).animate(inFade);
+
+                      return FadeTransition(
+                        opacity: inFade,
+                        child: SlideTransition(
+                          position: inSlide,
+                          child: child,
+                        ),
+                      );
+                    } else {
+                      // Outgoing screen drops to 0 opacity rapidly, guaranteeing no ghosting
+                      final outFade = CurvedAnimation(
+                        parent: animation,
+                        curve: const Interval(0.75, 1.0, curve: Curves.easeInQuad),
+                      );
+                      return FadeTransition(
+                        opacity: outFade,
+                        child: child,
+                      );
+                    }
                   },
                   child: KeyedSubtree(
                     key: ValueKey<int>(currentTab),
