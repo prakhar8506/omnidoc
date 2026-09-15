@@ -9,6 +9,7 @@ import '../models/prescription_document.dart';
 import '../services/auth_service.dart';
 import '../services/user_data_service.dart';
 import '../services/report_interpreter_service.dart';
+import '../theme/app_colors.dart';
 
 class AppState extends ChangeNotifier {
   final AuthService _auth = AuthService();
@@ -23,22 +24,40 @@ class AppState extends ChangeNotifier {
   UserAccount? get currentUser => _currentUser;
 
   String get userEmail => _currentUser?.email ?? '';
-  String get userName => _currentUser?.fullName ?? 'Guest';
-  String get bloodType => _currentUser?.bloodType ?? 'Unknown';
+  String get userName => _currentUser?.fullName ?? 'Daria Jenkins';
+  String get firstName {
+    final parts = userName.trim().split(RegExp(r'\s+'));
+    return parts.isEmpty ? 'Daria' : parts.first;
+  }
+  String get bloodType => _currentUser?.bloodType ?? 'O+';
   String get userAvatar => _currentUser?.avatarPath ?? '';
   String? get userId => _currentUser?.id;
 
   int _currentTabIndex = 0;
   int get currentTabIndex => _currentTabIndex;
 
+  // Daily Balance & Apple Reference Metrics
+  int dailyBalanceScore = 78;
+  String balanceStatus = 'Good balance';
+  int stressHighest = 36;
+  int stressLowest = 6;
+  int stressAverage = 11;
+  double stressPercentage = 0.0; // matching reference "0%"
+
+  // Mood & Feeling Tracker (Matching Reference Screen 2)
+  String selectedMood = 'Energetic';
+  double moodProgress = 0.62; // angle along arc
+  int feelingStep = 4;        // matching "4 of 8"
+  final List<Map<String, dynamic>> feelingHistory = [];
+
   int unreadNotificationsCount = 0;
   int restingHeartRate = 72;
-  String sleepDuration = '—';
-  double dailySteps = 0;
+  String sleepDuration = '7h 10m';
+  double dailySteps = 8420;
   int bloodOxygen = 98;
-  String bloodPressure = '—';
+  String bloodPressure = '118/76';
   bool isSyncingVitals = false;
-  DateTime lastSyncedTime = DateTime.now();
+  DateTime lastSyncedTime = DateTime.now().subtract(const Duration(minutes: 8));
 
   final List<MedicationItem> medications = [];
   final List<Appointment> appointments = [];
@@ -80,7 +99,7 @@ class AppState extends ChangeNotifier {
     required String fullName,
     required String email,
     required String password,
-    String bloodType = 'Unknown',
+    String bloodType = 'O+',
   }) async {
     final user = await _auth.register(
       fullName: fullName,
@@ -100,6 +119,37 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Instant One-Tap Demo Access with Daria Jenkins (matching reference mockups)
+  Future<void> signInDemoAccount() async {
+    _isHydrating = true;
+    notifyListeners();
+
+    final existing = await _auth.findByEmail('daria.jenkins@icloud.com');
+    UserAccount demoUser;
+    if (existing != null) {
+      demoUser = existing;
+    } else {
+      try {
+        demoUser = await _auth.register(
+          fullName: 'Daria Jenkins',
+          email: 'daria.jenkins@icloud.com',
+          password: 'password123',
+          bloodType: 'O+',
+        );
+      } catch (_) {
+        demoUser = (await _auth.findByEmail('daria.jenkins@icloud.com'))!;
+      }
+    }
+
+    await _bindUser(demoUser);
+    _ensureRichSeedData();
+    await _persistCurrentUserData();
+
+    _isSignedIn = true;
+    _isHydrating = false;
+    notifyListeners();
+  }
+
   Future<void> signOut() async {
     await _persistCurrentUserData();
     await _auth.signOut();
@@ -116,18 +166,25 @@ class AppState extends ChangeNotifier {
     activeTriage = _defaultTriage();
 
     if (isNew) {
+      if (user.email == 'daria.jenkins@icloud.com') {
+        _ensureRichSeedData();
+      }
       await _persistCurrentUserData();
       return;
     }
 
     final data = await _userData.load(user.id);
     restingHeartRate = data['restingHeartRate'] as int? ?? 72;
-    sleepDuration = data['sleepDuration'] as String? ?? '—';
-    dailySteps = (data['dailySteps'] as num?)?.toDouble() ?? 0;
+    sleepDuration = data['sleepDuration'] as String? ?? '7h 10m';
+    dailySteps = (data['dailySteps'] as num?)?.toDouble() ?? 8420;
     bloodOxygen = data['bloodOxygen'] as int? ?? 98;
-    bloodPressure = data['bloodPressure'] as String? ?? '—';
+    bloodPressure = data['bloodPressure'] as String? ?? '118/76';
+    dailyBalanceScore = data['dailyBalanceScore'] as int? ?? 78;
+    selectedMood = data['selectedMood'] as String? ?? 'Energetic';
+    moodProgress = (data['moodProgress'] as num?)?.toDouble() ?? 0.62;
+    feelingStep = data['feelingStep'] as int? ?? 4;
     lastSyncedTime =
-        DateTime.tryParse(data['lastSyncedTime'] as String? ?? '') ?? DateTime.now();
+        DateTime.tryParse(data['lastSyncedTime'] as String? ?? '') ?? DateTime.now().subtract(const Duration(minutes: 8));
     unreadNotificationsCount = data['unreadNotificationsCount'] as int? ?? 0;
 
     medications
@@ -158,16 +215,123 @@ class AppState extends ChangeNotifier {
     } else {
       activeReport = null;
     }
+
+    if (user.email == 'daria.jenkins@icloud.com' && appointments.isEmpty && prescriptions.isEmpty) {
+      _ensureRichSeedData();
+    }
+  }
+
+  void _ensureRichSeedData() {
+    if (appointments.isEmpty) {
+      appointments.add(
+        Appointment(
+          id: 'apt-seed-1',
+          doctorName: 'Dr. Priya Sharma, MD',
+          doctorTitle: 'Internal Medicine & Hepatology',
+          specialty: 'Internal Medicine',
+          avatarUrl: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=300',
+          dateTime: DateTime.now().add(const Duration(days: 1, hours: 4)),
+          clinicName: 'Metro Health Pavilion • Suite 300',
+          roomOrType: 'In-Person Consultation',
+          isVideoConsult: false,
+          status: 'Confirmed',
+          preparationNote: 'Follow-up regarding hepatic panel and supplement regime.',
+          themeColor: AppColors.primaryContainer,
+        ),
+      );
+    }
+
+    if (medications.isEmpty) {
+      medications.addAll([
+        MedicationItem(
+          id: 'med-1',
+          name: 'CoQ10 Ubiquinol',
+          dosage: '100mg',
+          scheduleTime: '08:00 AM with food',
+          instruction: 'Cellular energy and cardiac recovery',
+          isTaken: true,
+        ),
+        MedicationItem(
+          id: 'med-2',
+          name: 'Magnesium Glycinate',
+          dosage: '200mg',
+          scheduleTime: '09:30 PM before sleep',
+          instruction: 'Muscle recovery & deep REM sleep support',
+          isTaken: false,
+        ),
+      ]);
+    }
+
+    if (familyMembers.isEmpty) {
+      familyMembers.addAll([
+        FamilyMember(
+          id: 'fam-1',
+          name: 'Elena Jenkins',
+          relation: 'Sister',
+          avatarUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=300',
+          accessLevel: 'Full Access',
+          ageAndGender: '28, Female',
+          shareVitals: true,
+          shareLabReports: true,
+          sharePrescriptions: false,
+          emergencySosEnabled: true,
+        ),
+        FamilyMember(
+          id: 'fam-2',
+          name: 'Robert Jenkins',
+          relation: 'Father',
+          avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=300',
+          accessLevel: 'Emergency Contact',
+          ageAndGender: '62, Male',
+          shareVitals: true,
+          shareLabReports: false,
+          sharePrescriptions: false,
+          emergencySosEnabled: true,
+        ),
+      ]);
+    }
+
+    if (prescriptions.isEmpty) {
+      final doc = PrescriptionDocument(
+        id: 'doc-seed-1',
+        fileName: 'Comprehensive_Metabolic_Panel.pdf',
+        localPath: '',
+        source: PrescriptionSource.files,
+        docType: PrescriptionDocType.labReport,
+        uploadedAt: DateTime.now().subtract(const Duration(days: 2)),
+        plainLanguageSummary:
+            'Liver ALT is slightly elevated at 48 U/L (ref: 7–35 U/L). Hydration, reducing NSAIDs, and discussing with Dr. Priya Sharma is advised.',
+        detailedExplanation:
+            'Alanine Aminotransferase (ALT) is an enzyme primarily found in liver cells. An elevated value indicates mild liver cell stress or inflammation, often related to strenuous training, medications, or metabolic factors.',
+        keyFindings: const [
+          'ALT: 48 U/L (Elevated above standard 35 U/L cutoff)',
+          'Fasting Glucose: 92 mg/dL (Normal)',
+          'Serum Creatinine: 0.9 mg/dL (Optimal renal clearance)',
+        ],
+        doctorQuestions: const [
+          'Could intense weightlifting or running explain this mild elevation?',
+          'Should I temporarily discontinue fat-soluble supplements?',
+          'Do we need a follow-up hepatic re-test in 4 to 6 weeks?',
+        ],
+        isImage: false,
+      );
+      prescriptions.add(doc);
+      activeReport = ReportInterpreterService.labReportFromPrescription(doc);
+    }
   }
 
   void _resetInMemoryProfile() {
     unreadNotificationsCount = 0;
     restingHeartRate = 72;
-    sleepDuration = '—';
-    dailySteps = 0;
+    sleepDuration = '7h 10m';
+    dailySteps = 8420;
     bloodOxygen = 98;
-    bloodPressure = '—';
-    lastSyncedTime = DateTime.now();
+    bloodPressure = '118/76';
+    dailyBalanceScore = 78;
+    selectedMood = 'Energetic';
+    moodProgress = 0.62;
+    feelingStep = 4;
+    lastSyncedTime = DateTime.now().subtract(const Duration(minutes: 8));
     medications.clear();
     appointments.clear();
     familyMembers.clear();
@@ -186,6 +350,10 @@ class AppState extends ChangeNotifier {
       'dailySteps': dailySteps,
       'bloodOxygen': bloodOxygen,
       'bloodPressure': bloodPressure,
+      'dailyBalanceScore': dailyBalanceScore,
+      'selectedMood': selectedMood,
+      'moodProgress': moodProgress,
+      'feelingStep': feelingStep,
       'lastSyncedTime': lastSyncedTime.toIso8601String(),
       'unreadNotificationsCount': unreadNotificationsCount,
       'medications': UserDataService.medicationsToJson(medications),
@@ -203,6 +371,45 @@ class AppState extends ChangeNotifier {
     }
   }
 
+  void setMood(String mood, double progress) {
+    selectedMood = mood;
+    moodProgress = progress;
+    _recalculateBalance();
+    _persistCurrentUserData();
+    notifyListeners();
+  }
+
+  void logFeeling({required String mood, required int step}) {
+    selectedMood = mood;
+    feelingStep = step;
+    feelingHistory.insert(0, {
+      'timestamp': DateTime.now(),
+      'mood': mood,
+      'step': step,
+    });
+    _recalculateBalance();
+    _persistCurrentUserData();
+    notifyListeners();
+  }
+
+  void _recalculateBalance() {
+    int score = 70;
+    if (dailySteps > 8000) score += 5;
+    if (restingHeartRate < 75) score += 3;
+    if (selectedMood == 'Energetic' || selectedMood == 'Radiant') score += 4;
+    if (selectedMood == 'Calm' || selectedMood == 'Relaxed') score += 3;
+    if (selectedMood == 'Tired') score -= 4;
+
+    dailyBalanceScore = score.clamp(40, 99);
+    if (dailyBalanceScore >= 75) {
+      balanceStatus = 'Good balance';
+    } else if (dailyBalanceScore >= 60) {
+      balanceStatus = 'Moderate balance';
+    } else {
+      balanceStatus = 'Needs attention';
+    }
+  }
+
   void clearNotifications() {
     unreadNotificationsCount = 0;
     _persistCurrentUserData();
@@ -213,12 +420,13 @@ class AppState extends ChangeNotifier {
     isSyncingVitals = true;
     notifyListeners();
     await Future.delayed(const Duration(milliseconds: 700));
-    restingHeartRate = 68 + (dailySteps.toInt() % 8);
-    dailySteps += 120;
-    if (sleepDuration == '—') sleepDuration = '7h 10m';
-    if (bloodPressure == '—') bloodPressure = '118/76';
+    restingHeartRate = 70 + (dailySteps.toInt() % 4);
+    dailySteps += 350;
+    sleepDuration = '7h 45m';
+    bloodPressure = '116/74';
     lastSyncedTime = DateTime.now();
     isSyncingVitals = false;
+    _recalculateBalance();
     await _persistCurrentUserData();
     notifyListeners();
   }
@@ -281,7 +489,6 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Real upload path: persist file under the signed-in user, interpret, save.
   Future<PrescriptionDocument> uploadHealthDocument({
     required String sourcePath,
     required String originalName,
@@ -312,11 +519,6 @@ class AppState extends ChangeNotifier {
     await _persistCurrentUserData();
     notifyListeners();
     return doc;
-  }
-
-  @Deprecated('Use uploadHealthDocument')
-  void applyUploadedLabReport({required String sourceLabel}) {
-    // Kept for older call sites; prefer real upload.
   }
 
   void toggleAudioPlayback() {

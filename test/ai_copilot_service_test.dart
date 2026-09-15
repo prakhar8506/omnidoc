@@ -24,7 +24,7 @@ void main() {
     });
 
     test('Returns contextual quick prompts for Lab Reports tab', () {
-      final prompts = AiCopilotService.getQuickPromptsForTab(3);
+      final prompts = AiCopilotService.getQuickPromptsForTab(4);
       expect(prompts, isNotEmpty);
       expect(prompts.any((p) => p.toLowerCase().contains('upload')), isTrue);
     });
@@ -32,13 +32,13 @@ void main() {
     test('Lab queries guide empty profiles to upload', () {
       final response = AiCopilotService.processQuery('Explain my lab report', appState);
       expect(response.text.toLowerCase(), contains('upload'));
-      expect(response.actionLinks!.any((a) => a.targetTabIndex == 3), isTrue);
+      expect(response.actionLinks!.any((a) => a.targetTabIndex == 4), isTrue);
     });
 
     test('Appointment queries handle empty schedule', () {
       final response = AiCopilotService.processQuery('When is my appointment?', appState);
       expect(response.text.toLowerCase(), contains('no upcoming'));
-      expect(response.actionLinks!.any((a) => a.targetTabIndex == 2), isTrue);
+      expect(response.actionLinks!.any((a) => a.targetTabIndex == 3), isTrue);
     });
 
     test('Processes vitals queries with live metrics', () {

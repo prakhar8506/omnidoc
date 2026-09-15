@@ -341,7 +341,7 @@ class _FamilyConnectScreenState extends State<FamilyConnectScreen> {
                   );
                 },
               ),
-              Text(
+              const Text(
                 'Connected',
                 style: TextStyle(
                   fontSize: 11,
@@ -493,10 +493,10 @@ class _FamilyConnectScreenState extends State<FamilyConnectScreen> {
             ),
             child: Row(
               children: [
-                CircleAvatar(
+                const CircleAvatar(
                   radius: 20,
                   backgroundColor: AppColors.surfaceContainerHigh,
-                  child: const Icon(Icons.person_outline_rounded, color: AppColors.textSecondary, size: 22),
+                  child: Icon(Icons.person_outline_rounded, color: AppColors.textSecondary, size: 22),
                 ),
                 const SizedBox(width: 12),
                 const Expanded(

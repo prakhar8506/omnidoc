@@ -483,9 +483,9 @@ class _AiChatSheetState extends State<AiChatSheet> with SingleTickerProviderStat
           Expanded(
             child: Container(
               padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: AppColors.surfaceCard,
-                borderRadius: const BorderRadius.only(
+                borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(4),
                   topRight: Radius.circular(20),
                   bottomLeft: Radius.circular(20),

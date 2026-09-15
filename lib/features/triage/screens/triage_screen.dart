@@ -373,7 +373,7 @@ class _TriageScreenState extends State<TriageScreen> {
                 style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
               ),
               onPressed: () {
-                widget.appState.setTabIndex(2);
+                widget.appState.setTabIndex(3);
               },
             ),
           ),

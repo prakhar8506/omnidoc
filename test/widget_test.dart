@@ -209,14 +209,14 @@ void main() {
 
     await tester.tap(find.descendant(
       of: find.byType(FloatingBottomNav),
-      matching: find.byIcon(Icons.healing_rounded),
+      matching: find.byIcon(Icons.auto_stories_rounded),
     ));
     await tester.pump(const Duration(milliseconds: 300));
-    expect(find.text('Symptom Triage Assistant'), findsOneWidget);
+    expect(find.textContaining('feeling today'), findsOneWidget);
 
     await tester.tap(find.descendant(
       of: find.byType(FloatingBottomNav),
-      matching: find.byIcon(Icons.analytics_outlined),
+      matching: find.byIcon(Icons.favorite_rounded),
     ));
     await tester.pump(const Duration(milliseconds: 300));
     expect(find.text('Lab Report Interpreter'), findsOneWidget);

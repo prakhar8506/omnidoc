@@ -6,30 +6,37 @@ class AiCopilotService {
     switch (tabIndex) {
       case 0:
         return [
-          'Explain my latest uploaded report',
+          'Explain my Daily Balance score',
           'How is my resting heart rate today?',
           'Check my medication schedule',
           'What features are available in the app?',
         ];
       case 1:
         return [
+          'How does my feeling correlate with vitals?',
+          'Tips to improve my energy and focus',
+          'Explain autonomic stress balance',
+          'Log feeling with voice or AI',
+        ];
+      case 2:
+        return [
           'What do my symptoms mean?',
           'When should I go to urgent care vs ER?',
           'Can you suggest safe home remedies?',
           'Are my medications safe to take now?',
         ];
-      case 2:
+      case 3:
         return [
           'Prepare questions for my next visit',
           'How do I share records with family?',
           'What documents should I take to clinic?',
           'Help me book a new appointment',
         ];
-      case 3:
+      case 4:
         return [
           'Explain my uploaded prescription or lab',
-          'What lifestyle tips support recovery?',
-          'Generate questions for my doctor',
+          'What does my ALT biomarker level mean?',
+          'Generate questions for Dr. Priya Sharma',
           'How do I upload another document?',
         ];
       default:
@@ -43,7 +50,7 @@ class AiCopilotService {
 
   static AiMessage processQuery(String query, AppState state) {
     final lower = query.toLowerCase();
-    final firstName = state.userName.split(' ').first;
+    final firstName = state.firstName;
 
     if (lower.contains('alt') ||
         lower.contains('liver') ||
@@ -59,7 +66,7 @@ class AiCopilotService {
       final latest = state.prescriptions.isNotEmpty ? state.prescriptions.first : null;
       final body = report == null
           ? "You do not have an uploaded lab or prescription yet, **$firstName**.\n\n"
-              "Go to **Labs**, then choose **Camera**, **Gallery**, or **Files** to upload a document. "
+              "Go to **Biology & Labs**, then choose **Camera**, **Gallery**, or **Files** to upload a document. "
               "I will explain it in plain language afterward."
           : "Here is a plain-language summary of your latest document:\n\n"
               "**${report.title}**\n"
@@ -73,7 +80,7 @@ class AiCopilotService {
         timestamp: DateTime.now(),
         contextualBadge: 'Labs • Document Insight',
         actionLinks: const [
-          AiActionLink(label: 'Open Labs', targetTabIndex: 3),
+          AiActionLink(label: 'Open Labs', targetTabIndex: 4),
         ],
       );
     }
@@ -92,7 +99,7 @@ class AiCopilotService {
           timestamp: DateTime.now(),
           contextualBadge: 'Appointments',
           actionLinks: const [
-            AiActionLink(label: 'Go to Appointments', targetTabIndex: 2),
+            AiActionLink(label: 'Go to Appointments', targetTabIndex: 3),
           ],
         );
       }
@@ -101,15 +108,15 @@ class AiCopilotService {
       return AiMessage(
         id: 'ai-${DateTime.now().millisecondsSinceEpoch}',
         text: "Your next visit is with **${next.doctorName}**.\n\n"
-              "• **When**: ${next.dateTime}\n"
-              "• **Where**: ${next.clinicName}\n"
-              "• **Type**: ${next.roomOrType}\n"
-              "• **Prep**: ${next.preparationNote}",
+            "• **When**: ${next.dateTime}\n"
+            "• **Where**: ${next.clinicName}\n"
+            "• **Type**: ${next.roomOrType}\n"
+            "• **Prep**: ${next.preparationNote}",
         sender: AiSender.assistant,
         timestamp: DateTime.now(),
         contextualBadge: 'Appointments • Schedule',
         actionLinks: const [
-          AiActionLink(label: 'Go to Appointments', targetTabIndex: 2),
+          AiActionLink(label: 'Go to Appointments', targetTabIndex: 3),
         ],
       );
     }
@@ -130,7 +137,7 @@ class AiCopilotService {
         timestamp: DateTime.now(),
         contextualBadge: 'Family Sharing',
         actionLinks: const [
-          AiActionLink(label: 'Manage Family Sharing', targetTabIndex: 2, actionType: 'family_tab'),
+          AiActionLink(label: 'Manage Family Sharing', targetTabIndex: 3, actionType: 'family_tab'),
         ],
       );
     }
@@ -141,21 +148,43 @@ class AiCopilotService {
         lower.contains('sleep') ||
         lower.contains('step') ||
         lower.contains('spo2') ||
+        lower.contains('balance') ||
         lower.contains('oxygen') ||
         lower.contains('blood pressure')) {
       return AiMessage(
         id: 'ai-${DateTime.now().millisecondsSinceEpoch}',
-        text: "Here is your biometric snapshot, **$firstName**:\n\n"
-              "• **Resting Heart Rate**: **${state.restingHeartRate} bpm**\n"
-              "• **Sleep**: **${state.sleepDuration}**\n"
-              "• **Activity**: **${(state.dailySteps / 1000).toStringAsFixed(1)}k steps**\n"
-              "• **Blood Oxygen**: **${state.bloodOxygen}%**\n"
-              "• **Blood Pressure**: **${state.bloodPressure}**",
+        text: "Here is your Apple biometric snapshot, **$firstName**:\n\n"
+            "• **Daily Balance**: **${state.dailyBalanceScore}/100** (${state.balanceStatus})\n"
+            "• **Resting Heart Rate**: **${state.restingHeartRate} bpm**\n"
+            "• **Sleep**: **${state.sleepDuration}**\n"
+            "• **Activity**: **${(state.dailySteps / 1000).toStringAsFixed(1)}k steps**\n"
+            "• **Blood Oxygen**: **${state.bloodOxygen}%**\n"
+            "• **Blood Pressure**: **${state.bloodPressure}**",
         sender: AiSender.assistant,
         timestamp: DateTime.now(),
         contextualBadge: 'Biometrics • Live Vitals',
         actionLinks: const [
           AiActionLink(label: 'View Vitals Dashboard', targetTabIndex: 0),
+        ],
+      );
+    }
+
+    if (lower.contains('mood') ||
+        lower.contains('feel') ||
+        lower.contains('journal') ||
+        lower.contains('stress') ||
+        lower.contains('mind')) {
+      return AiMessage(
+        id: 'ai-${DateTime.now().millisecondsSinceEpoch}',
+        text: "Your current tracked feeling is **${state.selectedMood}**.\n\n"
+            "• Autonomic Stress: **${state.stressHighest} max / ${state.stressAverage} avg**\n"
+            "• Physiological Tip: Light cardio or gentle stretching promotes serotonin & dopamine homeostasis.\n\n"
+            "Open your Feeling Journal to dial in adjustments anytime.",
+        sender: AiSender.assistant,
+        timestamp: DateTime.now(),
+        contextualBadge: 'Mental Balance • Journal',
+        actionLinks: const [
+          AiActionLink(label: 'Open Feeling Journal', targetTabIndex: 1),
         ],
       );
     }
@@ -170,14 +199,14 @@ class AiCopilotService {
       return AiMessage(
         id: 'ai-${DateTime.now().millisecondsSinceEpoch}',
         text: "Your latest triage note:\n\n"
-              "**${state.activeTriage.urgencyBadge}** (${state.activeTriage.timeframeWindow})\n\n"
-              "${state.activeTriage.clinicalRationale}\n\n"
-              "Use the Triage tab to describe new symptoms. Seek emergency care for chest pain, severe breathing trouble, or sudden weakness.",
+            "**${state.activeTriage.urgencyBadge}** (${state.activeTriage.timeframeWindow})\n\n"
+            "${state.activeTriage.clinicalRationale}\n\n"
+            "Use the Triage tab to describe new symptoms. Seek emergency care for chest pain, severe breathing trouble, or sudden weakness.",
         sender: AiSender.assistant,
         timestamp: DateTime.now(),
         contextualBadge: 'Clinical Triage',
         actionLinks: const [
-          AiActionLink(label: 'Open Symptom Triage', targetTabIndex: 1),
+          AiActionLink(label: 'Open Symptom Triage', targetTabIndex: 2),
         ],
       );
     }
@@ -190,17 +219,18 @@ class AiCopilotService {
       return AiMessage(
         id: 'ai-${DateTime.now().millisecondsSinceEpoch}',
         text: "Welcome to **Health Companion**, **$firstName**.\n\n"
-              "1. **Home** — vitals, medications, quick actions\n"
-              "2. **Triage** — describe symptoms for guidance\n"
-              "3. **Visits** — book appointments and share with family\n"
-              "4. **Labs** — upload prescriptions/labs from camera, gallery, or files\n"
-              "5. **Ask Health AI** — ask me anytime",
+            "1. **Daily Balance (Home)** — vitals, medications, stress telemetry\n"
+            "2. **Feeling Journal** — interactive mood arc dial & mental telemetry\n"
+            "3. **Symptom Triage** — describe symptoms for clinical evaluation\n"
+            "4. **Fitness & Visits** — book doctors & manage family connectivity\n"
+            "5. **Biology & Labs** — upload prescriptions & interpret biomarkers",
         sender: AiSender.assistant,
         timestamp: DateTime.now(),
         contextualBadge: 'Health Companion Guide',
         actionLinks: const [
           AiActionLink(label: 'Explore Home', targetTabIndex: 0),
-          AiActionLink(label: 'Upload Document', targetTabIndex: 3),
+          AiActionLink(label: 'Open Journal', targetTabIndex: 1),
+          AiActionLink(label: 'Upload Document', targetTabIndex: 4),
         ],
       );
     }
@@ -208,15 +238,15 @@ class AiCopilotService {
     return AiMessage(
       id: 'ai-${DateTime.now().millisecondsSinceEpoch}',
       text: "Thanks for asking about **\"$query\"**, **$firstName**.\n\n"
-            "I am using your profile (${state.userName}, blood type ${state.bloodType}, "
-            "heart rate ${state.restingHeartRate} bpm).\n\n"
-            "This is general guidance only — not a diagnosis. Upload reports in Labs or book a visit for clinician advice.",
+          "I am analyzing your profile (${state.userName}, blood type ${state.bloodType}, "
+          "heart rate ${state.restingHeartRate} bpm, feeling ${state.selectedMood}).\n\n"
+          "This is general guidance only — not a diagnosis. Upload reports in Labs or book a visit for clinician advice.",
       sender: AiSender.assistant,
       timestamp: DateTime.now(),
       contextualBadge: 'Health AI Copilot',
       actionLinks: const [
-        AiActionLink(label: 'Open Labs', targetTabIndex: 3),
-        AiActionLink(label: 'Book Visit', targetTabIndex: 2),
+        AiActionLink(label: 'Open Labs', targetTabIndex: 4),
+        AiActionLink(label: 'Book Visit', targetTabIndex: 3),
       ],
     );
   }

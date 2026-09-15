@@ -1,44 +1,73 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
 
-/// Serene Clinical Design System Typography
+/// Serene Apple Health & Wellness Design System Typography
+/// Provides const TextStyle constants for zero-overhead const widgets,
+/// along with GoogleFonts newsreader serif typography for Apple editorial headlines.
 class AppTypography {
+  // Apple Editorial Serif Headings
+  static TextStyle get editorialLg => GoogleFonts.newsreader(
+        fontSize: 32,
+        fontWeight: FontWeight.w600,
+        height: 1.15,
+        letterSpacing: -0.8,
+        color: AppColors.textPrimary,
+      );
+
+  static TextStyle get editorialMd => GoogleFonts.newsreader(
+        fontSize: 26,
+        fontWeight: FontWeight.w600,
+        height: 1.2,
+        letterSpacing: -0.6,
+        color: AppColors.textPrimary,
+      );
+
+  static TextStyle get editorialSm => GoogleFonts.newsreader(
+        fontSize: 20,
+        fontWeight: FontWeight.w600,
+        height: 1.25,
+        letterSpacing: -0.4,
+        color: AppColors.textPrimary,
+      );
+
+  // Const TextStyles for full backwards compatibility and const performance
   static const TextStyle headlineLg = TextStyle(
-    fontSize: 32,
+    fontSize: 30,
     fontWeight: FontWeight.w700,
-    height: 38 / 32,
+    height: 36 / 30,
     letterSpacing: -0.6,
     color: AppColors.textPrimary,
   );
 
   static const TextStyle headlineLgMobile = TextStyle(
-    fontSize: 28,
+    fontSize: 26,
     fontWeight: FontWeight.w700,
-    height: 34 / 28,
+    height: 32 / 26,
     letterSpacing: -0.5,
     color: AppColors.textPrimary,
   );
 
   static const TextStyle headlineMd = TextStyle(
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: FontWeight.w700,
-    height: 30 / 24,
+    height: 28 / 22,
     letterSpacing: -0.4,
     color: AppColors.textPrimary,
   );
 
   static const TextStyle titleLg = TextStyle(
-    fontSize: 20,
+    fontSize: 19,
     fontWeight: FontWeight.w600,
-    height: 26 / 20,
+    height: 25 / 19,
     letterSpacing: -0.3,
     color: AppColors.textPrimary,
   );
 
   static const TextStyle titleMd = TextStyle(
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: FontWeight.w600,
-    height: 24 / 18,
+    height: 22 / 16,
     letterSpacing: -0.2,
     color: AppColors.textPrimary,
   );

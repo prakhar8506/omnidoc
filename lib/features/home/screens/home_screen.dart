@@ -1,11 +1,12 @@
+import 'dart:math' as math;
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/state/app_state.dart';
+import '../../../core/widgets/glass_container.dart';
 import '../../../core/widgets/avatar_image.dart';
-import '../../family/screens/family_connect_screen.dart';
-import '../../lab_reports/widgets/upload_report_modal.dart';
 import '../../appointments/widgets/book_appointment_modal.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -22,31 +23,35 @@ class HomeScreen extends StatelessWidget {
       listenable: appState,
       builder: (context, _) {
         return SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 110),
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 120),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Greeting & Emergency Blood ID
-              _buildGreetingHeader(context),
-              const SizedBox(height: 24),
+              // Reference Screen 1 Header: Daily Balance & Circular Gauge
+              _buildDailyBalanceHeader(context),
+              const SizedBox(height: 20),
 
-              // Featured Hero Card: Latest Lab Analysis
-              _buildHeroDiagnosticCard(context),
-              const SizedBox(height: 24),
+              // Ambient Hero Card: Tip + Active pill + Weather pill
+              _buildAmbientWellnessCard(context),
+              const SizedBox(height: 20),
 
-              // Quick Stats Row (Vitals Grid)
+              // Reference Screen 1: Today's Stress Card (Highest 36, Lowest 6, Average 11, sparkline bar graph)
+              _buildTodayStressCard(context),
+              const SizedBox(height: 20),
+
+              // Vitals Dashboard (Heart, Sleep, Steps)
               _buildVitalsDashboard(context),
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
 
               // Medication Schedule
               _buildMedicationTracker(context),
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
 
               // Upcoming Consultation Preview
               _buildUpcomingConsultation(context),
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
 
-              // Quick Actions Grid
+              // Quick Access Grid
               _buildQuickActions(context),
             ],
           ),
@@ -55,200 +60,472 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  String _greetingForNow() {
-    final hour = DateTime.now().hour;
-    if (hour < 12) return 'Good morning';
-    if (hour < 17) return 'Good afternoon';
-    return 'Good evening';
-  }
-
-  String _firstName() {
-    final parts = appState.userName.trim().split(RegExp(r'\s+'));
-    return parts.isEmpty ? 'there' : parts.first;
-  }
-
-  String _syncLabel() {
-    if (appState.isSyncingVitals) return 'Syncing...';
-    final diff = DateTime.now().difference(appState.lastSyncedTime);
-    if (diff.inMinutes < 1) return 'Synced just now';
-    if (diff.inMinutes < 60) return 'Synced ${diff.inMinutes}m ago';
-    if (diff.inHours < 24) return 'Synced ${diff.inHours}h ago';
-    return 'Synced ${diff.inDays}d ago';
-  }
-
-  Widget _buildGreetingHeader(BuildContext context) {
+  /// Screen 1 Header: "Daily Balance" with semi-circular balance gauge ("78 / 100", "Good balance")
+  Widget _buildDailyBalanceHeader(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (appState.firstName.isNotEmpty) ...[
               Text(
-                '${_greetingForNow()}, ${_firstName()}',
-                style: AppTypography.headlineLgMobile.copyWith(
-                  height: 1.15,
+                'Good morning, ${appState.firstName}',
+                style: AppTypography.labelSm.copyWith(
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.2,
                 ),
               ),
-              const SizedBox(height: 4),
-              const Text(
-                'Your health snapshot for today',
-                style: AppTypography.bodyMd,
-              ),
+              const SizedBox(height: 2),
             ],
-          ),
+            Text('Daily Balance', style: AppTypography.editorialLg),
+            const SizedBox(height: 4),
+            Text(
+              'Your body state today',
+              style: AppTypography.bodyMd.copyWith(color: AppColors.textSecondary),
+            ),
+          ],
         ),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: AppColors.primaryContainer.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(999),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(
-                Icons.medical_information_rounded,
-                color: AppColors.primaryContainer,
-                size: 16,
+        // Semi-circular gauge (Reference: "78 / 100", "Good balance")
+        GestureDetector(
+          onTap: () => appState.setTabIndex(1), // Open feeling journal
+          child: Container(
+            width: 110,
+            height: 72,
+            padding: const EdgeInsets.fromLTRB(6, 4, 6, 2),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.75),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: Colors.white,
+                width: 1.2,
               ),
-              const SizedBox(width: 6),
-              Text(
-                'ID • ${appState.bloodType}',
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.primaryContainer,
-                  letterSpacing: 0.5,
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primaryContainer.withValues(alpha: 0.12),
+                  blurRadius: 18,
+                  offset: const Offset(0, 6),
                 ),
-              ),
-            ],
+              ],
+            ),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                CustomPaint(
+                  size: const Size(100, 55),
+                  painter: _BalanceArcGaugePainter(
+                    score: appState.dailyBalanceScore,
+                  ),
+                ),
+                Positioned(
+                  bottom: 2,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            '${appState.dailyBalanceScore}',
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          const Text(
+                            '/100',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.textTertiary,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Text(
+                        appState.balanceStatus,
+                        style: const TextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.primaryContainer,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildHeroDiagnosticCard(BuildContext context) {
-    final report = appState.activeReport;
-
+  /// Ambient Wellness Card with Glowing Gradient Mesh, Tip pill, Active pill, Weather pill
+  Widget _buildAmbientWellnessCard(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surfaceCardDark,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: AppColors.darkCardShadow,
+        borderRadius: BorderRadius.circular(28),
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFFE8E5FE),
+            Color(0xFFFDE8EF),
+            Color(0xFFEDE0FA),
+          ],
+        ),
+        boxShadow: AppColors.glassShadow,
       ),
-      clipBehavior: Clip.antiAlias,
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(28),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(28),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.8),
+                width: 1.5,
+              ),
+            ),
+            child: Column(
               children: [
+                // Frosted Tip Pill (Reference: "💡 Tip: Today is good for light cardio or yoga")
                 Container(
-                  width: 8,
-                  height: 8,
-                  decoration: const BoxDecoration(
-                    color: AppColors.primaryContainer,
-                    shape: BoxShape.circle,
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.72),
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.9),
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.lightbulb_rounded,
+                        color: AppColors.accentGold,
+                        size: 16,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Tip: Today is good for light cardio or yoga',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textPrimary.withValues(alpha: 0.9),
+                            letterSpacing: -0.1,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(width: 8),
-                Text(
-                  report == null ? 'GET STARTED' : 'LATEST UPLOAD',
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 1.0,
-                    color: AppColors.textSecondary,
-                  ),
+                const SizedBox(height: 14),
+
+                // Dual Pills: Activity Selector + Weather & Temperature
+                Row(
+                  children: [
+                    // Activity Pill (Reference: "🏃 Active ⌵")
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () {
+                          // Quick activity status toggle
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: const Text('Activity mode: Active cardio tracked via Apple Health.'),
+                              behavior: SnackBarBehavior.floating,
+                              backgroundColor: AppColors.surfaceCardDark,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                          );
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.65),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.85),
+                              width: 1,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                width: 28,
+                                height: 28,
+                                decoration: BoxDecoration(
+                                  color: AppColors.primaryContainer.withValues(alpha: 0.15),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.directions_run_rounded,
+                                  color: AppColors.primaryContainer,
+                                  size: 16,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              const Text(
+                                'Active',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              const Icon(
+                                Icons.keyboard_arrow_down_rounded,
+                                size: 16,
+                                color: AppColors.textSecondary,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+
+                    // Weather Pill (Reference: "30 °C Hot and Sunny")
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.65),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.85),
+                            width: 1,
+                          ),
+                        ),
+                        child: const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.wb_sunny_rounded,
+                              color: AppColors.accentGold,
+                              size: 18,
+                            ),
+                            SizedBox(width: 8),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  '30 °C',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                                Text(
+                                  'Hot & Sunny',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w500,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
-            const SizedBox(height: 16),
-            Text(
-              report?.title ?? 'Upload your prescription or lab report',
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-                color: Colors.white,
-                letterSpacing: -0.3,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              report?.overallSynthesis ??
-                  'Use camera, gallery, or files to add a document. We explain it in plain language for your visit.',
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontSize: 13,
-                color: AppColors.textSecondary,
-                height: 1.35,
-              ),
-            ),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: AppColors.surfaceCardDark,
-                  elevation: 0,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                ),
-                onPressed: () {
-                  if (report == null) {
-                    appState.setTabIndex(3);
-                    UploadReportModal.show(context, appState);
-                  } else {
-                    appState.setTabIndex(3);
-                  }
-                },
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      report == null ? 'Upload Document' : 'Review Interpretation',
-                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
-                    ),
-                    const SizedBox(width: 8),
-                    const Icon(Icons.arrow_forward_rounded, size: 18),
-                  ],
-                ),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildVitalsDashboard(BuildContext context) {
-    return Container(
+  /// Screen 1 Stress Card: "Today's stress", "Last updated at 07:54 AM", 36 Highest / 6 Lowest / 11 Average + sparkline bar
+  Widget _buildTodayStressCard(BuildContext context) {
+    return GlassContainer(
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceCard,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: AppColors.cardShadow,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Today's stress",
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                      letterSpacing: -0.2,
+                    ),
+                  ),
+                  SizedBox(height: 2),
+                  Text(
+                    'Last updated at 07:54 AM',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.accentTeal.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CircleAvatar(radius: 3, backgroundColor: AppColors.accentTeal),
+                    SizedBox(width: 4),
+                    Text(
+                      'Optimal',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.accentTeal,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+
+          // 3 Column stats: Highest 36, Lowest 6, Average 11
+          Row(
+            children: [
+              _buildStressMetric(value: '${appState.stressHighest}', label: 'Highest'),
+              const SizedBox(width: 24),
+              _buildStressMetric(value: '${appState.stressLowest}', label: 'Lowest'),
+              const SizedBox(width: 24),
+              _buildStressMetric(value: '${appState.stressAverage}', label: 'Average'),
+            ],
+          ),
+          const SizedBox(height: 18),
+
+          // Sparkline bar indicator with thunderbolt icon ⚡ and percentage "0%"
+          Row(
+            children: [
+              Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: AppColors.primaryContainer.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.bolt_rounded,
+                  color: AppColors.primaryContainer,
+                  size: 16,
+                ),
+              ),
+              const SizedBox(width: 10),
+              // Mini vertical sparkline bars (Reference design)
+              Expanded(
+                child: SizedBox(
+                  height: 24,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: List.generate(24, (index) {
+                      // Simulated physiological autonomic stress bars
+                      final heights = [6, 8, 10, 7, 5, 9, 12, 16, 14, 11, 8, 7, 6, 9, 11, 13, 10, 8, 7, 6, 5, 7, 8, 6];
+                      final h = heights[index].toDouble();
+                      final isPeak = h > 13;
+
+                      return Container(
+                        width: 4,
+                        height: h,
+                        decoration: BoxDecoration(
+                          color: isPeak
+                              ? AppColors.primaryContainer
+                              : Colors.black.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                      );
+                    }),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              const Text(
+                '0%',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
+    );
+  }
+
+  Widget _buildStressMetric({required String value, required String label}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textPrimary,
+            letterSpacing: -0.5,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w500,
+            color: AppColors.textSecondary,
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Apple-style Frosted Vitals Dashboard
+  Widget _buildVitalsDashboard(BuildContext context) {
+    return GlassContainer(
+      padding: const EdgeInsets.all(20),
       child: Column(
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text("Today's Vitals", style: AppTypography.titleMd),
+              const Text("Today's Vitals", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
               GestureDetector(
                 onTap: appState.isSyncingVitals ? null : () => appState.syncVitals(),
                 child: Row(
                   children: [
                     Text(
-                      _syncLabel(),
+                      appState.isSyncingVitals ? 'Syncing...' : 'Live Sync',
                       style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
@@ -269,33 +546,33 @@ class HomeScreen extends StatelessWidget {
           const SizedBox(height: 16),
           Row(
             children: [
-              // Resting Heart Rate
               Expanded(
                 child: _buildVitalTile(
                   icon: Icons.favorite_rounded,
                   value: '${appState.restingHeartRate}',
                   unit: 'bpm',
-                  label: 'Resting\nHeart',
+                  label: 'Resting Heart',
+                  iconColor: AppColors.accentCoral,
                 ),
               ),
-              const SizedBox(width: 12),
-              // Sleep
+              const SizedBox(width: 10),
               Expanded(
                 child: _buildVitalTile(
                   icon: Icons.bedtime_rounded,
                   value: appState.sleepDuration,
                   unit: '',
                   label: 'Deep & REM',
+                  iconColor: AppColors.primaryContainer,
                 ),
               ),
-              const SizedBox(width: 12),
-              // Steps
+              const SizedBox(width: 10),
               Expanded(
                 child: _buildVitalTile(
                   icon: Icons.directions_walk_rounded,
                   value: '${(appState.dailySteps / 1000).toStringAsFixed(1)}k',
                   unit: '',
                   label: 'Steps (84%)',
+                  iconColor: AppColors.accentTeal,
                 ),
               ),
             ],
@@ -310,18 +587,31 @@ class HomeScreen extends StatelessWidget {
     required String value,
     required String unit,
     required String label,
+    required Color iconColor,
   }) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(20),
+        color: Colors.white.withValues(alpha: 0.65),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.9),
+          width: 1,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: AppColors.primaryContainer, size: 20),
-          const SizedBox(height: 16),
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: iconColor.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, color: iconColor, size: 16),
+          ),
+          const SizedBox(height: 14),
           Row(
             crossAxisAlignment: CrossAxisAlignment.baseline,
             textBaseline: TextBaseline.alphabetic,
@@ -330,7 +620,7 @@ class HomeScreen extends StatelessWidget {
                 child: Text(
                   value,
                   style: const TextStyle(
-                    fontSize: 22,
+                    fontSize: 18,
                     fontWeight: FontWeight.w700,
                     color: AppColors.textPrimary,
                     letterSpacing: -0.5,
@@ -343,53 +633,51 @@ class HomeScreen extends StatelessWidget {
                 Text(
                   unit,
                   style: const TextStyle(
-                    fontSize: 12,
+                    fontSize: 11,
                     color: AppColors.textSecondary,
                   ),
                 ),
               ],
             ],
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 2),
           Text(
             label,
             style: const TextStyle(
-              fontSize: 12,
+              fontSize: 11,
               color: AppColors.textSecondary,
               fontWeight: FontWeight.w500,
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
     );
   }
 
+  /// Medication tracker
   Widget _buildMedicationTracker(BuildContext context) {
-    return Container(
+    return GlassContainer(
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceCard,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: AppColors.cardShadow,
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Medication Regimen', style: AppTypography.titleMd),
+              const Text('Medication Regimen', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: AppColors.primaryContainer.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(999),
                 ),
-                child: Row(
+                child: const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.verified_rounded, size: 14, color: AppColors.primaryContainer),
-                    const SizedBox(width: 4),
+                    Icon(Icons.verified_rounded, size: 14, color: AppColors.primaryContainer),
+                    SizedBox(width: 4),
                     Text(
                       'Zero Conflicts',
                       style: TextStyle(
@@ -408,110 +696,105 @@ class HomeScreen extends StatelessWidget {
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 8),
               child: Text(
-                'No medications yet. Upload a prescription from Labs to keep track of what you take.',
-                style: TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.35),
+                'No medications scheduled for today.',
+                style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
               ),
             )
           else
             ...appState.medications.map((med) {
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Material(
-                color: AppColors.surfaceContainerLow,
-                borderRadius: BorderRadius.circular(20),
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(20),
-                  onTap: () => appState.toggleMedication(med.id),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: AppColors.surfaceCard,
-                            borderRadius: BorderRadius.circular(12),
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: Material(
+                  color: Colors.white.withValues(alpha: 0.65),
+                  borderRadius: BorderRadius.circular(18),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(18),
+                    onTap: () => appState.toggleMedication(med.id),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 36,
+                            height: 36,
+                            decoration: BoxDecoration(
+                              color: med.isTaken
+                                  ? AppColors.primaryContainer.withValues(alpha: 0.15)
+                                  : Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Icon(
+                              med.isTaken ? Icons.check_circle_rounded : Icons.medication_rounded,
+                              color: med.isTaken ? AppColors.primaryContainer : AppColors.textSecondary,
+                              size: 18,
+                            ),
                           ),
-                          child: Icon(
-                            med.isTaken ? Icons.check_circle_rounded : Icons.medication_rounded,
-                            color: med.isTaken ? AppColors.primaryContainer : AppColors.textSecondary,
-                            size: 20,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                med.name,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: med.isTaken ? AppColors.textSecondary : AppColors.textPrimary,
-                                  decoration: med.isTaken ? TextDecoration.lineThrough : null,
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  med.name,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: med.isTaken ? AppColors.textSecondary : AppColors.textPrimary,
+                                    decoration: med.isTaken ? TextDecoration.lineThrough : null,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                '${med.dosage} • ${med.scheduleTime}',
-                                style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: med.isTaken
-                                ? AppColors.primaryContainer.withValues(alpha: 0.12)
-                                : AppColors.surfaceCard,
-                            borderRadius: BorderRadius.circular(999),
-                            border: Border.all(
-                              color: med.isTaken
-                                  ? AppColors.primaryContainer.withValues(alpha: 0.3)
-                                  : AppColors.outlineVariant,
+                                const SizedBox(height: 2),
+                                Text(
+                                  '${med.dosage} • ${med.scheduleTime}',
+                                  style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                                ),
+                              ],
                             ),
                           ),
-                          child: Text(
-                            med.isTaken ? 'Taken' : 'Mark taken',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
                               color: med.isTaken
-                                  ? AppColors.primaryContainer
-                                  : AppColors.textPrimary,
+                                  ? AppColors.primaryContainer.withValues(alpha: 0.12)
+                                  : Colors.white,
+                              borderRadius: BorderRadius.circular(999),
+                              border: Border.all(
+                                color: med.isTaken
+                                    ? AppColors.primaryContainer.withValues(alpha: 0.3)
+                                    : AppColors.outlineVariant,
+                              ),
+                            ),
+                            child: Text(
+                              med.isTaken ? 'Taken' : 'Mark taken',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: med.isTaken ? AppColors.primaryContainer : AppColors.textPrimary,
+                              ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
-            );
-          }),
+              );
+            }),
         ],
       ),
     );
   }
 
+  /// Upcoming Consultation Preview
   Widget _buildUpcomingConsultation(BuildContext context) {
     if (appState.appointments.isEmpty) return const SizedBox.shrink();
     final nextAppt = appState.appointments.first;
 
-    return Container(
+    return GlassContainer(
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceCard,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: AppColors.cardShadow,
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -541,24 +824,23 @@ class HomeScreen extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 16),
-
+          const SizedBox(height: 14),
           Row(
             children: [
               AvatarImage(
                 imageUrl: nextAppt.avatarUrl,
                 initials: initialsFromName(nextAppt.doctorName),
-                radius: 24,
+                radius: 22,
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(nextAppt.doctorName, style: AppTypography.titleMd),
+                    Text(nextAppt.doctorName, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
                     const SizedBox(height: 2),
                     Text(
-                      '${nextAppt.specialty} • Routine Post-Check',
+                      '${nextAppt.specialty} • ${DateFormat('EEE, MMM d • h:mm a').format(nextAppt.dateTime)}',
                       style: AppTypography.labelSm,
                     ),
                   ],
@@ -567,74 +849,26 @@ class HomeScreen extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: AppColors.surfaceContainerLow,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Column(
-              children: [
-                Row(
-                  children: [
-                    const Icon(Icons.calendar_today_rounded, size: 16, color: AppColors.primaryContainer),
-                    const SizedBox(width: 8),
-                    Text(
-                      DateFormat('EEEE, MMM d').format(nextAppt.dateTime),
-                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
-                    ),
-                    const Spacer(),
-                    Text(
-                      DateFormat('h:mm a').format(nextAppt.dateTime),
-                      style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Icon(
-                      nextAppt.isVideoConsult ? Icons.videocam_rounded : Icons.location_on_rounded,
-                      size: 16,
-                      color: AppColors.primaryContainer,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        nextAppt.clinicName,
-                        style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primaryContainer,
+                backgroundColor: AppColors.textPrimary,
                 foregroundColor: Colors.white,
                 elevation: 0,
-                padding: const EdgeInsets.symmetric(vertical: 14),
+                padding: const EdgeInsets.symmetric(vertical: 13),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
               ),
               icon: Icon(
-                nextAppt.isVideoConsult ? Icons.videocam_rounded : Icons.laptop_mac_rounded,
-                size: 18,
+                nextAppt.isVideoConsult ? Icons.videocam_rounded : Icons.calendar_today_rounded,
+                size: 16,
               ),
               label: Text(
-                nextAppt.isVideoConsult ? 'Join Video Visit' : 'Prepare for Visit',
-                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+                nextAppt.isVideoConsult ? 'Join Video Visit' : 'Manage Consultation',
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
               ),
               onPressed: () {
-                appState.setAppointmentSegment(0);
-                appState.setTabIndex(2);
+                appState.setTabIndex(3); // Visits tab
               },
             ),
           ),
@@ -643,44 +877,38 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
+  /// Quick Access Grid
   Widget _buildQuickActions(BuildContext context) {
     final actions = [
       {
-        'title': 'Symptom Triage',
-        'icon': Icons.healing_rounded,
+        'title': 'Feeling Tracker',
+        'icon': Icons.mood_rounded,
         'action': () => appState.setTabIndex(1),
       },
       {
-        'title': 'Book Doctor',
+        'title': 'Symptom Triage',
+        'icon': Icons.healing_rounded,
+        'action': () => appState.setTabIndex(2),
+      },
+      {
+        'title': 'Book Specialist',
         'icon': Icons.calendar_month_rounded,
         'action': () {
-          appState.setTabIndex(2);
+          appState.setTabIndex(3);
           BookAppointmentModal.show(context, appState);
         },
       },
       {
-        'title': 'Upload Lab Report',
-        'icon': Icons.upload_file_rounded,
-        'action': () {
-          appState.setTabIndex(3);
-          UploadReportModal.show(context, appState);
-        },
-      },
-      {
-        'title': 'Family Sharing',
-        'icon': Icons.people_outline_rounded,
-        'action': () {
-          Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => FamilyConnectScreen(appState: appState)),
-          );
-        },
+        'title': 'Lab Interpreter',
+        'icon': Icons.biotech_rounded,
+        'action': () => appState.setTabIndex(4),
       },
     ];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Quick Access', style: AppTypography.titleMd),
+        const Text('Quick Access', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
         const SizedBox(height: 12),
         GridView.builder(
           shrinkWrap: true,
@@ -689,42 +917,49 @@ class HomeScreen extends StatelessWidget {
             crossAxisCount: 2,
             crossAxisSpacing: 12,
             mainAxisSpacing: 12,
-            childAspectRatio: 2.2,
+            childAspectRatio: 2.3,
           ),
           itemCount: actions.length,
           itemBuilder: (context, index) {
             final act = actions[index];
             return Material(
-              color: AppColors.surfaceCard,
-              borderRadius: BorderRadius.circular(20),
+              color: Colors.white.withValues(alpha: 0.7),
+              borderRadius: BorderRadius.circular(18),
               elevation: 0,
               child: InkWell(
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(18),
                 onTap: act['action'] as VoidCallback,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.9),
+                      width: 1,
+                    ),
+                  ),
                   child: Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(8),
+                        padding: const EdgeInsets.all(7),
                         decoration: BoxDecoration(
-                          color: AppColors.primaryContainer.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(12),
+                          color: AppColors.primaryContainer.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(10),
                         ),
-                        child: Icon(act['icon'] as IconData, color: AppColors.primaryContainer, size: 20),
+                        child: Icon(act['icon'] as IconData, color: AppColors.primaryContainer, size: 18),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 10),
                       Expanded(
                         child: Text(
                           act['title'] as String,
                           style: const TextStyle(
-                            fontSize: 13,
+                            fontSize: 12,
                             fontWeight: FontWeight.w600,
                             color: AppColors.textPrimary,
                           ),
                         ),
                       ),
-                      const Icon(Icons.chevron_right_rounded, size: 18, color: AppColors.textSecondary),
+                      const Icon(Icons.chevron_right_rounded, size: 16, color: AppColors.textTertiary),
                     ],
                   ),
                 ),
@@ -734,5 +969,46 @@ class HomeScreen extends StatelessWidget {
         ),
       ],
     );
+  }
+}
+
+/// Semi-circular Arc Gauge Painter (Reference: "78 / 100 Good balance")
+class _BalanceArcGaugePainter extends CustomPainter {
+  final int score;
+
+  _BalanceArcGaugePainter({required this.score});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height - 4);
+    final radius = size.width * 0.42;
+
+    final bgPaint = Paint()
+      ..color = AppColors.primaryContainer.withValues(alpha: 0.12)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 6.5
+      ..strokeCap = StrokeCap.round;
+
+    final rect = Rect.fromCircle(center: center, radius: radius);
+    canvas.drawArc(rect, math.pi, math.pi, false, bgPaint);
+
+    final sweep = math.pi * (score / 100.0).clamp(0.05, 1.0);
+    final activePaint = Paint()
+      ..shader = const LinearGradient(
+        colors: [
+          Color(0xFF818CF8),
+          AppColors.primaryContainer,
+        ],
+      ).createShader(rect)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 6.5
+      ..strokeCap = StrokeCap.round;
+
+    canvas.drawArc(rect, math.pi, sweep, false, activePaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _BalanceArcGaugePainter oldDelegate) {
+    return oldDelegate.score != score;
   }
 }
