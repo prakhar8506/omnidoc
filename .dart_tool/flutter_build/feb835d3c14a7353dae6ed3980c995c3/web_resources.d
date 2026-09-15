@@ -1,0 +1,1 @@
+ /Users/prakharjain/Downloads/stitch_application_builder_workspace/build/web/manifest.json:  /Users/prakharjain/Downloads/stitch_application_builder_workspace/web/index.html /Users/prakharjain/Downloads/stitch_application_builder_workspace/web/manifest.json

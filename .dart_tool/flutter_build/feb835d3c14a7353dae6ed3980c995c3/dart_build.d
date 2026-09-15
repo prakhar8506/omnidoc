@@ -1,0 +1,1 @@
+ /Users/prakharjain/Downloads/stitch_application_builder_workspace/.dart_tool/flutter_build/feb835d3c14a7353dae6ed3980c995c3/dart_build_result.json:  /Users/prakharjain/Downloads/stitch_application_builder_workspace/.dart_tool/package_config.json /Users/prakharjain/Downloads/stitch_application_builder_workspace/pubspec.yaml /opt/homebrew/share/flutter/bin/cache/dart-sdk/version
