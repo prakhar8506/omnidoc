@@ -17,10 +17,17 @@ import '../domains/baseline_engine.dart';
 import '../domains/data_quality_service.dart';
 import '../domains/recovery_model.dart';
 import '../analytics/analytics_service.dart';
+import '../network/supabase_repository.dart';
+import '../data/supabase_sync_service.dart';
 import '../../features/wearables/services/wearable_service.dart';
 
 class AppState extends ChangeNotifier {
-  final AuthService _auth = AuthService();
+  final HealthBackendRepository supabaseRepository = SupabaseRepository();
+  late final SupabaseSyncService supabaseSyncService = SupabaseSyncService(
+    repository: supabaseRepository,
+    eventStore: eventStore,
+  );
+  late final AuthService _auth = AuthService(backendRepository: supabaseRepository);
   final UserDataService _userData = UserDataService();
 
   bool _isSignedIn = false;
@@ -435,10 +442,13 @@ class AppState extends ChangeNotifier {
 
   Future<void> hydrate() async {
     try {
+      await supabaseRepository.initialize();
+      await eventStore.initialize();
       final user = await _auth.getSessionUser();
       if (user != null) {
         await _bindUser(user);
         _isSignedIn = true;
+        supabaseSyncService.syncPendingEvents(user.id);
       } else {
         _isSignedIn = false;
         _currentUser = null;
@@ -1136,6 +1146,9 @@ class AppState extends ChangeNotifier {
 
     final events = await WearableService.ingestEvents(consentManager: consentManager);
     await eventStore.recordEvents(events);
+    if (userId != null) {
+      supabaseSyncService.syncPendingEvents(userId!);
+    }
 
     restingHeartRate = 70 + (dailySteps.toInt() % 4);
     dailySteps += 350;

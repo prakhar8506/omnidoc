@@ -23,6 +23,7 @@ dependencies:
   uuid: ^4.6.0
   health: ^13.3.2
   pdf: ^3.13.0
+  supabase_flutter: ^2.8.0
 
 dev_dependencies:
   flutter_test:

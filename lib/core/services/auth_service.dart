@@ -1,8 +1,10 @@
 import 'dart:convert';
 import 'package:crypto/crypto.dart';
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 import '../models/user_account.dart';
+import '../network/supabase_repository.dart';
 
 class AuthException implements Exception {
   final String message;
@@ -16,6 +18,9 @@ class AuthService {
   static const _usersKey = 'hc_users_v1';
   static const _sessionUserIdKey = 'hc_session_user_id';
   static const _uuid = Uuid();
+  final HealthBackendRepository? backendRepository;
+
+  AuthService({this.backendRepository});
 
   Future<SharedPreferences> get _prefs async => SharedPreferences.getInstance();
 
@@ -82,7 +87,25 @@ class AuthService {
       throw AuthException('An account with this email already exists. Please sign in.');
     }
 
-    final id = _uuid.v4();
+    String id = _uuid.v4();
+
+    // If Supabase is configured, register with hosted Auth
+    if (backendRepository != null && backendRepository!.isConfigured) {
+      try {
+        final authRes = await backendRepository!.signUp(
+          email: normalizedEmail,
+          password: password,
+          fullName: name,
+          bloodType: bloodType,
+        );
+        if (authRes?.user?.id != null) {
+          id = authRes!.user!.id;
+        }
+      } catch (e) {
+        debugPrint('[AuthService] Supabase remote sign up error (falling back to offline): $e');
+      }
+    }
+
     final hash = hashPassword(password, id);
     final user = UserAccount(
       id: id,
@@ -114,6 +137,34 @@ class AuthService {
       throw AuthException('Please enter your password.');
     }
 
+    // Try remote sign in if configured
+    if (backendRepository != null && backendRepository!.isConfigured) {
+      try {
+        final authRes = await backendRepository!.signIn(
+          email: normalizedEmail,
+          password: password,
+        );
+        if (authRes?.user != null) {
+          final remoteUser = authRes!.user!;
+          final localUser = await findByEmail(normalizedEmail);
+          final user = localUser ??
+              UserAccount(
+                id: remoteUser.id,
+                fullName: (remoteUser.userMetadata?['full_name'] as String?) ?? 'User',
+                email: normalizedEmail,
+                passwordHash: hashPassword(password, remoteUser.id),
+                bloodType: (remoteUser.userMetadata?['blood_type'] as String?) ?? 'Unknown',
+                createdAt: DateTime.now(),
+              );
+          final prefs = await _prefs;
+          await prefs.setString(_sessionUserIdKey, user.id);
+          return user;
+        }
+      } catch (e) {
+        debugPrint('[AuthService] Remote signIn error: $e');
+      }
+    }
+
     final user = await findByEmail(normalizedEmail);
     if (user == null) {
       throw AuthException('No account found for this email. Create an account first.');
@@ -130,6 +181,13 @@ class AuthService {
   }
 
   Future<void> signOut() async {
+    if (backendRepository != null && backendRepository!.isConfigured) {
+      try {
+        await backendRepository!.signOut();
+      } catch (e) {
+        debugPrint('[AuthService] Remote signOut error: $e');
+      }
+    }
     final prefs = await _prefs;
     await prefs.remove(_sessionUserIdKey);
   }
