@@ -21,8 +21,8 @@
     },
     "linking_enabled": false
   },
-  "out_dir_shared": "/Users/prakharjain/Downloads/stitch_application_builder_workspace/.dart_tool/hooks_runner/shared/objective_c/build/",
-  "out_file": "/Users/prakharjain/Downloads/stitch_application_builder_workspace/.dart_tool/hooks_runner/objective_c/de310349bc/output.json",
+  "out_dir_shared": "/Users/prakharjain/Documents/stitch_application_builder_workspace/.dart_tool/hooks_runner/shared/objective_c/build/",
+  "out_file": "/Users/prakharjain/Documents/stitch_application_builder_workspace/.dart_tool/hooks_runner/objective_c/de310349bc/output.json",
   "package_name": "objective_c",
   "package_root": "/Users/prakharjain/.pub-cache/hosted/pub.dev/objective_c-9.5.0/",
   "user_defines": {}

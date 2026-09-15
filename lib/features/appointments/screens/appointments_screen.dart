@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/state/app_state.dart';
+import '../../../core/widgets/avatar_image.dart';
 import '../widgets/book_appointment_modal.dart';
 import '../widgets/family_member_modal.dart';
 
@@ -148,31 +150,35 @@ class AppointmentsScreen extends StatelessWidget {
   }
 
   Widget _buildDateStripSelector() {
-    final days = [
-      {'day': 'Mon', 'date': '21'},
-      {'day': 'Tue', 'date': '22'},
-      {'day': 'Wed', 'date': '23'},
-      {'day': 'Thu', 'date': '24'},
-      {'day': 'Fri', 'date': '25'},
-      {'day': 'Sat', 'date': '26'},
-      {'day': 'Sun', 'date': '27'},
-    ];
+    final today = DateTime.now();
+    final startOfWeek = today.subtract(Duration(days: today.weekday - 1));
+    final days = List.generate(7, (i) {
+      final date = startOfWeek.add(Duration(days: i));
+      return date;
+    });
+    final monthLabel = DateFormat('MMMM yyyy').format(days[appState.selectedDateIndex.clamp(0, 6)]);
 
     return Column(
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text('October 2024', style: AppTypography.titleMd),
+            Text(monthLabel, style: AppTypography.titleMd),
             Row(
               children: [
                 IconButton(
                   icon: const Icon(Icons.chevron_left_rounded, size: 20),
-                  onPressed: () {},
+                  onPressed: () {
+                    final next = (appState.selectedDateIndex - 1).clamp(0, 6);
+                    appState.setSelectedDateIndex(next);
+                  },
                 ),
                 IconButton(
                   icon: const Icon(Icons.chevron_right_rounded, size: 20),
-                  onPressed: () {},
+                  onPressed: () {
+                    final next = (appState.selectedDateIndex + 1).clamp(0, 6);
+                    appState.setSelectedDateIndex(next);
+                  },
                 ),
               ],
             ),
@@ -182,8 +188,11 @@ class AppointmentsScreen extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: List.generate(days.length, (index) {
-            final item = days[index];
+            final date = days[index];
             final isSelected = appState.selectedDateIndex == index;
+            final isToday = date.year == today.year &&
+                date.month == today.month &&
+                date.day == today.day;
 
             return GestureDetector(
               onTap: () => appState.setSelectedDateIndex(index),
@@ -202,11 +211,14 @@ class AppointmentsScreen extends StatelessWidget {
                           ),
                         ]
                       : null,
+                  border: isToday && !isSelected
+                      ? Border.all(color: AppColors.primaryContainer.withValues(alpha: 0.4))
+                      : null,
                 ),
                 child: Column(
                   children: [
                     Text(
-                      item['day']!,
+                      DateFormat('E').format(date),
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w500,
@@ -215,7 +227,7 @@ class AppointmentsScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      item['date']!,
+                      '${date.day}',
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
@@ -244,6 +256,43 @@ class AppointmentsScreen extends StatelessWidget {
   }
 
   Widget _buildUpcomingConsultationBanner(BuildContext context) {
+    if (appState.appointments.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: AppColors.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(18),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.12),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.event_available_rounded, color: AppColors.primary, size: 20),
+            ),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('No upcoming visits', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                  SizedBox(height: 2),
+                  Text('Book a visit to get started', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final next = appState.appointments.first;
+    final relative = _relativeLabel(next.dateTime);
+
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -262,13 +311,19 @@ class AppointmentsScreen extends StatelessWidget {
             child: const Icon(Icons.notifications_active_rounded, color: AppColors.primary, size: 20),
           ),
           const SizedBox(width: 12),
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Consultation Today', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
-                SizedBox(height: 2),
-                Text('Dr. Sharma at Metro Center Clinic • 10:30 AM', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                Text(
+                  next.dateTime.day == DateTime.now().day ? 'Consultation Today' : 'Upcoming Consultation',
+                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '${next.doctorName.split(',').first} • ${DateFormat('h:mm a').format(next.dateTime)}',
+                  style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                ),
               ],
             ),
           ),
@@ -278,14 +333,22 @@ class AppointmentsScreen extends StatelessWidget {
               color: AppColors.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(999),
             ),
-            child: const Text(
-              'In 2h',
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.primary),
+            child: Text(
+              relative,
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.primary),
             ),
           ),
         ],
       ),
     );
+  }
+
+  String _relativeLabel(DateTime when) {
+    final diff = when.difference(DateTime.now());
+    if (diff.isNegative) return 'Soon';
+    if (diff.inMinutes < 60) return 'In ${diff.inMinutes}m';
+    if (diff.inHours < 24) return 'In ${diff.inHours}h';
+    return 'In ${diff.inDays}d';
   }
 
   Widget _buildScheduledVisitsHeader(BuildContext context) {
@@ -312,6 +375,42 @@ class AppointmentsScreen extends StatelessWidget {
   }
 
   Widget _buildAppointmentCards(BuildContext context) {
+    if (appState.appointments.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: AppColors.surfaceCard,
+          borderRadius: BorderRadius.circular(22),
+          boxShadow: AppColors.cardShadow,
+        ),
+        child: Column(
+          children: [
+            const Icon(Icons.event_busy_rounded, size: 40, color: AppColors.textSecondary),
+            const SizedBox(height: 12),
+            const Text('No visits scheduled', style: AppTypography.titleMd),
+            const SizedBox(height: 6),
+            const Text(
+              'Book a visit to see it here.',
+              style: AppTypography.labelSm,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryContainer,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+              ),
+              onPressed: () => BookAppointmentModal.show(context, appState),
+              child: const Text('Book Visit', style: TextStyle(fontWeight: FontWeight.w700)),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Column(
       children: appState.appointments.map((appt) {
         return Container(
@@ -325,13 +424,13 @@ class AppointmentsScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Doctor Row
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  CircleAvatar(
+                  AvatarImage(
+                    imageUrl: appt.avatarUrl,
+                    initials: initialsFromName(appt.doctorName),
                     radius: 24,
-                    backgroundImage: NetworkImage(appt.avatarUrl),
                   ),
                   const SizedBox(width: 14),
                   Expanded(
@@ -341,6 +440,15 @@ class AppointmentsScreen extends StatelessWidget {
                         Text(appt.doctorName, style: AppTypography.titleMd),
                         const SizedBox(height: 2),
                         Text(appt.doctorTitle, style: AppTypography.labelSm),
+                        const SizedBox(height: 4),
+                        Text(
+                          DateFormat('EEE, MMM d • h:mm a').format(appt.dateTime),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.primaryContainer,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -362,8 +470,6 @@ class AppointmentsScreen extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 14),
-
-              // Location / Consultation Details
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
@@ -405,8 +511,6 @@ class AppointmentsScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 14),
-
-              // Actions Row
               Row(
                 children: [
                   if (appt.isVideoConsult) ...[
@@ -424,7 +528,7 @@ class AppointmentsScreen extends StatelessWidget {
                         onPressed: () {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text('Launching telehealth video consultation with ${appt.doctorName}...'),
+                              content: Text('Opening telehealth room for ${appt.doctorName.split(',').first}...'),
                               behavior: SnackBarBehavior.floating,
                               backgroundColor: AppColors.surfaceCardDark,
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -448,7 +552,7 @@ class AppointmentsScreen extends StatelessWidget {
                         onPressed: () {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: const Text('Opening navigation to Metro Center Health Pavilion...'),
+                              content: Text('Directions to ${appt.clinicName}'),
                               behavior: SnackBarBehavior.floating,
                               backgroundColor: AppColors.surfaceCardDark,
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -461,21 +565,22 @@ class AppointmentsScreen extends StatelessWidget {
                   const SizedBox(width: 10),
                   OutlinedButton(
                     style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: AppColors.outlineVariant),
+                      side: BorderSide(color: AppColors.accentCoral.withValues(alpha: 0.4)),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     ),
                     onPressed: () {
+                      appState.cancelAppointment(appt.id);
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text('Rescheduling request submitted for ${appt.doctorName}.'),
+                          content: Text('Cancelled visit with ${appt.doctorName.split(',').first}.'),
                           behavior: SnackBarBehavior.floating,
                           backgroundColor: AppColors.surfaceCardDark,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
                       );
                     },
-                    child: const Text('Reschedule', style: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600)),
+                    child: const Text('Cancel', style: TextStyle(color: AppColors.accentCoral, fontWeight: FontWeight.w600)),
                   ),
                 ],
               ),
@@ -566,9 +671,10 @@ class AppointmentsScreen extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    CircleAvatar(
+                    AvatarImage(
+                      imageUrl: member.avatarUrl,
+                      initials: initialsFromName(member.name),
                       radius: 24,
-                      backgroundImage: NetworkImage(member.avatarUrl),
                     ),
                     const SizedBox(width: 12),
                     Expanded(

@@ -14,8 +14,8 @@ class FloatingBottomNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
       decoration: BoxDecoration(
         color: AppColors.navBackground,
         borderRadius: BorderRadius.circular(999),
@@ -37,18 +37,18 @@ class FloatingBottomNav extends StatelessWidget {
           ),
           _buildNavItem(
             index: 1,
-            icon: Icons.description_outlined,
-            label: 'Reports',
-          ),
-          _buildNavItem(
-            index: 2,
-            icon: Icons.grid_view_rounded,
+            icon: Icons.healing_rounded,
             label: 'Triage',
           ),
           _buildNavItem(
+            index: 2,
+            icon: Icons.calendar_month_rounded,
+            label: 'Visits',
+          ),
+          _buildNavItem(
             index: 3,
-            icon: Icons.people_outline_rounded,
-            label: 'Family',
+            icon: Icons.analytics_outlined,
+            label: 'Labs',
           ),
         ],
       ),
@@ -62,39 +62,39 @@ class FloatingBottomNav extends StatelessWidget {
   }) {
     final isSelected = currentIndex == index;
 
-    return GestureDetector(
-      onTap: () => onTabSelected(index),
-      behavior: HitTestBehavior.opaque,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        curve: Curves.easeInOut,
-        padding: EdgeInsets.symmetric(
-          horizontal: isSelected ? 16 : 14,
-          vertical: 10,
-        ),
-        decoration: BoxDecoration(
-          color: isSelected ? Colors.white.withValues(alpha: 0.15) : Colors.transparent,
-          borderRadius: BorderRadius.circular(999),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 22,
-              color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.45),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => onTabSelected(index),
+        behavior: HitTestBehavior.opaque,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeInOut,
+          margin: const EdgeInsets.symmetric(horizontal: 2),
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: isSelected ? Colors.white.withValues(alpha: 0.15) : Colors.transparent,
+            borderRadius: BorderRadius.circular(999),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                size: 22,
                 color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.45),
-                fontSize: 11,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                letterSpacing: -0.1,
               ),
-            ),
-          ],
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.45),
+                  fontSize: 11,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                  letterSpacing: -0.1,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/state/app_state.dart';
+import '../../../core/widgets/avatar_image.dart';
 import '../models/ai_message.dart';
 import '../services/ai_copilot_service.dart';
 
@@ -47,8 +48,8 @@ class _AiChatSheetState extends State<AiChatSheet> with SingleTickerProviderStat
     _messages.add(
       AiMessage(
         id: 'msg-welcome',
-        text: "Hello Sarah! I'm your **Health Companion AI Copilot**.\n\n"
-              "I have real-time access to your health profile, including your **latest CMP lab test**, **today's vitals (72 bpm)**, and your **10:30 AM appointment with Dr. Priya Sharma**.\n\n"
+        text: "Hello ${widget.appState.userName.split(' ').first}! I'm your **Health Companion AI Copilot**.\n\n"
+              "I can help with your vitals, appointments, uploaded prescriptions/labs, and symptom questions.\n\n"
               "Currently viewing: **$tabName**.",
         sender: AiSender.assistant,
         timestamp: DateTime.now(),
@@ -453,11 +454,10 @@ class _AiChatSheetState extends State<AiChatSheet> with SingleTickerProviderStat
               ),
             ),
             const SizedBox(width: 8),
-            const CircleAvatar(
+            AvatarImage(
+              imageUrl: widget.appState.userAvatar,
+              initials: initialsFromName(widget.appState.userName),
               radius: 14,
-              backgroundImage: NetworkImage(
-                'https://lh3.googleusercontent.com/aida-public/AB6AXuBcoFHSis1XxVDmBl7hk56dd97bAqbvjiUvgqTv-5VhElxMp5YTqFocH2FvUl1bFmczGheAUOzcO3J6uNoBlxZkKLV1r56lQQvltvQknCtArDW05V6QXwUuhhb8YwBWEQ15XuDOWTEqnoKrxn4qvz8IDy1IUtmHu-T63BgMxCT86f99QS2h_TzD9SKQN-8rkht_Ds2OZdOU3dByEVnNpdY_ye6OGTddpRR00wpGovZYFiXV5XcU3sbsHg',
-              ),
             ),
           ],
         ),

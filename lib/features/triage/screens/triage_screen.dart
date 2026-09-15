@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/state/app_state.dart';
+import '../../../core/widgets/avatar_image.dart';
 
 class TriageScreen extends StatefulWidget {
   final AppState appState;
@@ -208,11 +209,10 @@ class _TriageScreenState extends State<TriageScreen> {
           ),
         ),
         const SizedBox(width: 10),
-        const CircleAvatar(
+        AvatarImage(
+          imageUrl: widget.appState.userAvatar,
+          initials: initialsFromName(widget.appState.userName),
           radius: 16,
-          backgroundImage: NetworkImage(
-            'https://lh3.googleusercontent.com/aida-public/AB6AXuCCl5FbkrOKPHatJB-X_71ApBPCglKe_3i3GLe2QSUwJIWat2UrqfdLnT8bh1XFO_yIun2RsQrihSZd9zFDRXuRFYcUDLlsw0RUkFoq2jn4D-xZnFRX4J2oRUCKVRSqsCUnpfgBkWJFC6mOHMpRG29Whs6nasoasUm1KMFUXskhivppe3PqwgXRK2epMLhjR-B6hL0PlQPfXHKtSrzmRDB1KDgCMF5xhEaM3nbeqgqbHnx1JzL1GxwU4Q',
-          ),
         ),
       ],
     );

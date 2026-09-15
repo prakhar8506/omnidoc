@@ -3,6 +3,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/state/app_state.dart';
 import '../../../core/models/biomarker_report.dart';
+import '../../../core/models/prescription_document.dart';
 import '../widgets/upload_report_modal.dart';
 import '../widgets/doctor_questions_modal.dart';
 import '../../ai_assistant/widgets/ai_chat_sheet.dart';
@@ -28,51 +29,137 @@ class _LabReportsScreenState extends State<LabReportsScreen> {
       listenable: widget.appState,
       builder: (context, _) {
         final report = widget.appState.activeReport;
+        final docs = widget.appState.prescriptions;
 
         return SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 110),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Top Action Header
               _buildTopHeader(context),
               const SizedBox(height: 14),
-
-              // Unobtrusive Disclaimer Banner
               _buildDisclaimerBanner(),
               const SizedBox(height: 18),
-
-              // Active Report Card
-              _buildActiveReportCard(report),
-              const SizedBox(height: 22),
-
-              // Biomarker Breakdown Section Header
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text('Biomarker Breakdown', style: AppTypography.titleLg),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: AppColors.surfaceContainerHigh,
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    child: Text('${report.biomarkers.length} Markers', style: AppTypography.labelSm),
-                  ),
+              if (report == null) ...[
+                _buildEmptyUploadCard(context),
+              ] else ...[
+                _buildActiveReportCard(report),
+                const SizedBox(height: 22),
+                if (docs.isNotEmpty) ...[
+                  const Text('Your Uploads', style: AppTypography.titleLg),
+                  const SizedBox(height: 10),
+                  ...docs.take(5).map(_buildUploadTile),
+                  const SizedBox(height: 22),
                 ],
-              ),
-              const SizedBox(height: 14),
-
-              // Biomarker Cards
-              ...report.biomarkers.map((bm) => _buildBiomarkerCard(bm)),
-              const SizedBox(height: 20),
-
-              // Doctor Discussion Assistant & AI Prompts
-              _buildDoctorQuestionsCard(context, report),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('What this means', style: AppTypography.titleLg),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceContainerHigh,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(
+                        '${report.biomarkers.length} Insights',
+                        style: AppTypography.labelSm,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                ...report.biomarkers.map((bm) => _buildBiomarkerCard(bm)),
+                const SizedBox(height: 20),
+                _buildDoctorQuestionsCard(context, report),
+              ],
             ],
           ),
         );
       },
+    );
+  }
+
+  Widget _buildEmptyUploadCard(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceCard,
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: AppColors.cardShadow,
+      ),
+      child: Column(
+        children: [
+          const Icon(Icons.cloud_upload_rounded, size: 42, color: AppColors.primaryContainer),
+          const SizedBox(height: 12),
+          const Text('No reports yet', style: AppTypography.titleMd),
+          const SizedBox(height: 6),
+          const Text(
+            'Upload a prescription or lab report from camera, gallery, or files. We will explain it in plain language.',
+            textAlign: TextAlign.center,
+            style: AppTypography.labelSm,
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primaryContainer,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+            ),
+            icon: const Icon(Icons.upload_file_rounded, size: 18),
+            label: const Text('Upload Prescription / Lab', style: TextStyle(fontWeight: FontWeight.w700)),
+            onPressed: () => UploadReportModal.show(context, widget.appState),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildUploadTile(PrescriptionDocument doc) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceCard,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: AppColors.cardShadow,
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: AppColors.primaryContainer.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(Icons.description_outlined, color: AppColors.primaryContainer, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  doc.fileName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  doc.plainLanguageSummary,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -100,7 +187,7 @@ class _LabReportsScreenState extends State<LabReportsScreen> {
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
           ),
           icon: const Icon(Icons.add_circle_outline_rounded, size: 16),
-          label: const Text('Upload Lab', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+          label: const Text('Upload', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
           onPressed: () => UploadReportModal.show(context, widget.appState),
         ),
       ],

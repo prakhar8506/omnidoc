@@ -2,8 +2,13 @@ import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:health_companion/main.dart';
+import 'package:health_companion/core/state/app_state.dart';
 import 'package:health_companion/core/widgets/floating_bottom_nav.dart';
+import 'package:health_companion/core/services/auth_service.dart';
+import 'package:health_companion/features/auth/screens/sign_in_screen.dart';
+import 'package:health_companion/features/auth/screens/sign_up_screen.dart';
 
 class _TestHttpOverrides extends HttpOverrides {
   @override
@@ -24,12 +29,6 @@ class _MockHttpClient implements HttpClient {
   @override
   String? userAgent;
 
-  @override
-  void addAuthenticate(Uri url, String realm, HttpClientCredentials credentials) {}
-  @override
-  void addCredentials(Uri url, String realm, HttpClientCredentials credentials) {}
-  @override
-  void close({bool force = false}) {}
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 
@@ -88,17 +87,6 @@ class _MockHttpClientResponse implements HttpClientResponse {
   HttpHeaders get headers => _MockHttpHeaders();
 
   @override
-  Stream<List<int>> asBroadcastStream({
-    void Function(StreamSubscription<List<int>> subscription)? onListen,
-    void Function(StreamSubscription<List<int>> subscription)? onCancel,
-  }) {
-    return Stream<List<int>>.value(_kTransparentImage).asBroadcastStream(
-      onListen: onListen,
-      onCancel: onCancel,
-    );
-  }
-
-  @override
   StreamSubscription<List<int>> listen(
     void Function(List<int> event)? onData, {
     Function? onError,
@@ -114,67 +102,154 @@ class _MockHttpClientResponse implements HttpClientResponse {
   }
 }
 
+Future<void> _pumpFrames(WidgetTester tester) async {
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 100));
+}
+
 void main() {
   setUpAll(() {
     HttpOverrides.global = _TestHttpOverrides();
   });
 
-  testWidgets('HealthCompanionApp renders shell and initial home screen', (WidgetTester tester) async {
+  setUp(() {
+    SharedPreferences.setMockInitialValues({});
+  });
+
+  testWidgets('Create account lands on personal home profile', (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(800, 1600);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+
+    final appState = AppState();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: ListenableBuilder(
+          listenable: appState,
+          builder: (context, _) {
+            if (!appState.isSignedIn) {
+              return SignInScreen(appState: appState);
+            }
+            return HealthCompanionShell(appState: appState);
+          },
+        ),
+      ),
+    );
+    await _pumpFrames(tester);
+
+    await tester.tap(find.text('Create New Account'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(find.byType(SignUpScreen), findsOneWidget);
+    final fields = find.descendant(
+      of: find.byType(SignUpScreen),
+      matching: find.byType(TextFormField),
+    );
+    expect(fields, findsNWidgets(4));
+    await tester.enterText(fields.at(0), 'Alex Rivera');
+    await tester.enterText(fields.at(1), 'alex.rivera@gmail.com');
+    await tester.enterText(fields.at(2), 'secret12');
+    await tester.enterText(fields.at(3), 'secret12');
+
+    final createBtn = find.descendant(
+      of: find.byType(SignUpScreen),
+      matching: find.widgetWithText(ElevatedButton, 'Create Account'),
+    );
+    await tester.ensureVisible(createBtn);
+    await tester.tap(createBtn);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 900));
+    await _pumpFrames(tester);
+
+    expect(appState.isSignedIn, isTrue);
+    expect(appState.userName, 'Alex Rivera');
+    expect(find.byType(SignUpScreen), findsNothing);
+    expect(find.textContaining('Alex'), findsWidgets);
+    expect(find.textContaining('Sarah'), findsNothing);
+    expect(find.text('Ask Health AI'), findsOneWidget);
+  });
+
+  testWidgets('Sign in rejects unknown email', (WidgetTester tester) async {
     tester.view.physicalSize = const Size(800, 1200);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.resetPhysicalSize);
 
     await tester.pumpWidget(const HealthCompanionApp());
-    await tester.pump(const Duration(milliseconds: 100));
+    await _pumpFrames(tester);
 
-    // Verify GlassAppBar title
-    expect(find.text('Health Companion'), findsOneWidget);
+    final fields = find.byType(TextFormField);
+    await tester.enterText(fields.at(0), 'nobody@gmail.com');
+    await tester.enterText(fields.at(1), 'whatever');
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Sign In'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
 
-    // Verify Greeting
-    expect(find.text('Good morning, Sarah'), findsOneWidget);
-
-    // Verify Omnipresent Floating AI Button
-    expect(find.text('Ask Health AI'), findsOneWidget);
-
-    // Verify Navigation Bar items
-    expect(find.descendant(of: find.byType(FloatingBottomNav), matching: find.byIcon(Icons.dashboard_rounded)), findsOneWidget);
-    expect(find.descendant(of: find.byType(FloatingBottomNav), matching: find.byIcon(Icons.healing_rounded)), findsOneWidget);
-    expect(find.descendant(of: find.byType(FloatingBottomNav), matching: find.byIcon(Icons.calendar_month_rounded)), findsOneWidget);
-    expect(find.descendant(of: find.byType(FloatingBottomNav), matching: find.byIcon(Icons.analytics_outlined)), findsOneWidget);
+    expect(find.textContaining('No account found'), findsOneWidget);
   });
 
   testWidgets('Tapping bottom navigation switches tabs cleanly', (WidgetTester tester) async {
-    tester.view.physicalSize = const Size(800, 1200);
+    tester.view.physicalSize = const Size(800, 1400);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.resetPhysicalSize);
 
-    await tester.pumpWidget(const HealthCompanionApp());
-    await tester.pump(const Duration(milliseconds: 100));
+    final appState = AppState();
+    await appState.register(
+      fullName: 'Jordan Lee',
+      email: 'jordan.lee@gmail.com',
+      password: 'pass1234',
+    );
 
-    // Tap Triage tab icon inside FloatingBottomNav
-    final triageNavBtn = find.descendant(of: find.byType(FloatingBottomNav), matching: find.byIcon(Icons.healing_rounded));
-    await tester.tap(triageNavBtn);
+    await tester.pumpWidget(
+      MaterialApp(home: HealthCompanionShell(appState: appState)),
+    );
+    await _pumpFrames(tester);
+
+    expect(find.textContaining('Jordan'), findsWidgets);
+
+    await tester.tap(find.descendant(
+      of: find.byType(FloatingBottomNav),
+      matching: find.byIcon(Icons.healing_rounded),
+    ));
     await tester.pump(const Duration(milliseconds: 300));
-
-    // Verify Triage Screen is active
     expect(find.text('Symptom Triage Assistant'), findsOneWidget);
-    expect(find.text('Safe Home Self-Care Guidance'), findsOneWidget);
 
-    // Tap Labs tab icon inside FloatingBottomNav
-    final labsNavBtn = find.descendant(of: find.byType(FloatingBottomNav), matching: find.byIcon(Icons.analytics_outlined));
-    await tester.tap(labsNavBtn);
+    await tester.tap(find.descendant(
+      of: find.byType(FloatingBottomNav),
+      matching: find.byIcon(Icons.analytics_outlined),
+    ));
     await tester.pump(const Duration(milliseconds: 300));
-
-    // Verify Lab Reports Screen
     expect(find.text('Lab Report Interpreter'), findsOneWidget);
-    expect(find.text('Biomarker Breakdown'), findsOneWidget);
+    expect(find.text('No reports yet'), findsOneWidget);
 
-    // Tap Visits tab icon inside FloatingBottomNav
-    final visitsNavBtn = find.descendant(of: find.byType(FloatingBottomNav), matching: find.byIcon(Icons.calendar_month_rounded));
-    await tester.tap(visitsNavBtn);
+    await tester.tap(find.descendant(
+      of: find.byType(FloatingBottomNav),
+      matching: find.byIcon(Icons.calendar_month_rounded),
+    ));
     await tester.pump(const Duration(milliseconds: 300));
-
-    // Verify Appointments Screen
     expect(find.text('Upcoming Visits'), findsOneWidget);
+  });
+
+  test('AuthService isolates accounts by email', () async {
+    final auth = AuthService();
+    final a = await auth.register(
+      fullName: 'User One',
+      email: 'one@gmail.com',
+      password: 'pass123',
+    );
+    final b = await auth.register(
+      fullName: 'User Two',
+      email: 'two@gmail.com',
+      password: 'pass456',
+    );
+    expect(a.id, isNot(b.id));
+
+    final signed = await auth.signIn(email: 'two@gmail.com', password: 'pass456');
+    expect(signed.fullName, 'User Two');
+
+    expect(
+      () => auth.signIn(email: 'one@gmail.com', password: 'wrong'),
+      throwsA(isA<AuthException>()),
+    );
   });
 }

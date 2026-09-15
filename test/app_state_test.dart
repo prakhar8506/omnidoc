@@ -1,18 +1,32 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:health_companion/core/state/app_state.dart';
 import 'package:health_companion/core/models/appointment.dart';
 import 'package:health_companion/core/models/family_member.dart';
+import 'package:health_companion/core/services/auth_service.dart';
 
 void main() {
   group('AppState Tests', () {
     late AppState appState;
 
-    setUp(() {
+    setUp(() async {
+      SharedPreferences.setMockInitialValues({});
       appState = AppState();
+      await appState.register(
+        fullName: 'Test User',
+        email: 'test.user@gmail.com',
+        password: 'testpass',
+        bloodType: 'O+',
+      );
     });
 
-    test('Initial tab index is 0 (Home)', () {
-      expect(appState.currentTabIndex, 0);
+    test('New account uses the registered name, not Sarah', () {
+      expect(appState.userName, 'Test User');
+      expect(appState.userEmail, 'test.user@gmail.com');
+      expect(appState.bloodType, 'O+');
+      expect(appState.appointments, isEmpty);
+      expect(appState.familyMembers, isEmpty);
+      expect(appState.activeReport, isNull);
     });
 
     test('setTabIndex updates state and notifies listeners', () {
@@ -21,13 +35,6 @@ void main() {
       appState.setTabIndex(2);
       expect(appState.currentTabIndex, 2);
       expect(notified, isTrue);
-    });
-
-    test('toggleMedication flips isTaken', () {
-      final medId = appState.medications.first.id;
-      final initialStatus = appState.medications.first.isTaken;
-      appState.toggleMedication(medId);
-      expect(appState.medications.first.isTaken, !initialStatus);
     });
 
     test('addAppointment increases appointment list', () {
@@ -52,11 +59,11 @@ void main() {
       final initialCount = appState.familyMembers.length;
       final member = FamilyMember(
         id: 'fam-test',
-        name: 'Alex Jenkins',
+        name: 'Alex Friend',
         relation: 'Sibling',
         avatarUrl: '',
         accessLevel: 'View Only',
-        ageAndGender: '32 yrs • Non-binary',
+        ageAndGender: '32 yrs',
       );
       appState.addFamilyMember(member);
       expect(appState.familyMembers.length, initialCount + 1);
@@ -66,6 +73,26 @@ void main() {
       appState.submitNewSymptomTriage('Sudden chest tightness and breathlessness');
       expect(appState.activeTriage.userQuery, contains('chest tightness'));
       expect(appState.activeTriage.urgencyBadge, contains('URGENT'));
+    });
+
+    test('signOut clears session', () async {
+      await appState.signOut();
+      expect(appState.isSignedIn, isFalse);
+      expect(appState.userEmail, isEmpty);
+    });
+
+    test('wrong password does not sign into another profile', () async {
+      await appState.signOut();
+      final auth = AuthService();
+      await auth.register(
+        fullName: 'Other Person',
+        email: 'other@gmail.com',
+        password: 'abcdef',
+      );
+      expect(
+        () => auth.signIn(email: 'other@gmail.com', password: 'nope'),
+        throwsA(isA<AuthException>()),
+      );
     });
   });
 }

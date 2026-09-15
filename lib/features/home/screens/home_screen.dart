@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/state/app_state.dart';
+import '../../../core/widgets/avatar_image.dart';
 import '../../family/screens/family_connect_screen.dart';
+import '../../lab_reports/widgets/upload_report_modal.dart';
+import '../../appointments/widgets/book_appointment_modal.dart';
 
 class HomeScreen extends StatelessWidget {
   final AppState appState;
@@ -51,6 +55,27 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
+  String _greetingForNow() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) return 'Good morning';
+    if (hour < 17) return 'Good afternoon';
+    return 'Good evening';
+  }
+
+  String _firstName() {
+    final parts = appState.userName.trim().split(RegExp(r'\s+'));
+    return parts.isEmpty ? 'there' : parts.first;
+  }
+
+  String _syncLabel() {
+    if (appState.isSyncingVitals) return 'Syncing...';
+    final diff = DateTime.now().difference(appState.lastSyncedTime);
+    if (diff.inMinutes < 1) return 'Synced just now';
+    if (diff.inMinutes < 60) return 'Synced ${diff.inMinutes}m ago';
+    if (diff.inHours < 24) return 'Synced ${diff.inHours}h ago';
+    return 'Synced ${diff.inDays}d ago';
+  }
+
   Widget _buildGreetingHeader(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -61,14 +86,14 @@ class HomeScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Good morning,\nSarah',
+                '${_greetingForNow()}, ${_firstName()}',
                 style: AppTypography.headlineLgMobile.copyWith(
                   height: 1.15,
                 ),
               ),
               const SizedBox(height: 4),
               const Text(
-                'All vitals in typical range today',
+                'Your health snapshot for today',
                 style: AppTypography.bodyMd,
               ),
             ],
@@ -80,18 +105,18 @@ class HomeScreen extends StatelessWidget {
             color: AppColors.primaryContainer.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(999),
           ),
-          child: const Row(
+          child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
+              const Icon(
                 Icons.medical_information_rounded,
                 color: AppColors.primaryContainer,
                 size: 16,
               ),
-              SizedBox(width: 6),
+              const SizedBox(width: 6),
               Text(
-                'ID • A+',
-                style: TextStyle(
+                'ID • ${appState.bloodType}',
+                style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
                   color: AppColors.primaryContainer,
@@ -106,6 +131,8 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildHeroDiagnosticCard(BuildContext context) {
+    final report = appState.activeReport;
+
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surfaceCardDark,
@@ -118,143 +145,51 @@ class HomeScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Tag, status & share icon in one header row
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 8,
-                      height: 8,
-                      decoration: const BoxDecoration(
-                        color: AppColors.primaryContainer,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    const Text(
-                      'NEW DIAGNOSTIC REPORT',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 1.0,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: const BoxDecoration(
+                    color: AppColors.primaryContainer,
+                    shape: BoxShape.circle,
+                  ),
                 ),
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: AppColors.primaryContainer.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                      child: const Text(
-                        'Review Ready',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.primaryFixedDim,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    GestureDetector(
-                      onTap: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: const Text('Exporting encrypted HIPAA PDF for sharing...'),
-                            behavior: SnackBarBehavior.floating,
-                            backgroundColor: AppColors.surfaceCardDark,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          ),
-                        );
-                      },
-                      child: Container(
-                        width: 32,
-                        height: 32,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.1),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(Icons.ios_share_rounded, color: Colors.white70, size: 16),
-                      ),
-                    ),
-                  ],
+                const SizedBox(width: 8),
+                Text(
+                  report == null ? 'GET STARTED' : 'LATEST UPLOAD',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 1.0,
+                    color: AppColors.textSecondary,
+                  ),
                 ),
               ],
             ),
             const SizedBox(height: 16),
-
-            // Report Title
-            const Text(
-              'Comprehensive Metabolic Panel',
-              style: TextStyle(
+            Text(
+              report?.title ?? 'Upload your prescription or lab report',
+              style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
                 color: Colors.white,
                 letterSpacing: -0.3,
               ),
             ),
-            const SizedBox(height: 4),
-            const Text(
-              'Dr. Robert Chen • Verified 2 days ago',
-              style: TextStyle(
+            const SizedBox(height: 8),
+            Text(
+              report?.overallSynthesis ??
+                  'Use camera, gallery, or files to add a document. We explain it in plain language for your visit.',
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
                 fontSize: 13,
                 color: AppColors.textSecondary,
+                height: 1.35,
               ),
             ),
-            const SizedBox(height: 16),
-
-            // Biomarker synthesis — flat typographic hierarchy, no nested card
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: AppColors.primaryContainer.withValues(alpha: 0.2),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.insights_rounded,
-                    color: AppColors.primaryFixedDim,
-                    size: 16,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                const Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Biomarker Synthesis',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                      ),
-                      SizedBox(height: 2),
-                      Text(
-                        'ALT mildly elevated (65 U/L), other 13 biomarkers within optimal range.',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: AppColors.textSecondary,
-                          height: 1.35,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
             const SizedBox(height: 24),
-
-            // Single primary CTA — full width
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
@@ -268,17 +203,22 @@ class HomeScreen extends StatelessWidget {
                   ),
                 ),
                 onPressed: () {
-                  appState.setTabIndex(3);
+                  if (report == null) {
+                    appState.setTabIndex(3);
+                    UploadReportModal.show(context, appState);
+                  } else {
+                    appState.setTabIndex(3);
+                  }
                 },
-                child: const Row(
+                child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      'Review Interpretation',
-                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+                      report == null ? 'Upload Document' : 'Review Interpretation',
+                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
                     ),
-                    SizedBox(width: 8),
-                    Icon(Icons.arrow_forward_rounded, size: 18),
+                    const SizedBox(width: 8),
+                    const Icon(Icons.arrow_forward_rounded, size: 18),
                   ],
                 ),
               ),
@@ -308,7 +248,7 @@ class HomeScreen extends StatelessWidget {
                 child: Row(
                   children: [
                     Text(
-                      appState.isSyncingVitals ? 'Syncing...' : 'Synced 12m ago',
+                      _syncLabel(),
                       style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
@@ -464,90 +404,91 @@ class HomeScreen extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          ...appState.medications.map((med) {
-            return Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              decoration: BoxDecoration(
+          if (appState.medications.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8),
+              child: Text(
+                'No medications yet. Upload a prescription from Labs to keep track of what you take.',
+                style: TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.35),
+              ),
+            )
+          else
+            ...appState.medications.map((med) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Material(
                 color: AppColors.surfaceContainerLow,
                 borderRadius: BorderRadius.circular(20),
-              ),
-              child: Row(
-                children: [
-                  // Medication icon
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: AppColors.surfaceCard,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(
-                      med.isTaken ? Icons.check_circle_rounded : Icons.medication_rounded,
-                      color: med.isTaken ? AppColors.primaryContainer : AppColors.textSecondary,
-                      size: 20,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(20),
+                  onTap: () => appState.toggleMedication(med.id),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    child: Row(
                       children: [
-                        Text(
-                          med.name,
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: med.isTaken ? AppColors.textSecondary : AppColors.textPrimary,
-                            decoration: med.isTaken ? TextDecoration.lineThrough : null,
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: AppColors.surfaceCard,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Icon(
+                            med.isTaken ? Icons.check_circle_rounded : Icons.medication_rounded,
+                            color: med.isTaken ? AppColors.primaryContainer : AppColors.textSecondary,
+                            size: 20,
                           ),
                         ),
-                        const SizedBox(height: 2),
-                        Text(
-                          '${med.dosage} • ${med.scheduleTime}',
-                          style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                med.name,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: med.isTaken ? AppColors.textSecondary : AppColors.textPrimary,
+                                  decoration: med.isTaken ? TextDecoration.lineThrough : null,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                '${med.dosage} • ${med.scheduleTime}',
+                                style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: med.isTaken
+                                ? AppColors.primaryContainer.withValues(alpha: 0.12)
+                                : AppColors.surfaceCard,
+                            borderRadius: BorderRadius.circular(999),
+                            border: Border.all(
+                              color: med.isTaken
+                                  ? AppColors.primaryContainer.withValues(alpha: 0.3)
+                                  : AppColors.outlineVariant,
+                            ),
+                          ),
+                          child: Text(
+                            med.isTaken ? 'Taken' : 'Mark taken',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: med.isTaken
+                                  ? AppColors.primaryContainer
+                                  : AppColors.textPrimary,
+                            ),
+                          ),
                         ),
                       ],
                     ),
                   ),
-                  // Schedule time or "Taken" badge
-                  if (med.isTaken)
-                    const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.check_rounded, size: 14, color: AppColors.primaryContainer),
-                        SizedBox(width: 4),
-                        Text(
-                          'Taken',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.primaryContainer,
-                          ),
-                        ),
-                      ],
-                    )
-                  else
-                    GestureDetector(
-                      onTap: () => appState.toggleMedication(med.id),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: AppColors.surfaceCard,
-                          borderRadius: BorderRadius.circular(999),
-                          border: Border.all(color: AppColors.outlineVariant),
-                        ),
-                        child: Text(
-                          med.scheduleTime.split('(').first.trim(),
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
+                ),
               ),
             );
           }),
@@ -602,12 +543,12 @@ class HomeScreen extends StatelessWidget {
           ),
           const SizedBox(height: 16),
 
-          // Doctor info
           Row(
             children: [
-              CircleAvatar(
+              AvatarImage(
+                imageUrl: nextAppt.avatarUrl,
+                initials: initialsFromName(nextAppt.doctorName),
                 radius: 24,
-                backgroundImage: NetworkImage(nextAppt.avatarUrl),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -627,7 +568,6 @@ class HomeScreen extends StatelessWidget {
           ),
           const SizedBox(height: 16),
 
-          // Details rows
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
@@ -640,14 +580,14 @@ class HomeScreen extends StatelessWidget {
                   children: [
                     const Icon(Icons.calendar_today_rounded, size: 16, color: AppColors.primaryContainer),
                     const SizedBox(width: 8),
-                    const Text(
-                      'Thursday, Oct 24',
-                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                    Text(
+                      DateFormat('EEEE, MMM d').format(nextAppt.dateTime),
+                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
                     ),
                     const Spacer(),
-                    const Text(
-                      '10:30 AM EST',
-                      style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                    Text(
+                      DateFormat('h:mm a').format(nextAppt.dateTime),
+                      style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
                     ),
                   ],
                 ),
@@ -674,7 +614,6 @@ class HomeScreen extends StatelessWidget {
           ),
           const SizedBox(height: 16),
 
-          // CTA
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
@@ -685,9 +624,16 @@ class HomeScreen extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
               ),
-              icon: const Icon(Icons.laptop_mac_rounded, size: 18),
-              label: const Text('Prepare for Call', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
+              icon: Icon(
+                nextAppt.isVideoConsult ? Icons.videocam_rounded : Icons.laptop_mac_rounded,
+                size: 18,
+              ),
+              label: Text(
+                nextAppt.isVideoConsult ? 'Join Video Visit' : 'Prepare for Visit',
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+              ),
               onPressed: () {
+                appState.setAppointmentSegment(0);
                 appState.setTabIndex(2);
               },
             ),
@@ -699,10 +645,36 @@ class HomeScreen extends StatelessWidget {
 
   Widget _buildQuickActions(BuildContext context) {
     final actions = [
-      {'title': 'Symptom Triage', 'icon': Icons.healing_rounded, 'tab': 1},
-      {'title': 'Book Doctor', 'icon': Icons.calendar_month_rounded, 'tab': 2},
-      {'title': 'Upload Lab Report', 'icon': Icons.upload_file_rounded, 'tab': 3},
-      {'title': 'Family Sharing', 'icon': Icons.people_outline_rounded, 'tab': 2},
+      {
+        'title': 'Symptom Triage',
+        'icon': Icons.healing_rounded,
+        'action': () => appState.setTabIndex(1),
+      },
+      {
+        'title': 'Book Doctor',
+        'icon': Icons.calendar_month_rounded,
+        'action': () {
+          appState.setTabIndex(2);
+          BookAppointmentModal.show(context, appState);
+        },
+      },
+      {
+        'title': 'Upload Lab Report',
+        'icon': Icons.upload_file_rounded,
+        'action': () {
+          appState.setTabIndex(3);
+          UploadReportModal.show(context, appState);
+        },
+      },
+      {
+        'title': 'Family Sharing',
+        'icon': Icons.people_outline_rounded,
+        'action': () {
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => FamilyConnectScreen(appState: appState)),
+          );
+        },
+      },
     ];
 
     return Column(
@@ -728,15 +700,7 @@ class HomeScreen extends StatelessWidget {
               elevation: 0,
               child: InkWell(
                 borderRadius: BorderRadius.circular(20),
-                onTap: () {
-                  if (act['title'] == 'Family Sharing') {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => FamilyConnectScreen(appState: appState)),
-                    );
-                  } else {
-                    appState.setTabIndex(act['tab'] as int);
-                  }
-                },
+                onTap: act['action'] as VoidCallback,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   child: Row(

@@ -1,54 +1,51 @@
-Running `(cd /Users/prakharjain/.pub-cache/hosted/pub.dev/objective_c-9.5.0/; TMPDIR=/var/folders/jn/71s2v31j5x9_6zpgj7g7c67h0000gn/T/ PATH=/Users/prakharjain/.gemini/antigravity-ide/bin:/Users/prakharjain/.local/bin:/Users/prakharjain/.antigravity-ide/antigravity-ide/bin:/Users/prakharjain/.antigravity-ide/antigravity-ide/bin:/Users/prakharjain/.antigravity-ide/antigravity-ide/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/Users/prakharjain/.local/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/opt/pkg/env/active/bin:/opt/pmk/env/global/bin HOME=/Users/prakharjain /opt/homebrew/share/flutter/bin/cache/dart-sdk/bin/dart --packages=/Users/prakharjain/Downloads/stitch_application_builder_workspace/.dart_tool/package_config.json /Users/prakharjain/Downloads/stitch_application_builder_workspace/.dart_tool/hooks_runner/objective_c/de310349bc/hook.dill --config=/Users/prakharjain/Downloads/stitch_application_builder_workspace/.dart_tool/hooks_runner/objective_c/de310349bc/input.json )`.
-INFO: 2026-09-15 02:58:12.694982: Using compiler /Library/Developer/CommandLineTools/usr/bin/clang from BuildInput.cCompiler.cc.
+Running `(cd /Users/prakharjain/.pub-cache/hosted/pub.dev/objective_c-9.5.0/; TMPDIR=/var/folders/jn/71s2v31j5x9_6zpgj7g7c67h0000gn/T/ PATH=/Users/prakharjain/.local/bin:/Users/prakharjain/.antigravity-ide/antigravity-ide/bin:/Users/prakharjain/.antigravity-ide/antigravity-ide/bin:/Users/prakharjain/.antigravity-ide/antigravity-ide/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/Users/prakharjain/.local/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/opt/pkg/env/active/bin:/opt/pmk/env/global/bin:/Applications/Cursor.app/Contents/Resources/app/node_modules/@vscode/ripgrep/bin:/Users/prakharjain/.local/bin:/Users/prakharjain/.antigravity-ide/antigravity-ide/bin HOME=/Users/prakharjain /opt/homebrew/share/flutter/bin/cache/dart-sdk/bin/dart --packages=/Users/prakharjain/Documents/stitch_application_builder_workspace/.dart_tool/package_config.json /Users/prakharjain/Documents/stitch_application_builder_workspace/.dart_tool/hooks_runner/objective_c/de310349bc/hook.dill --config=/Users/prakharjain/Documents/stitch_application_builder_workspace/.dart_tool/hooks_runner/objective_c/de310349bc/input.json )`.
+INFO: 2026-09-15 16:55:52.046428: Using compiler /Library/Developer/CommandLineTools/usr/bin/clang from BuildInput.cCompiler.cc.
 
-INFO: 2026-09-15 02:58:12.699427: Running: /Library/Developer/CommandLineTools/usr/bin/clang -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk -target arm64-apple-darwin -mmacos-version-min=13 -c /Users/prakharjain/.pub-cache/hosted/pub.dev/objective_c-9.5.0/src/include/dart_api_dl.c -fpic -gline-tables-only -I src -o /Users/prakharjain/Downloads/stitch_application_builder_workspace/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/include/dart_api_dl.c.o
+INFO: 2026-09-15 16:55:52.054148: Running: /Library/Developer/CommandLineTools/usr/bin/clang -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk -target arm64-apple-darwin -mmacos-version-min=13 -c /Users/prakharjain/.pub-cache/hosted/pub.dev/objective_c-9.5.0/src/include/dart_api_dl.c -fpic -gline-tables-only -I src -o /Users/prakharjain/Documents/stitch_application_builder_workspace/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/include/dart_api_dl.c.o
 
-INFO: 2026-09-15 02:58:12.701859: Running: /Library/Developer/CommandLineTools/usr/bin/clang -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk -target arm64-apple-darwin -mmacos-version-min=13 -c /Users/prakharjain/.pub-cache/hosted/pub.dev/objective_c-9.5.0/src/objective_c.c -fpic -gline-tables-only -I src -o /Users/prakharjain/Downloads/stitch_application_builder_workspace/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/objective_c.c.o
+INFO: 2026-09-15 16:55:52.055827: Running: /Library/Developer/CommandLineTools/usr/bin/clang -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk -target arm64-apple-darwin -mmacos-version-min=13 -c /Users/prakharjain/.pub-cache/hosted/pub.dev/objective_c-9.5.0/src/objective_c.c -fpic -gline-tables-only -I src -o /Users/prakharjain/Documents/stitch_application_builder_workspace/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/objective_c.c.o
 
-INFO: 2026-09-15 02:58:12.702486: Running: /Library/Developer/CommandLineTools/usr/bin/clang -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk -target arm64-apple-darwin -mmacos-version-min=13 -x objective-c -fobjc-arc -c /Users/prakharjain/.pub-cache/hosted/pub.dev/objective_c-9.5.0/src/objective_c.m -fpic -gline-tables-only -I src -o /Users/prakharjain/Downloads/stitch_application_builder_workspace/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/objective_c.m.o
+INFO: 2026-09-15 16:55:52.056183: Running: /Library/Developer/CommandLineTools/usr/bin/clang -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk -target arm64-apple-darwin -mmacos-version-min=13 -x objective-c -fobjc-arc -c /Users/prakharjain/.pub-cache/hosted/pub.dev/objective_c-9.5.0/src/objective_c.m -fpic -gline-tables-only -I src -o /Users/prakharjain/Documents/stitch_application_builder_workspace/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/objective_c.m.o
 
 ream_adapter.m.o
 
-INFO: 2026-09-15 02:58:12.702636: Running: /Library/Developer/CommandLineTools/usr/bin/clang -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk -target arm64-apple-darwin -mmacos-version-min=13 -x objective-c -fobjc-arc -c /Users/prakharjain/.pub-cache/hosted/pub.dev/objective_c-9.5.0/src/observer.m -fpic -gline-tables-only -I src -o /Users/prakharjain/Downloads/stitch_application_builder_workspace/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/observer.m.o
+INFO: 2026-09-15 16:55:52.056521: Running: /Library/Developer/CommandLineTools/usr/bin/clang -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk -target arm64-apple-darwin -mmacos-version-min=13 -x objective-c -fobjc-arc -c /Users/prakharjain/.pub-cache/hosted/pub.dev/objective_c-9.5.0/src/protocol.m -fpic -gline-tables-only -I src -o /Users/prakharjain/Documents/stitch_application_builder_workspace/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/protocol.m.o
 
-INFO: 2026-09-15 02:58:12.702938: Running: /Library/Developer/CommandLineTools/usr/bin/clang -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk -target arm64-apple-darwin -mmacos-version-min=13 -x objective-c -fobjc-arc -c /Users/prakharjain/.pub-cache/hosted/pub.dev/objective_c-9.5.0/src/ns_number.m -fpic -gline-tables-only -I src -o /Users/prakharjain/Downloads/stitch_application_builder_workspace/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/ns_number.m.o
+NFO: 2026-09-15 16:55:52.056416: Running: /Library/Developer/CommandLineTools/usr/bin/clang -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk -target arm64-apple-darwin -mmacos-version-min=13 -x objective-c -fobjc-arc -c /Users/prakharjain/.pub-cache/hosted/pub.dev/objective_c-9.5.0/src/ns_number.m -fpic -gline-tables-only -I src -o /Users/prakharjain/Documents/stitch_application_builder_workspace/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/ns_number.m.o
 
-INFO: 2026-09-15 02:58:12.703190: Running: /Library/Developer/CommandLineTools/usr/bin/clang -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk -target arm64-apple-darwin -mmacos-version-min=13 -x objective-c -fobjc-arc -c /Users/prakharjain/.pub-cache/hosted/pub.dev/objective_c-9.5.0/src/protocol.m -fpic -gline-tables-only -I src -o /Users/prakharjain/Downloads/stitch_application_builder_workspace/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/protocol.m.o
+INFO: 2026-09-15 16:55:52.056649: Running: /Library/Developer/CommandLineTools/usr/bin/clang -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk -target arm64-apple-darwin -mmacos-version-min=13 -x objective-c -fobjc-arc -c /Users/prakharjain/.pub-cache/hosted/pub.dev/objective_c-9.5.0/src/objective_c_bindings_generated.m -fpic -gline-tables-only -I src -o /Users/prakharjain/Documents/stitch_application_builder_workspace/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/objective_c_bindings_generated.m.o
 
-INFO: 2026-09-15 02:58:12.703396: Running: /Library/Developer/CommandLineTools/usr/bin/clang -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk -target arm64-apple-darwin -mmacos-version-min=13 -x objective-c -fobjc-arc -c /Users/prakharjain/.pub-cache/hosted/pub.dev/objective_c-9.5.0/src/objective_c_bindings_generated.m -fpic -gline-tables-only -I src -o /Users/prakharjain/Downloads/stitch_application_builder_workspace/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/objective_c_bindings_generated.m.o
+INFO: 2026-09-15 16:55:52.652807: 
+INFO: 2026-09-15 16:55:52.652985: 
+INFO: 2026-09-15 16:55:52.653020: Generated /Users/prakharjain/Documents/stitch_application_builder_workspace/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/observer.m.o
+INFO: 2026-09-15 16:55:52.653269: 
+INFO: 2026-09-15 16:55:52.653283: 
+INFO: 2026-09-15 16:55:52.653305: Generated /Users/prakharjain/Documents/stitch_application_builder_workspace/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/include/dart_api_dl.c.o
+INFO: 2026-09-15 16:55:52.653837: 
+INFO: 2026-09-15 16:55:52.653855: 
+INFO: 2026-09-15 16:55:52.653867: Generated /Users/prakharjain/Documents/stitch_application_builder_workspace/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/protocol.m.o
+INFO: 2026-09-15 16:55:52.653949: 
+INFO: 2026-09-15 16:55:52.653962: 
+INFO: 2026-09-15 16:55:52.653971: Generated /Users/prakharjain/Documents/stitch_application_builder_workspace/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/objective_c.c.o
 
-INFO: 2026-09-15 02:58:14.072915: 
-INFO: 2026-09-15 02:58:14.073184: 
-INFO: 2026-09-15 02:58:14.073230: Generated /Users/prakharjain/Downloads/stitch_application_builder_workspace/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/protocol.m.o
-INFO: 2026-09-15 02:58:14.073549: 
-INFO: 2026-09-15 02:58:14.073586: 
-INFO: 2026-09-15 02:58:14.073604: Generated /Users/prakharjain/Downloads/stitch_application_builder_workspace/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/include/dart_api_dl.c.o
-INFO: 2026-09-15 02:58:14.073789: 
-INFO: 2026-09-15 02:58:14.073803: 
-INFO: 2026-09-15 02:58:14.073816: Generated /Users/prakharjain/Downloads/stitch_application_builder_workspace/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/observer.m.o
-INFO: 2026-09-15 02:58:14.073860: 
-INFO: 2026-09-15 02:58:14.073870: 
-INFO: 2026-09-15 02:58:14.073878: Generated /Users/prakharjain/Downloads/stitch_application_builder_workspace/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/objective_c.c.o
+INFO: 2026-09-15 16:55:53.019543: 
+INFO: 2026-09-15 16:55:53.019596: 
+INFO: 2026-09-15 16:55:53.019607: Generated /Users/prakharjain/Documents/stitch_application_builder_workspace/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/ns_number.m.o
 
-INFO: 2026-09-15 02:58:15.076362: 
-INFO: 2026-09-15 02:58:15.076542: 
-INFO: 2026-09-15 02:58:15.076562: Generated /Users/prakharjain/Downloads/stitch_application_builder_workspace/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/ns_number.m.o
+INFO: 2026-09-15 16:55:53.037312: 
+INFO: 2026-09-15 16:55:53.037362: 
+INFO: 2026-09-15 16:55:53.037378: Generated /Users/prakharjain/Documents/stitch_application_builder_workspace/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/input_stream_adapter.m.o
+INFO: 2026-09-15 16:55:53.037479: 
+INFO: 2026-09-15 16:55:53.037507: 
+INFO: 2026-09-15 16:55:53.037517: Generated /Users/prakharjain/Documents/stitch_application_builder_workspace/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/objective_c.m.o
 
-INFO: 2026-09-15 02:58:15.260721: 
-INFO: 2026-09-15 02:58:15.260773: 
-INFO: 2026-09-15 02:58:15.260785: Generated /Users/prakharjain/Downloads/stitch_application_builder_workspace/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/objective_c.m.o
+INFO: 2026-09-15 16:55:53.080219: 
+INFO: 2026-09-15 16:55:53.080272: 
+INFO: 2026-09-15 16:55:53.080283: Generated /Users/prakharjain/Documents/stitch_application_builder_workspace/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/objective_c_bindings_generated.m.o
 
-INFO: 2026-09-15 02:58:15.261228: 
-INFO: 2026-09-15 02:58:15.261295: 
-INFO: 2026-09-15 02:58:15.261306: Generated /Users/prakharjain/Downloads/stitch_application_builder_workspace/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/input_stream_adapter.m.o
+INFO: 2026-09-15 16:55:53.080685: Running: /Library/Developer/CommandLineTools/usr/bin/clang -shared -Wl,-encryptable -undefined dynamic_lookup -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk -target arm64-apple-darwin -mmacos-version-min=13 /Users/prakharjain/Documents/stitch_application_builder_workspace/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/include/dart_api_dl.c.o /Users/prakharjain/Documents/stitch_application_builder_workspace/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/objective_c.c.o /Users/prakharjain/Documents/stitch_application_builder_workspace/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/input_stream_adapter.m.o /Users/prakharjain/Documents/stitch_application_builder_workspace/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/objective_c.m.o /Users/prakharjain/Documents/stitch_application_builder_workspace/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/observer.m.o /Users/prakharjain/Documents/stitch_application_builder_workspace/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/ns_number.m.o /Users/prakharjain/Documents/stitch_application_builder_workspace/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/protocol.m.o /Users/prakharjain/Documents/stitch_application_builder_workspace/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/objective_c_bindings_generated.m.o -o /Users/prakharjain/Documents/stitch_application_builder_workspace/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/objective_c.dylib
 
-INFO: 2026-09-15 02:58:15.306103: 
-INFO: 2026-09-15 02:58:15.306156: 
-INFO: 2026-09-15 02:58:15.306167: Generated /Users/prakharjain/Downloads/stitch_application_builder_workspace/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/objective_c_bindings_generated.m.o
-
-INFO: 2026-09-15 02:58:15.306669: Running: /Library/Developer/CommandLineTools/usr/bin/clang -shared -Wl,-encryptable -undefined dynamic_lookup -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk -target arm64-apple-darwin -mmacos-version-min=13 /Users/prakharjain/Downloads/stitch_application_builder_workspace/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/include/dart_api_dl.c.o /Users/prakharjain/Downloads/stitch_application_builder_workspace/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/objective_c.c.o /Users/prakharjain/Downloads/stitch_application_builder_workspace/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/input_stream_adapter.m.o /Users/prakharjain/Downloads/stitch_application_builder_workspace/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/objective_c.m.o /Users/prakharjain/Downloads/stitch_application_builder_workspace/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/observer.m.o /Users/prakharjain/Downloads/stitch_application_builder_workspace/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/ns_number.m.o /Users/prakharjain/Downloads/stitch_application_builder_workspace/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/protocol.m.o /Users/prakharjain/Downloads/stitch_application_builder_workspace/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/objective_c_bindings_generated.m.o -o /Users/prakharjain/Downloads/stitch_application_builder_workspace/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/objective_c.dylib
-
-INFO: 2026-09-15 02:58:15.587468: 
-INFO: 2026-09-15 02:58:15.587579: 
-INFO: 2026-09-15 02:58:15.587595: Generated /Users/prakharjain/Downloads/stitch_application_builder_workspace/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/objective_c.dylib
+INFO: 2026-09-15 16:55:53.248112: 
+INFO: 2026-09-15 16:55:53.248193: 
+INFO: 2026-09-15 16:55:53.248211: Generated /Users/prakharjain/Documents/stitch_application_builder_workspace/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/objective_c.dylib
 

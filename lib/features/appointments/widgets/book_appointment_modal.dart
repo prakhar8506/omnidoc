@@ -3,6 +3,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/models/appointment.dart';
 import '../../../core/state/app_state.dart';
+import '../../../core/widgets/avatar_image.dart';
 
 class BookAppointmentModal extends StatefulWidget {
   final AppState appState;
@@ -156,9 +157,10 @@ class _BookAppointmentModalState extends State<BookAppointmentModal> {
                       ),
                       child: Row(
                         children: [
-                          CircleAvatar(
+                          AvatarImage(
+                            imageUrl: doc['avatar'] as String,
+                            initials: initialsFromName(doc['name'] as String),
                             radius: 22,
-                            backgroundImage: NetworkImage(doc['avatar'] as String),
                           ),
                           const SizedBox(width: 12),
                           Expanded(

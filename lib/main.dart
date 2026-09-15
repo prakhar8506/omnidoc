@@ -14,6 +14,10 @@ import 'features/auth/screens/sign_in_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -32,7 +36,20 @@ class HealthCompanionApp extends StatefulWidget {
 }
 
 class _HealthCompanionAppState extends State<HealthCompanionApp> {
-  final AppState _appState = AppState();
+  late final AppState _appState;
+
+  @override
+  void initState() {
+    super.initState();
+    _appState = AppState();
+    _appState.hydrate();
+  }
+
+  @override
+  void dispose() {
+    _appState.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -43,12 +60,51 @@ class _HealthCompanionAppState extends State<HealthCompanionApp> {
       home: ListenableBuilder(
         listenable: _appState,
         builder: (context, _) {
-          // Conditional: sign in screen or main app shell
+          if (_appState.isHydrating) {
+            return const _SplashGate();
+          }
           if (!_appState.isSignedIn) {
             return SignInScreen(appState: _appState);
           }
           return HealthCompanionShell(appState: _appState);
         },
+      ),
+    );
+  }
+}
+
+class _SplashGate extends StatelessWidget {
+  const _SplashGate();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      backgroundColor: AppColors.surface,
+      body: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.add_rounded, size: 48, color: AppColors.primaryContainer),
+            SizedBox(height: 16),
+            Text(
+              'Health Companion',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            SizedBox(height: 24),
+            SizedBox(
+              width: 28,
+              height: 28,
+              child: CircularProgressIndicator(
+                strokeWidth: 2.5,
+                color: AppColors.primaryContainer,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -101,20 +157,15 @@ class HealthCompanionShell extends StatelessWidget {
           ),
           body: Stack(
             children: [
-              // Active Tab Content
               IndexedStack(
                 index: currentTab,
                 children: screens,
               ),
-
-              // Omnipresent Floating AI Button
               Positioned(
                 right: 20,
                 bottom: 100,
                 child: FloatingAiButton(appState: appState),
               ),
-
-              // Floating Bottom Navigation Pill
               Positioned(
                 left: 0,
                 right: 0,

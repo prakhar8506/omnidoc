@@ -59,7 +59,7 @@ class _FamilyMemberModalState extends State<FamilyMemberModal> {
     Navigator.pop(context);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('${newMember.name} added to Family Sharing with encrypted access!'),
+        content: Text('${newMember.name} added to Family Sharing.'),
         behavior: SnackBarBehavior.floating,
         backgroundColor: AppColors.surfaceCardDark,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

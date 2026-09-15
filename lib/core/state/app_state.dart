@@ -4,32 +4,197 @@ import '../models/appointment.dart';
 import '../models/biomarker_report.dart';
 import '../models/triage_models.dart';
 import '../models/family_member.dart';
+import '../models/user_account.dart';
+import '../models/prescription_document.dart';
+import '../services/auth_service.dart';
+import '../services/user_data_service.dart';
+import '../services/report_interpreter_service.dart';
 
 class AppState extends ChangeNotifier {
-  // Authentication State
+  final AuthService _auth = AuthService();
+  final UserDataService _userData = UserDataService();
+
   bool _isSignedIn = false;
   bool get isSignedIn => _isSignedIn;
-  String _userEmail = '';
-  String get userEmail => _userEmail;
+  bool _isHydrating = true;
+  bool get isHydrating => _isHydrating;
 
-  void signIn(String email, String password) async {
-    // Simulate network delay
-    await Future.delayed(const Duration(milliseconds: 800));
-    _userEmail = email;
+  UserAccount? _currentUser;
+  UserAccount? get currentUser => _currentUser;
+
+  String get userEmail => _currentUser?.email ?? '';
+  String get userName => _currentUser?.fullName ?? 'Guest';
+  String get bloodType => _currentUser?.bloodType ?? 'Unknown';
+  String get userAvatar => _currentUser?.avatarPath ?? '';
+  String? get userId => _currentUser?.id;
+
+  int _currentTabIndex = 0;
+  int get currentTabIndex => _currentTabIndex;
+
+  int unreadNotificationsCount = 0;
+  int restingHeartRate = 72;
+  String sleepDuration = '—';
+  double dailySteps = 0;
+  int bloodOxygen = 98;
+  String bloodPressure = '—';
+  bool isSyncingVitals = false;
+  DateTime lastSyncedTime = DateTime.now();
+
+  final List<MedicationItem> medications = [];
+  final List<Appointment> appointments = [];
+  final List<FamilyMember> familyMembers = [];
+  final List<PrescriptionDocument> prescriptions = [];
+
+  int selectedDateIndex = DateTime.now().weekday - 1;
+  int appointmentSegmentIndex = 0;
+
+  DiagnosticReport? activeReport;
+  late TriageAssessment activeTriage;
+  bool isAudioPlaying = false;
+  bool isListeningVoice = false;
+
+  AppState() {
+    activeTriage = _defaultTriage();
+  }
+
+  Future<void> hydrate() async {
+    try {
+      final user = await _auth.getSessionUser();
+      if (user != null) {
+        await _bindUser(user);
+        _isSignedIn = true;
+      } else {
+        _isSignedIn = false;
+        _currentUser = null;
+      }
+    } catch (_) {
+      _isSignedIn = false;
+      _currentUser = null;
+    } finally {
+      _isHydrating = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> register({
+    required String fullName,
+    required String email,
+    required String password,
+    String bloodType = 'Unknown',
+  }) async {
+    final user = await _auth.register(
+      fullName: fullName,
+      email: email,
+      password: password,
+      bloodType: bloodType,
+    );
+    await _bindUser(user, isNew: true);
     _isSignedIn = true;
     notifyListeners();
   }
 
-  void signOut() {
-    _isSignedIn = false;
-    _userEmail = '';
-    _currentTabIndex = 0;
+  Future<void> signIn(String email, String password) async {
+    final user = await _auth.signIn(email: email, password: password);
+    await _bindUser(user);
+    _isSignedIn = true;
     notifyListeners();
   }
 
-  // Navigation State
-  int _currentTabIndex = 0;
-  int get currentTabIndex => _currentTabIndex;
+  Future<void> signOut() async {
+    await _persistCurrentUserData();
+    await _auth.signOut();
+    _isSignedIn = false;
+    _currentUser = null;
+    _currentTabIndex = 0;
+    _resetInMemoryProfile();
+    notifyListeners();
+  }
+
+  Future<void> _bindUser(UserAccount user, {bool isNew = false}) async {
+    _currentUser = user;
+    _resetInMemoryProfile();
+    activeTriage = _defaultTriage();
+
+    if (isNew) {
+      await _persistCurrentUserData();
+      return;
+    }
+
+    final data = await _userData.load(user.id);
+    restingHeartRate = data['restingHeartRate'] as int? ?? 72;
+    sleepDuration = data['sleepDuration'] as String? ?? '—';
+    dailySteps = (data['dailySteps'] as num?)?.toDouble() ?? 0;
+    bloodOxygen = data['bloodOxygen'] as int? ?? 98;
+    bloodPressure = data['bloodPressure'] as String? ?? '—';
+    lastSyncedTime =
+        DateTime.tryParse(data['lastSyncedTime'] as String? ?? '') ?? DateTime.now();
+    unreadNotificationsCount = data['unreadNotificationsCount'] as int? ?? 0;
+
+    medications
+      ..clear()
+      ..addAll(UserDataService.medicationsFromJson(data['medications'] as List<dynamic>?));
+
+    appointments
+      ..clear()
+      ..addAll(
+        (data['appointments'] as List<dynamic>? ?? [])
+            .map((e) => Appointment.fromJson(Map<String, dynamic>.from(e as Map))),
+      );
+
+    familyMembers
+      ..clear()
+      ..addAll(
+        (data['familyMembers'] as List<dynamic>? ?? [])
+            .map((e) => FamilyMember.fromJson(Map<String, dynamic>.from(e as Map))),
+      );
+
+    prescriptions
+      ..clear()
+      ..addAll(UserDataService.prescriptionsFromJson(data['prescriptions'] as List<dynamic>?));
+
+    if (prescriptions.isNotEmpty) {
+      activeReport =
+          ReportInterpreterService.labReportFromPrescription(prescriptions.first);
+    } else {
+      activeReport = null;
+    }
+  }
+
+  void _resetInMemoryProfile() {
+    unreadNotificationsCount = 0;
+    restingHeartRate = 72;
+    sleepDuration = '—';
+    dailySteps = 0;
+    bloodOxygen = 98;
+    bloodPressure = '—';
+    lastSyncedTime = DateTime.now();
+    medications.clear();
+    appointments.clear();
+    familyMembers.clear();
+    prescriptions.clear();
+    activeReport = null;
+    appointmentSegmentIndex = 0;
+    selectedDateIndex = DateTime.now().weekday - 1;
+  }
+
+  Future<void> _persistCurrentUserData() async {
+    final id = _currentUser?.id;
+    if (id == null) return;
+    await _userData.save(id, {
+      'restingHeartRate': restingHeartRate,
+      'sleepDuration': sleepDuration,
+      'dailySteps': dailySteps,
+      'bloodOxygen': bloodOxygen,
+      'bloodPressure': bloodPressure,
+      'lastSyncedTime': lastSyncedTime.toIso8601String(),
+      'unreadNotificationsCount': unreadNotificationsCount,
+      'medications': UserDataService.medicationsToJson(medications),
+      'appointments': appointments.map((a) => a.toJson()).toList(),
+      'familyMembers': familyMembers.map((f) => f.toJson()).toList(),
+      'prescriptions': UserDataService.prescriptionsToJson(prescriptions),
+      'hasActiveReport': activeReport != null,
+    });
+  }
 
   void setTabIndex(int index) {
     if (_currentTabIndex != index) {
@@ -38,69 +203,32 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  // Profile Info
-  final String userName = "Sarah Jenkins";
-  final String bloodType = "A+";
-  final String userAvatar = "https://lh3.googleusercontent.com/aida-public/AB6AXuBcoFHSis1XxVDmBl7hk56dd97bAqbvjiUvgqTv-5VhElxMp5YTqFocH2FvUl1bFmczGheAUOzcO3J6uNoBlxZkKLV1r56lQQvltvQknCtArDW05V6QXwUuhhb8YwBWEQ15XuDOWTEqnoKrxn4qvz8IDy1IUtmHu-T63BgMxCT86f99QS2h_TzD9SKQN-8rkht_Ds2OZdOU3dByEVnNpdY_ye6OGTddpRR00wpGovZYFiXV5XcU3sbsHg";
-  int unreadNotificationsCount = 2;
-
-  // Vitals State
-  int restingHeartRate = 72;
-  String sleepDuration = "7h 45m";
-  double dailySteps = 8420;
-  int bloodOxygen = 98;
-  String bloodPressure = "118/76";
-  bool isSyncingVitals = false;
-  DateTime lastSyncedTime = DateTime.now().subtract(const Duration(minutes: 12));
-
-  void syncVitals() async {
-    isSyncingVitals = true;
-    notifyListeners();
-    await Future.delayed(const Duration(milliseconds: 900));
-    restingHeartRate = 71;
-    dailySteps += 140;
-    lastSyncedTime = DateTime.now();
-    isSyncingVitals = false;
+  void clearNotifications() {
+    unreadNotificationsCount = 0;
+    _persistCurrentUserData();
     notifyListeners();
   }
 
-  // Medications
-  final List<MedicationItem> medications = [
-    MedicationItem(
-      id: 'm1',
-      name: 'Omega-3 EPA/DHA',
-      dosage: '1,000 mg • 1 Softgel',
-      scheduleTime: '8:00 AM (With Breakfast)',
-      instruction: 'Take with healthy dietary fats for peak absorption.',
-      isTaken: true,
-    ),
-    MedicationItem(
-      id: 'm2',
-      name: 'Vitamin D3 + K2',
-      dosage: '2,000 IU • 1 Drop',
-      scheduleTime: '1:00 PM (Lunch)',
-      instruction: 'Supports bone density and calcium homeostasis.',
-      isTaken: false,
-    ),
-    MedicationItem(
-      id: 'm3',
-      name: 'Magnesium Glycinate',
-      dosage: '200 mg • 2 Capsules',
-      scheduleTime: '9:30 PM (Pre-Sleep)',
-      instruction: 'Promotes restorative sleep and muscle recovery.',
-      isTaken: false,
-    ),
-  ];
+  Future<void> syncVitals() async {
+    isSyncingVitals = true;
+    notifyListeners();
+    await Future.delayed(const Duration(milliseconds: 700));
+    restingHeartRate = 68 + (dailySteps.toInt() % 8);
+    dailySteps += 120;
+    if (sleepDuration == '—') sleepDuration = '7h 10m';
+    if (bloodPressure == '—') bloodPressure = '118/76';
+    lastSyncedTime = DateTime.now();
+    isSyncingVitals = false;
+    await _persistCurrentUserData();
+    notifyListeners();
+  }
 
   void toggleMedication(String id) {
     final med = medications.firstWhere((m) => m.id == id);
     med.isTaken = !med.isTaken;
+    _persistCurrentUserData();
     notifyListeners();
   }
-
-  // Appointments
-  int selectedDateIndex = 3; // Thu 24 by default
-  int appointmentSegmentIndex = 0; // 0: Upcoming Visits, 1: Family Sharing
 
   void setAppointmentSegment(int index) {
     appointmentSegmentIndex = index;
@@ -112,94 +240,28 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  final List<Appointment> appointments = [
-    Appointment(
-      id: 'apt-1',
-      doctorName: 'Dr. Priya Sharma, MD',
-      doctorTitle: 'Internal Medicine & Hepatology',
-      specialty: 'Internal Medicine',
-      avatarUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDjYVUUFq-37pCqIkprzJW0Wx_HCEqZi_pojgtYHuNHCYORqQMkpq8kx73AXEQ4l2Ged06kqgnqvs1taHv0aOPp-Gx7Gi130wBUpJemTaMAdsSUQ1NhsZ-aKRql8JPedBEWE6r_vOGJXbJl6cCyIpS1DejAmz7zR7WJT2BEeTKFUktIDXG03Iu4fjF288S7lbkm_u0OAaGC9S-vss257hKUs-rGM5jAwtvQ2cEg0tXSTo_OaF4W8AbUXg',
-      dateTime: DateTime.now().add(const Duration(hours: 2, minutes: 15)),
-      clinicName: 'Metro Center Health Pavilion • Suite 402',
-      roomOrType: 'In-Person Consultation',
-      isVideoConsult: false,
-      status: 'In 2h',
-      preparationNote: 'Bring CMP Lab Results & list of current supplements.',
-      themeColor: const Color(0xFF2E5BFF),
-    ),
-    Appointment(
-      id: 'apt-2',
-      doctorName: 'Dr. Marcus Vance, FACC',
-      doctorTitle: 'Cardiovascular Health Specialist',
-      specialty: 'Cardiology',
-      avatarUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDFqT3K0T9U8xJz3h8m-aV3fP3X9X1gK3X1_71ApBPCglKe_3i3GLe2QSUwJIWat2UrqfdLnT8bh1XFO_yIun2RsQrihSZd9zFDRXuRFYcUDLlsw0RUkFoq2jn4D-xZnFRX4J2oRUCKVRSqsCUnpfgBkWJFC6mOHMpRG29Whs6nasoasUm1KMFUXskhivppe3PqwgXRK2epMLhjR-B6hL0PlQPfXHKtSrzmRDB1KDgCMF5xhEaM3nbeqgqbHnx1JzL1GxwU4Q',
-      dateTime: DateTime.now().add(const Duration(days: 6, hours: 4)),
-      clinicName: 'Telehealth Virtual Video Room',
-      roomOrType: 'HD Video Call • Link Ready',
-      isVideoConsult: true,
-      status: 'Confirmed',
-      preparationNote: '7-day resting heart rate sync will auto-transmit.',
-      themeColor: const Color(0xFF4FD1C5),
-    ),
-  ];
-
   void addAppointment(Appointment appt) {
-    appointments.add(appt);
+    appointments.insert(0, appt);
+    unreadNotificationsCount += 1;
+    _persistCurrentUserData();
     notifyListeners();
   }
 
   void cancelAppointment(String id) {
     appointments.removeWhere((a) => a.id == id);
+    _persistCurrentUserData();
     notifyListeners();
   }
 
-  // Family Members
-  final List<FamilyMember> familyMembers = [
-    FamilyMember(
-      id: 'fam-1',
-      name: 'David Jenkins',
-      relation: 'Spouse',
-      avatarUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCCl5FbkrOKPHatJB-X_71ApBPCglKe_3i3GLe2QSUwJIWat2UrqfdLnT8bh1XFO_yIun2RsQrihSZd9zFDRXuRFYcUDLlsw0RUkFoq2jn4D-xZnFRX4J2oRUCKVRSqsCUnpfgBkWJFC6mOHMpRG29Whs6nasoasUm1KMFUXskhivppe3PqwgXRK2epMLhjR-B6hL0PlQPfXHKtSrzmRDB1KDgCMF5xhEaM3nbeqgqbHnx1JzL1GxwU4Q',
-      accessLevel: 'Full Caregiver Access',
-      ageAndGender: '35 yrs • Male',
-      shareVitals: true,
-      shareLabReports: true,
-      sharePrescriptions: true,
-      emergencySosEnabled: true,
-    ),
-    FamilyMember(
-      id: 'fam-2',
-      name: 'Maya Jenkins',
-      relation: 'Daughter',
-      avatarUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBcoFHSis1XxVDmBl7hk56dd97bAqbvjiUvgqTv-5VhElxMp5YTqFocH2FvUl1bFmczGheAUOzcO3J6uNoBlxZkKLV1r56lQQvltvQknCtArDW05V6QXwUuhhb8YwBWEQ15XuDOWTEqnoKrxn4qvz8IDy1IUtmHu-T63BgMxCT86f99QS2h_TzD9SKQN-8rkht_Ds2OZdOU3dByEVnNpdY_ye6OGTddpRR00wpGovZYFiXV5XcU3sbsHg',
-      accessLevel: 'Dependent Profile',
-      ageAndGender: '7 yrs • Female',
-      shareVitals: true,
-      shareLabReports: true,
-      sharePrescriptions: true,
-      emergencySosEnabled: false,
-    ),
-    FamilyMember(
-      id: 'fam-3',
-      name: 'Eleanor Jenkins',
-      relation: 'Mother',
-      avatarUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDjYVUUFq-37pCqIkprzJW0Wx_HCEqZi_pojgtYHuNHCYORqQMkpq8kx73AXEQ4l2Ged06kqgnqvs1taHv0aOPp-Gx7Gi130wBUpJemTaMAdsSUQ1NhsZ-aKRql8JPedBEWE6r_vOGJXbJl6cCyIpS1DejAmz7zR7WJT2BEeTKFUktIDXG03Iu4fjF288S7lbkm_u0OAaGC9S-vss257hKUs-rGM5jAwtvQ2cEg0tXSTo_OaF4W8AbUXg',
-      accessLevel: 'Emergency Contact Only',
-      ageAndGender: '68 yrs • Female',
-      shareVitals: true,
-      shareLabReports: false,
-      sharePrescriptions: false,
-      emergencySosEnabled: true,
-    ),
-  ];
-
   void addFamilyMember(FamilyMember member) {
     familyMembers.add(member);
+    _persistCurrentUserData();
     notifyListeners();
   }
 
   void removeFamilyMember(String id) {
     familyMembers.removeWhere((m) => m.id == id);
+    _persistCurrentUserData();
     notifyListeners();
   }
 
@@ -215,147 +277,47 @@ class AppState extends ChangeNotifier {
       case 'sos':
         member.emergencySosEnabled = value;
     }
+    _persistCurrentUserData();
     notifyListeners();
   }
 
-  // Diagnostic Reports
-  late DiagnosticReport activeReport;
+  /// Real upload path: persist file under the signed-in user, interpret, save.
+  Future<PrescriptionDocument> uploadHealthDocument({
+    required String sourcePath,
+    required String originalName,
+    required PrescriptionSource source,
+    required bool isImage,
+  }) async {
+    final id = userId;
+    if (id == null) {
+      throw StateError('You must be signed in to upload documents.');
+    }
 
-  AppState() {
-    activeReport = DiagnosticReport(
-      id: 'rep-cmp-1024',
-      title: 'Comprehensive Metabolic Panel (CMP)',
-      laboratory: 'Quest Diagnostics • Clinical Reference Lab',
-      verifiedDoctor: 'Dr. Robert Chen, MD (Pathologist)',
-      date: DateTime.now().subtract(const Duration(days: 2)),
-      totalTested: 14,
-      outOfRangeCount: 1,
-      confidencePercentage: 99,
-      overallSynthesis: 'ALT is mildly elevated at 65 U/L (Reference 7–56 U/L). All other 13 metabolic biomarkers (Electrolytes, Kidney Function, Fasting Glucose, Protein Synthesis) remain well within physiological baseline.',
-      biomarkers: [
-        const Biomarker(
-          code: 'ALT',
-          name: 'Alanine Aminotransferase',
-          fullCategory: 'Liver Enzyme / Metabolic Activity',
-          value: '65',
-          unit: 'U/L',
-          referenceRange: '7–56 U/L',
-          status: BiomarkerStatus.elevated,
-          isAttentionFlagged: true,
-          trendText: '+12% since July test',
-          plainSummary: 'This enzyme is primarily located in hepatocytes (liver cells). A mild elevation is commonly associated with recent intense strength training, metabolic clearance of medications, or temporary hepatic strain. It is not an immediate alarm but warrants routine follow-up with your physician.',
-          clinicalContext: 'Mild isolated transaminitis. AST and Alkaline Phosphatase remain strictly normal, indicating absence of acute parenchymal injury.',
-          historyTrend: [44.0, 48.0, 52.0, 58.0, 65.0],
-        ),
-        const Biomarker(
-          code: 'GLU',
-          name: 'Fasting Blood Glucose',
-          fullCategory: 'Glycemic Regulation',
-          value: '92',
-          unit: 'mg/dL',
-          referenceRange: '70–99 mg/dL',
-          status: BiomarkerStatus.optimal,
-          isAttentionFlagged: false,
-          trendText: 'Optimal baseline stability',
-          plainSummary: 'Your fasting blood sugar is in the ideal healthy reference window, indicating excellent insulin sensitivity and stable glucose metabolism.',
-          clinicalContext: 'Euglycemic fasting state without evidence of pre-diabetes or impaired fasting glucose.',
-          historyTrend: [95.0, 94.0, 91.0, 93.0, 92.0],
-        ),
-        const Biomarker(
-          code: 'CREAT',
-          name: 'Serum Creatinine',
-          fullCategory: 'Renal / Kidney Clearance',
-          value: '0.88',
-          unit: 'mg/dL',
-          referenceRange: '0.50–1.10 mg/dL',
-          status: BiomarkerStatus.optimal,
-          isAttentionFlagged: false,
-          trendText: 'Stable renal clearance',
-          plainSummary: 'Creatinine is a natural byproduct of muscle contraction filtered exclusively by the kidneys. Your level demonstrates pristine kidney filtration (eGFR > 90).',
-          clinicalContext: 'Normal GFR estimation and intact nephron functional capacity.',
-          historyTrend: [0.85, 0.86, 0.89, 0.87, 0.88],
-        ),
-        const Biomarker(
-          code: 'eGFR',
-          name: 'Estimated Glomerular Filtration',
-          fullCategory: 'Renal Filtration Rate',
-          value: '> 90',
-          unit: 'mL/min/1.73m²',
-          referenceRange: '> 60 mL/min',
-          status: BiomarkerStatus.optimal,
-          isAttentionFlagged: false,
-          trendText: 'Grade 1 Optimal',
-          plainSummary: 'Your kidney filtration rate is functioning at maximum healthy capacity.',
-          clinicalContext: 'No chronic kidney disease markers detected.',
-          historyTrend: [94.0, 95.0, 93.0, 96.0, 95.0],
-        ),
-        const Biomarker(
-          code: 'NA',
-          name: 'Sodium Electrolyte',
-          fullCategory: 'Fluid Balance & Homeostasis',
-          value: '140',
-          unit: 'mEq/L',
-          referenceRange: '135–145 mEq/L',
-          status: BiomarkerStatus.optimal,
-          isAttentionFlagged: false,
-          trendText: 'Balanced hydration',
-          plainSummary: 'Sodium levels reflect balanced total body water distribution and proper nervous system signaling.',
-          clinicalContext: 'Normonatremic status with adequate osmotic regulation.',
-          historyTrend: [139.0, 141.0, 140.0, 139.0, 140.0],
-        ),
-      ],
-      recommendedDoctorQuestions: [
-        'Could my recent high-intensity strength training or supplements explain this mild ALT elevation?',
-        'Do you recommend rechecking liver function enzymes in 8 to 12 weeks?',
-        'Are there any specific dietary adjustments or hydration protocols you recommend in the interim?',
-        'Should we check an ultrasound or additional lipid markers if ALT remains mildly high?',
-      ],
+    final localPath = await ReportInterpreterService.persistPickedFile(
+      userId: id,
+      sourcePath: sourcePath,
+      originalName: originalName,
     );
 
-    activeTriage = TriageAssessment(
-      id: 'tri-headache-01',
-      userQuery: '“I\'ve had a dull headache behind my eyes since yesterday morning and mild neck stiffness after working on my laptop.”',
-      timestamp: DateTime.fromMillisecondsSinceEpoch(1729760000000),
-      urgency: TriageUrgency.moderate,
-      urgencyBadge: 'SEE DOCTOR SOON',
-      timeframeWindow: 'Window: 24–48 hrs',
-      clinicalRationale: 'Moderate attention recommended within 24–48 hours if neck stiffness persists. Symptoms suggest potential postural tension strain or screen fatigue, but clinical evaluation is advised to rule out cervicogenic tension.',
-      selfCareItems: [
-        SelfCareGuidance(
-          icon: Icons.water_drop_rounded,
-          title: 'Hydration & Electrolytes',
-          description: 'Drink 2.5L of mineral water and balanced electrolyte fluids throughout the day to prevent dehydrated vascular tension.',
-        ),
-        SelfCareGuidance(
-          icon: Icons.screen_rotation_alt_rounded,
-          title: 'Screen Micro-Breaks (20-20-20 Rule)',
-          description: 'Every 20 minutes, look at an object 20 feet away for 20 seconds. Ensure monitor top edge aligns with eye height.',
-        ),
-        SelfCareGuidance(
-          icon: Icons.ac_unit_rounded,
-          title: 'Cold / Warm Neck Compress',
-          description: 'Apply a soothing cold compress to forehead and gentle warm compress to cervical neck muscles for 15 minutes.',
-        ),
-        SelfCareGuidance(
-          icon: Icons.self_improvement_rounded,
-          title: 'Suboccipital Gentle Stretches',
-          description: 'Gently tuck chin towards chest and hold for 10 seconds to decompress cervical spine compression.',
-        ),
-      ],
-      redFlagAlerts: [
-        'Sudden "thunderclap" headache reaching maximum intensity in seconds.',
-        'High fever accompanied by inability to bend chin to chest.',
-        'Sudden vision changes, confusion, weakness, or slurred speech.',
-      ],
-      recommendedSpecialty: 'Internal Medicine / Neurological Assessment',
-      audioNarrationTranscript: 'Your symptoms show moderate signs of screen fatigue and neck postural tension. While non-emergency, schedule an evaluation within 48 hours if discomfort continues.',
+    final doc = ReportInterpreterService.interpretUpload(
+      fileName: originalName,
+      localPath: localPath,
+      source: source,
+      isImage: isImage,
     );
+
+    prescriptions.insert(0, doc);
+    activeReport = ReportInterpreterService.labReportFromPrescription(doc);
+    unreadNotificationsCount += 1;
+    await _persistCurrentUserData();
+    notifyListeners();
+    return doc;
   }
 
-  // Triage State
-  late TriageAssessment activeTriage;
-  bool isAudioPlaying = false;
-  bool isListeningVoice = false;
+  @Deprecated('Use uploadHealthDocument')
+  void applyUploadedLabReport({required String sourceLabel}) {
+    // Kept for older call sites; prefer real upload.
+  }
 
   void toggleAudioPlayback() {
     isAudioPlaying = !isAudioPlaying;
@@ -368,7 +330,6 @@ class AppState extends ChangeNotifier {
   }
 
   void submitNewSymptomTriage(String query) {
-    // Generate new interactive triage assessment
     activeTriage = TriageAssessment(
       id: 'tri-${DateTime.now().millisecondsSinceEpoch}',
       userQuery: '“$query”',
@@ -379,28 +340,57 @@ class AppState extends ChangeNotifier {
       urgencyBadge: query.toLowerCase().contains('chest') || query.toLowerCase().contains('breath')
           ? 'URGENT EVALUATION'
           : 'MONITOR & CONSULT',
-      timeframeWindow: query.toLowerCase().contains('chest') ? 'Immediate / Same Day' : 'Window: 24–48 hrs',
-      clinicalRationale: 'Based on reported symptoms: "$query", automated clinical guidance recommends monitoring symptom evolution. No acute high-risk markers confirmed, but professional consultation provides highest safety assurance.',
-      selfCareItems: [
-        const SelfCareGuidance(
+      timeframeWindow:
+          query.toLowerCase().contains('chest') ? 'Immediate / Same Day' : 'Window: 24–48 hrs',
+      clinicalRationale:
+          'Based on reported symptoms: "$query", automated clinical guidance recommends monitoring symptom evolution. No acute high-risk markers confirmed, but professional consultation provides highest safety assurance.',
+      selfCareItems: const [
+        SelfCareGuidance(
           icon: Icons.spa_rounded,
           title: 'Rest in Low-Stimulus Room',
-          description: 'Rest comfortably in a dim, quiet room with optimal airflow and elevated head posture.',
+          description:
+              'Rest comfortably in a dim, quiet room with optimal airflow and elevated head posture.',
         ),
-        const SelfCareGuidance(
+        SelfCareGuidance(
           icon: Icons.water_drop_rounded,
           title: 'Fluid & Nutrient Support',
           description: 'Sip warm herbal teas (chamomile or peppermint) and maintain balanced hydration.',
         ),
       ],
-      redFlagAlerts: [
+      redFlagAlerts: const [
         'Difficulty breathing or sudden chest pressure.',
         'Uncontrollable vomiting or severe dizziness.',
         'Loss of consciousness or severe disorientation.',
       ],
       recommendedSpecialty: 'General Practice / Telehealth',
-      audioNarrationTranscript: 'Assessment complete for your reported symptoms. Please review guidance and contact your physician if discomfort worsens.',
+      audioNarrationTranscript:
+          'Assessment complete for your reported symptoms. Please review guidance and contact your physician if discomfort worsens.',
     );
     notifyListeners();
+  }
+
+  TriageAssessment _defaultTriage() {
+    return TriageAssessment(
+      id: 'tri-welcome',
+      userQuery: '“Describe how you feel to get personalized self-care guidance.”',
+      timestamp: DateTime.now(),
+      urgency: TriageUrgency.low,
+      urgencyBadge: 'READY WHEN YOU ARE',
+      timeframeWindow: 'On demand',
+      clinicalRationale:
+          'No active triage yet. Enter symptoms below for guidance. This is not a substitute for emergency care.',
+      selfCareItems: const [
+        SelfCareGuidance(
+          icon: Icons.favorite_outline_rounded,
+          title: 'Start with how you feel',
+          description: 'Use plain language — headache, fever, cough, dizziness, etc.',
+        ),
+      ],
+      redFlagAlerts: const [
+        'Call emergency services for chest pain, severe breathing trouble, or sudden weakness.',
+      ],
+      recommendedSpecialty: 'General Practice',
+      audioNarrationTranscript: 'Welcome. Describe your symptoms to begin triage.',
+    );
   }
 }

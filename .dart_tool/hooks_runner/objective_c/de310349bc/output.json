@@ -2,7 +2,7 @@
   "assets": [
     {
       "encoding": {
-        "file": "/Users/prakharjain/Downloads/stitch_application_builder_workspace/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/objective_c.dylib",
+        "file": "/Users/prakharjain/Documents/stitch_application_builder_workspace/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/objective_c.dylib",
         "id": "package:objective_c/objective_c.dylib",
         "link_mode": {
           "type": "dynamic_loading_bundle"
@@ -42,5 +42,5 @@
     "/Users/prakharjain/.pub-cache/hosted/pub.dev/objective_c-9.5.0/src/ffi.h"
   ],
   "status": "success",
-  "timestamp": "2026-09-15 02:58:12.000"
+  "timestamp": "2026-09-15 16:55:51.000"
 }

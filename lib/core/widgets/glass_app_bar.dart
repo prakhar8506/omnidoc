@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_typography.dart';
 import '../state/app_state.dart';
+import 'avatar_image.dart';
 import '../../features/family/screens/family_connect_screen.dart';
 
 class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
@@ -17,13 +19,14 @@ class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
   });
 
   @override
-  Size get preferredSize => const Size.fromHeight(64);
+  Size get preferredSize => const Size.fromHeight(100);
 
   @override
   Widget build(BuildContext context) {
+    final topPad = MediaQuery.of(context).padding.top;
     return Container(
       padding: EdgeInsets.only(
-        top: MediaQuery.of(context).padding.top + 8,
+        top: topPad + 8,
         left: 20,
         right: 20,
         bottom: 8,
@@ -41,7 +44,6 @@ class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Left brand logo + title
           Row(
             children: [
               Container(
@@ -65,22 +67,33 @@ class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
                 ),
               ),
               const SizedBox(width: 10),
-              const Text(
-                'Health Companion',
-                style: TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
-                  letterSpacing: -0.3,
-                ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Health Companion',
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                      letterSpacing: -0.3,
+                    ),
+                  ),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-
-          // Right action buttons
           Row(
             children: [
-              // Notification Bell
               Stack(
                 children: [
                   Container(
@@ -97,12 +110,19 @@ class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
                         size: 20,
                       ),
                       onPressed: () {
+                        appState.clearNotifications();
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: const Text('2 Unread updates: Lab report verified & Appointment in 2h.'),
+                            content: Text(
+                              appState.appointments.isEmpty
+                                  ? 'You are all caught up.'
+                                  : 'Updates: lab report ready & next visit ${DateFormat('EEE h:mm a').format(appState.appointments.first.dateTime)}.',
+                            ),
                             behavior: SnackBarBehavior.floating,
                             backgroundColor: AppColors.surfaceCardDark,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
                         );
                       },
@@ -124,30 +144,12 @@ class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
                 ],
               ),
               const SizedBox(width: 10),
-              // Profile Avatar
               GestureDetector(
-                onTap: () {
-                  _showProfileDialog(context);
-                },
-                child: Container(
-                  width: 38,
-                  height: 38,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 2),
-                    boxShadow: AppColors.cardShadow,
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(999),
-                    child: Image.network(
-                      appState.userAvatar,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => const CircleAvatar(
-                        backgroundColor: AppColors.primaryContainer,
-                        child: Text('SJ', style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold)),
-                      ),
-                    ),
-                  ),
+                onTap: () => _showProfileDialog(context),
+                child: AvatarImage(
+                  imageUrl: appState.userAvatar,
+                  initials: initialsFromName(appState.userName),
+                  radius: 19,
                 ),
               ),
             ],
@@ -166,9 +168,10 @@ class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            CircleAvatar(
+            AvatarImage(
+              imageUrl: appState.userAvatar,
+              initials: initialsFromName(appState.userName),
               radius: 36,
-              backgroundImage: NetworkImage(appState.userAvatar),
             ),
             const SizedBox(height: 12),
             Text(appState.userName, style: AppTypography.titleLg),
@@ -199,26 +202,36 @@ class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
               dense: true,
               leading: const Icon(Icons.people_outline_rounded, color: AppColors.primaryContainer),
               title: const Text('Family Connectivity', style: AppTypography.bodyMd),
-              subtitle: Text('${appState.familyMembers.length} members connected', style: AppTypography.labelSm),
+              subtitle: Text(
+                '${appState.familyMembers.length} members connected',
+                style: AppTypography.labelSm,
+              ),
               trailing: const Icon(Icons.chevron_right_rounded, size: 20, color: AppColors.textSecondary),
               onTap: () {
                 Navigator.pop(dialogContext);
                 Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => FamilyConnectScreen(appState: appState)),
+                  MaterialPageRoute(
+                    builder: (_) => FamilyConnectScreen(appState: appState),
+                  ),
                 );
               },
             ),
-            ListTile(
+            const ListTile(
               dense: true,
-              leading: const Icon(Icons.shield_outlined, color: AppColors.primaryContainer),
-              title: const Text('HIPAA & Data Encryption', style: AppTypography.bodyMd),
-              subtitle: const Text('Active • End-to-End Encrypted', style: AppTypography.labelSm),
+              leading: Icon(Icons.shield_outlined, color: AppColors.primaryContainer),
+              title: Text('Privacy & Data', style: AppTypography.bodyMd),
+              subtitle: Text('Local demo session • Not clinical care', style: AppTypography.labelSm),
             ),
             ListTile(
               dense: true,
               leading: const Icon(Icons.emergency_outlined, color: AppColors.primaryContainer),
               title: const Text('Emergency SOS Contact', style: AppTypography.bodyMd),
-              subtitle: const Text('David Jenkins (Spouse)', style: AppTypography.labelSm),
+              subtitle: Text(
+                appState.familyMembers.isNotEmpty
+                    ? '${appState.familyMembers.first.name} (${appState.familyMembers.first.relation})'
+                    : 'No emergency contact set',
+                style: AppTypography.labelSm,
+              ),
             ),
             const SizedBox(height: 8),
             const Divider(color: AppColors.surfaceContainerHigh),
@@ -245,7 +258,10 @@ class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Done', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryContainer)),
+            child: const Text(
+              'Done',
+              style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryContainer),
+            ),
           ),
         ],
       ),

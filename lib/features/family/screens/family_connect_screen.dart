@@ -3,6 +3,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/state/app_state.dart';
 import '../../../core/models/family_member.dart';
+import '../../../core/widgets/avatar_image.dart';
 
 class FamilyConnectScreen extends StatefulWidget {
   final AppState appState;
@@ -140,7 +141,7 @@ class _FamilyConnectScreenState extends State<FamilyConnectScreen> {
                     ),
                     SizedBox(height: 2),
                     Text(
-                      'HIPAA & Zero-Knowledge Standard',
+                      'Privacy-first sharing controls',
                       style: TextStyle(
                         fontSize: 12,
                         color: AppColors.textSecondary,
@@ -214,14 +215,10 @@ class _FamilyConnectScreenState extends State<FamilyConnectScreen> {
           // Header row
           Row(
             children: [
-              CircleAvatar(
+              AvatarImage(
+                imageUrl: member.avatarUrl,
+                initials: initialsFromName(member.name),
                 radius: 24,
-                backgroundImage: NetworkImage(member.avatarUrl),
-                onBackgroundImageError: (_, __) {},
-                child: Text(
-                  member.name.split(' ').map((e) => e[0]).take(2).join(),
-                  style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
-                ),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -563,7 +560,7 @@ class _FamilyConnectScreenState extends State<FamilyConnectScreen> {
           SizedBox(width: 10),
           Expanded(
             child: Text(
-              'Encrypted end-to-end with cryptographic per-session tokens. All data sharing is HIPAA compliant.',
+              'Sharing permissions are stored on this device for demo purposes. Always review access with your care team before sharing clinical records.',
               style: TextStyle(fontSize: 11, color: AppColors.textSecondary, height: 1.3),
             ),
           ),
