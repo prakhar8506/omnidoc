@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/app_colors.dart';
 import 'core/state/app_state.dart';
+import 'core/localization/app_localizations.dart';
 import 'core/widgets/glass_app_bar.dart';
 import 'core/widgets/floating_bottom_nav.dart';
 import 'core/widgets/quick_action_sheet.dart';
+import 'core/widgets/holographic_background.dart';
+import 'features/splash/screens/splash_screen.dart';
 import 'features/home/screens/home_screen.dart';
 import 'features/journal/screens/journal_feeling_screen.dart';
 import 'features/triage/screens/triage_screen.dart';
@@ -40,6 +44,7 @@ class HealthCompanionApp extends StatefulWidget {
 
 class _HealthCompanionAppState extends State<HealthCompanionApp> {
   late final AppState _appState;
+  bool _splashCompleted = false;
 
   @override
   void initState() {
@@ -56,73 +61,48 @@ class _HealthCompanionAppState extends State<HealthCompanionApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Health Companion',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
-      home: ListenableBuilder(
-        listenable: _appState,
-        builder: (context, _) {
-          if (_appState.isHydrating) {
-            return const _SplashGate();
-          }
-          if (!_appState.isSignedIn) {
-            return SignInScreen(appState: _appState);
-          }
-          return HealthCompanionShell(appState: _appState);
-        },
-      ),
-    );
-  }
-}
-
-class _SplashGate extends StatelessWidget {
-  const _SplashGate();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFFFBF6FC),
-              Color(0xFFFDE8EF),
-              Color(0xFFEDEAFE),
-            ],
+    return ListenableBuilder(
+      listenable: _appState,
+      builder: (context, _) {
+        return MaterialApp(
+          title: 'Health Companion',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.lightTheme,
+          locale: _appState.currentLocale,
+          supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          home: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 500),
+            switchInCurve: Curves.easeOutCubic,
+            switchOutCurve: Curves.easeInCubic,
+            child: (!_splashCompleted || _appState.isHydrating)
+                ? SplashScreen(
+                    key: const ValueKey('splash_screen'),
+                    onComplete: () {
+                      if (mounted) {
+                        setState(() {
+                          _splashCompleted = true;
+                        });
+                      }
+                    },
+                  )
+                : (!_appState.isSignedIn)
+                    ? SignInScreen(
+                        key: const ValueKey('sign_in_screen'),
+                        appState: _appState,
+                      )
+                    : HealthCompanionShell(
+                        key: const ValueKey('shell_screen'),
+                        appState: _appState,
+                      ),
           ),
-        ),
-        child: const Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.spa_rounded, size: 52, color: AppColors.primaryContainer),
-              SizedBox(height: 16),
-              Text(
-                'Health Companion',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
-                  letterSpacing: -0.3,
-                ),
-              ),
-              SizedBox(height: 24),
-              SizedBox(
-                width: 28,
-                height: 28,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2.5,
-                  color: AppColors.primaryContainer,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
@@ -135,12 +115,13 @@ class HealthCompanionShell extends StatelessWidget {
     required this.appState,
   });
 
-  String _getSubTitle(int tabIndex) {
+  String _getSubTitle(BuildContext context, int tabIndex) {
+    final loc = AppLocalizations.of(context);
     switch (tabIndex) {
       case 0:
-        return 'Daily Balance';
+        return loc.translate('daily_balance');
       case 1:
-        return "Feeling Journal";
+        return loc.translate('feeling_tracker');
       case 2:
         return 'Symptom Triage';
       case 3:
@@ -148,7 +129,7 @@ class HealthCompanionShell extends StatelessWidget {
       case 4:
         return 'Biology & Labs';
       default:
-        return 'Health Companion';
+        return loc.translate('app_title');
     }
   }
 
@@ -172,29 +153,35 @@ class HealthCompanionShell extends StatelessWidget {
           backgroundColor: AppColors.background,
           appBar: GlassAppBar(
             title: 'Health Companion',
-            subtitle: _getSubTitle(currentTab),
+            subtitle: _getSubTitle(context, currentTab),
             appState: appState,
           ),
-          body: Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Color(0xFFFAF6FC),
-                  Color(0xFFFDF1F5),
-                  Color(0xFFF1EEFE),
-                  Color(0xFFFAF7FD),
-                ],
-              ),
-            ),
+          body: HolographicBackground(
             child: Stack(
               children: [
-                IndexedStack(
-                  index: currentTab.clamp(0, screens.length - 1),
-                  children: screens,
+                // Fluid shared-element-style animated tab switcher
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 320),
+                  switchInCurve: Curves.easeOutCubic,
+                  switchOutCurve: Curves.easeInCubic,
+                  transitionBuilder: (child, animation) {
+                    return FadeTransition(
+                      opacity: animation,
+                      child: SlideTransition(
+                        position: Tween<Offset>(
+                          begin: const Offset(0.015, 0),
+                          end: Offset.zero,
+                        ).animate(animation),
+                        child: child,
+                      ),
+                    );
+                  },
+                  child: KeyedSubtree(
+                    key: ValueKey<int>(currentTab),
+                    child: screens[currentTab.clamp(0, screens.length - 1)],
+                  ),
                 ),
-                if (currentTab != 1) // Hidden on feeling journal screen for serene feeling dial focus
+                if (currentTab != 1) // Serene focus on feeling journal screen
                   Positioned(
                     right: 18,
                     bottom: 96,

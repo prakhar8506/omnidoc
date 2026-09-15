@@ -175,7 +175,10 @@ void main() {
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.resetPhysicalSize);
 
-    await tester.pumpWidget(const HealthCompanionApp());
+    final appState = AppState();
+    await tester.pumpWidget(
+      MaterialApp(home: SignInScreen(appState: appState)),
+    );
     await _pumpFrames(tester);
 
     final fields = find.byType(TextFormField);

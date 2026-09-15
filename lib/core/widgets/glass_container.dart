@@ -55,8 +55,8 @@ class GlassContainer extends StatelessWidget {
               borderRadius: BorderRadius.circular(borderRadius),
               border: border ??
                   Border.all(
-                    color: Colors.white.withValues(alpha: 0.7),
-                    width: 1.2,
+                    color: Colors.white.withValues(alpha: 0.85),
+                    width: 1.1,
                   ),
             ),
             child: child,

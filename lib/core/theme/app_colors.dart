@@ -19,6 +19,32 @@ class AppColors {
   static const Color surfaceContainerHigh = Color(0xFFECE7F4);
   static const Color surfaceContainerHighest = Color(0xFFE4DEF0);
 
+  // 1. Ambient Background Gradient (Holographic / Pearlescent Shifting)
+  static const Color holoPeach = Color(0xFFFCE4EC);      // Pearlescent peach mist
+  static const Color holoLavender = Color(0xFFEDE7F6);   // Soft lavender sheen
+  static const Color holoIceCyan = Color(0xFFE1F5FE);    // Holographic soft ice blue
+  static const Color holoBlush = Color(0xFFFFF3E0);      // Warm pearl blush
+  static const Color holoSoftViolet = Color(0xFFF3E5F5); // Translucent violet
+
+  // 2. Bold Aurora Moments (Reserved for Splash, Onboarding & Hero Displays)
+  static const Color auroraHeroViolet = Color(0xFF4A148C);
+  static const Color auroraHeroMagenta = Color(0xFF880E4F);
+  static const Color auroraHeroTeal = Color(0xFF004D40);
+  static const Color auroraHeroIndigo = Color(0xFF1A237E);
+  static const Color auroraHeroIris = Color(0xFF6200EA);
+
+  // 3. Apple Watch-Face-Style Stat Tiles (Dark Surface + Radial Glow)
+  static const Color watchFaceDarkBg = Color(0xFF12111A);
+  static const Color watchFaceDarkSurface = Color(0xFF1A1926);
+  static const Color watchFaceBorder = Color(0x2EFFFFFF);
+  static const Color watchHeartRate = Color(0xFFFF5252);   // Warm coral glow
+  static const Color watchSleep = Color(0xFF5C6BC0);       // Deep indigo glow
+  static const Color watchStress = Color(0xFFE040FB);      // Vivid magenta glow
+  static const Color watchActivity = Color(0xFF00E676);    // Electric emerald glow
+  static const Color watchSpO2 = Color(0xFF00E5FF);        // Cyan aura
+  static const Color watchGlucose = Color(0xFFFFB300);     // Amber glow
+  static const Color watchHydration = Color(0xFF29B6F6);   // Sky azure glow
+
   // Glassmorphism Tokens
   static const Color glassWhite = Color(0xB8FFFFFF);       // ~72% frosted white
   static const Color glassSurface = Color(0xD9FFFFFF);     // ~85% opaque white
@@ -47,6 +73,7 @@ class AppColors {
   static const Color accentCoral = Color(0xFFFF5E7E);      // Attention / flagged
   static const Color accentTeal = Color(0xFF28C78B);       // Normal / verified / optimal
   static const Color accentGold = Color(0xFFFFB338);       // Warning / alert
+  static const Color accentAmber = Color(0xFFFFB300);      // Glucose / metabolic amber
   static const Color accentPurple = Color(0xFF8B5CF6);     // AI neural vibe
   static const Color accentSky = Color(0xFF38BDF8);        // Hydration / breath
   static const Color accentRose = Color(0xFFF472B6);       // Warmth / heart

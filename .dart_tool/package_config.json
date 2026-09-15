@@ -8,6 +8,12 @@
       "languageVersion": "3.10"
     },
     {
+      "name": "archive",
+      "rootUri": "file:///Users/prakharjain/.pub-cache/hosted/pub.dev/archive-4.0.9",
+      "packageUri": "lib/",
+      "languageVersion": "3.0"
+    },
+    {
       "name": "args",
       "rootUri": "file:///Users/prakharjain/.pub-cache/hosted/pub.dev/args-2.7.0",
       "packageUri": "lib/",
@@ -20,10 +26,28 @@
       "languageVersion": "3.4"
     },
     {
+      "name": "barcode",
+      "rootUri": "file:///Users/prakharjain/.pub-cache/hosted/pub.dev/barcode-2.2.9",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    },
+    {
+      "name": "bidi",
+      "rootUri": "file:///Users/prakharjain/.pub-cache/hosted/pub.dev/bidi-2.0.13",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    },
+    {
       "name": "boolean_selector",
       "rootUri": "file:///Users/prakharjain/.pub-cache/hosted/pub.dev/boolean_selector-2.1.2",
       "packageUri": "lib/",
       "languageVersion": "3.1"
+    },
+    {
+      "name": "carp_serializable",
+      "rootUri": "file:///Users/prakharjain/.pub-cache/hosted/pub.dev/carp_serializable-3.0.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.3"
     },
     {
       "name": "characters",
@@ -72,6 +96,18 @@
       "rootUri": "file:///Users/prakharjain/.pub-cache/hosted/pub.dev/dbus-0.7.15",
       "packageUri": "lib/",
       "languageVersion": "2.17"
+    },
+    {
+      "name": "device_info_plus",
+      "rootUri": "file:///Users/prakharjain/.pub-cache/hosted/pub.dev/device_info_plus-13.2.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.10"
+    },
+    {
+      "name": "device_info_plus_platform_interface",
+      "rootUri": "file:///Users/prakharjain/.pub-cache/hosted/pub.dev/device_info_plus_platform_interface-8.1.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.10"
     },
     {
       "name": "fake_async",
@@ -170,6 +206,12 @@
       "languageVersion": "3.1"
     },
     {
+      "name": "flutter_localizations",
+      "rootUri": "file:///opt/homebrew/share/flutter/packages/flutter_localizations",
+      "packageUri": "lib/",
+      "languageVersion": "3.10"
+    },
+    {
       "name": "flutter_plugin_android_lifecycle",
       "rootUri": "file:///Users/prakharjain/.pub-cache/hosted/pub.dev/flutter_plugin_android_lifecycle-2.0.35",
       "packageUri": "lib/",
@@ -194,6 +236,12 @@
       "languageVersion": "3.9"
     },
     {
+      "name": "health",
+      "rootUri": "file:///Users/prakharjain/.pub-cache/hosted/pub.dev/health-13.3.2",
+      "packageUri": "lib/",
+      "languageVersion": "3.8"
+    },
+    {
       "name": "hooks",
       "rootUri": "file:///Users/prakharjain/.pub-cache/hosted/pub.dev/hooks-2.0.2",
       "packageUri": "lib/",
@@ -210,6 +258,12 @@
       "rootUri": "file:///Users/prakharjain/.pub-cache/hosted/pub.dev/http_parser-4.1.2",
       "packageUri": "lib/",
       "languageVersion": "3.4"
+    },
+    {
+      "name": "image",
+      "rootUri": "file:///Users/prakharjain/.pub-cache/hosted/pub.dev/image-4.10.1",
+      "packageUri": "lib/",
+      "languageVersion": "3.0"
     },
     {
       "name": "image_picker",
@@ -261,9 +315,9 @@
     },
     {
       "name": "intl",
-      "rootUri": "file:///Users/prakharjain/.pub-cache/hosted/pub.dev/intl-0.20.3",
+      "rootUri": "file:///Users/prakharjain/.pub-cache/hosted/pub.dev/intl-0.20.2",
       "packageUri": "lib/",
-      "languageVersion": "3.9"
+      "languageVersion": "3.3"
     },
     {
       "name": "jni",
@@ -282,6 +336,12 @@
       "rootUri": "file:///Users/prakharjain/.pub-cache/hosted/pub.dev/jni_util-1.0.0",
       "packageUri": "lib/",
       "languageVersion": "3.3"
+    },
+    {
+      "name": "json_annotation",
+      "rootUri": "file:///Users/prakharjain/.pub-cache/hosted/pub.dev/json_annotation-4.12.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.9"
     },
     {
       "name": "leak_tracker",
@@ -356,6 +416,12 @@
       "languageVersion": "3.4"
     },
     {
+      "name": "path_parsing",
+      "rootUri": "file:///Users/prakharjain/.pub-cache/hosted/pub.dev/path_parsing-1.1.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.3"
+    },
+    {
       "name": "path_provider",
       "rootUri": "file:///Users/prakharjain/.pub-cache/hosted/pub.dev/path_provider-2.1.6",
       "packageUri": "lib/",
@@ -392,6 +458,12 @@
       "languageVersion": "3.2"
     },
     {
+      "name": "pdf",
+      "rootUri": "file:///Users/prakharjain/.pub-cache/hosted/pub.dev/pdf-3.13.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.12"
+    },
+    {
       "name": "petitparser",
       "rootUri": "file:///Users/prakharjain/.pub-cache/hosted/pub.dev/petitparser-7.0.2",
       "packageUri": "lib/",
@@ -410,8 +482,20 @@
       "languageVersion": "3.0"
     },
     {
+      "name": "posix",
+      "rootUri": "file:///Users/prakharjain/.pub-cache/hosted/pub.dev/posix-6.5.2",
+      "packageUri": "lib/",
+      "languageVersion": "3.0"
+    },
+    {
       "name": "pub_semver",
       "rootUri": "file:///Users/prakharjain/.pub-cache/hosted/pub.dev/pub_semver-2.2.1",
+      "packageUri": "lib/",
+      "languageVersion": "3.4"
+    },
+    {
+      "name": "qr",
+      "rootUri": "file:///Users/prakharjain/.pub-cache/hosted/pub.dev/qr-3.0.2",
       "packageUri": "lib/",
       "languageVersion": "3.4"
     },
@@ -538,6 +622,12 @@
     {
       "name": "win32",
       "rootUri": "file:///Users/prakharjain/.pub-cache/hosted/pub.dev/win32-6.4.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.10"
+    },
+    {
+      "name": "win32_registry",
+      "rootUri": "file:///Users/prakharjain/.pub-cache/hosted/pub.dev/win32_registry-3.0.3",
       "packageUri": "lib/",
       "languageVersion": "3.10"
     },

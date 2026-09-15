@@ -7,7 +7,17 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/state/app_state.dart';
 import '../../../core/widgets/glass_container.dart';
 import '../../../core/widgets/avatar_image.dart';
+import '../../../core/widgets/watch_face_tile.dart';
+import '../../../core/widgets/bouncing_tap.dart';
 import '../../appointments/widgets/book_appointment_modal.dart';
+import '../../wearables/widgets/wearable_permissions_sheet.dart';
+import '../../nutrition/screens/nutrition_hydration_screen.dart';
+import '../../womens_health/screens/womens_health_screen.dart';
+import '../../chronic_care/screens/chronic_care_screen.dart';
+import '../../community/screens/community_challenges_screen.dart';
+import '../../insurance/screens/insurance_claims_screen.dart';
+import '../../emergency/screens/emergency_safety_screen.dart';
+import '../../data_portability/screens/data_portability_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   final AppState appState;
@@ -31,6 +41,9 @@ class HomeScreen extends StatelessWidget {
               _buildDailyBalanceHeader(context),
               const SizedBox(height: 20),
 
+              // Clinical Preventive Care Banner (USPSTF / CDC Guidelines)
+              _buildPreventiveCareBanner(context),
+
               // Ambient Hero Card: Tip + Active pill + Weather pill
               _buildAmbientWellnessCard(context),
               const SizedBox(height: 20),
@@ -39,11 +52,11 @@ class HomeScreen extends StatelessWidget {
               _buildTodayStressCard(context),
               const SizedBox(height: 20),
 
-              // Vitals Dashboard (Heart, Sleep, Steps)
+              // Apple Watch-Face Vitals Dashboard (Heart, Sleep, Steps, SpO2)
               _buildVitalsDashboard(context),
               const SizedBox(height: 20),
 
-              // Medication Schedule
+              // Medication Schedule with Animated Strikethrough
               _buildMedicationTracker(context),
               const SizedBox(height: 20),
 
@@ -51,12 +64,116 @@ class HomeScreen extends StatelessWidget {
               _buildUpcomingConsultation(context),
               const SizedBox(height: 20),
 
-              // Quick Access Grid
+              // Quick Access Grid to all Features
               _buildQuickActions(context),
             ],
           ),
         );
       },
+    );
+  }
+
+  /// Clinical Preventive Care Banner (USPSTF / CDC Guidelines)
+  Widget _buildPreventiveCareBanner(BuildContext context) {
+    final activeReminders = appState.preventiveReminders.where((r) => r['isDismissed'] != true).toList();
+    if (activeReminders.isEmpty) return const SizedBox.shrink();
+
+    final reminder = activeReminders.first;
+    final id = reminder['id'] as String;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 20),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF13141F),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+          color: AppColors.accentTeal.withValues(alpha: 0.35),
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.accentTeal.withValues(alpha: 0.15),
+            blurRadius: 20,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppColors.accentTeal.withValues(alpha: 0.2),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.health_and_safety_rounded, color: AppColors.accentTeal, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        (reminder['guideline'] as String? ?? 'USPSTF GUIDELINE').toUpperCase(),
+                        style: const TextStyle(
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.8,
+                          color: AppColors.accentTeal,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        reminder['due'] as String? ?? '',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.white.withValues(alpha: 0.7),
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  reminder['title'] as String? ?? '',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  reminder['status'] as String? ?? '',
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    color: Colors.white.withValues(alpha: 0.75),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.close_rounded, size: 18, color: Colors.white54),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+            onPressed: () => appState.dismissPreventiveReminder(id),
+          ),
+        ],
+      ),
     );
   }
 
@@ -113,10 +230,15 @@ class HomeScreen extends StatelessWidget {
             child: Stack(
               alignment: Alignment.center,
               children: [
-                CustomPaint(
-                  size: const Size(100, 55),
-                  painter: _BalanceArcGaugePainter(
-                    score: appState.dailyBalanceScore,
+                Semantics(
+                  label: 'Daily balance score: ${appState.dailyBalanceScore} out of 100',
+                  child: RepaintBoundary(
+                    child: CustomPaint(
+                      size: const Size(100, 55),
+                      painter: _BalanceArcGaugePainter(
+                        score: appState.dailyBalanceScore,
+                      ),
+                    ),
                   ),
                 ),
                 Positioned(
@@ -510,153 +632,124 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  /// Apple-style Frosted Vitals Dashboard
+  /// Apple Watch-Face-Style Frosted Vitals Dashboard
   Widget _buildVitalsDashboard(BuildContext context) {
-    return GlassContainer(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text("Today's Vitals", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
-              GestureDetector(
-                onTap: appState.isSyncingVitals ? null : () => appState.syncVitals(),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              "Today's Vitals & Wearables",
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            GestureDetector(
+              onTap: () => WearablePermissionsSheet.show(context, appState),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: AppColors.watchFaceDarkBg,
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(
+                    color: (appState.isWearableConnected ? AppColors.accentTeal : AppColors.primaryContainer).withValues(alpha: 0.45),
+                    width: 1.1,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: (appState.isWearableConnected ? AppColors.accentTeal : AppColors.primaryContainer).withValues(alpha: 0.2),
+                      blurRadius: 10,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
                 child: Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
+                    CircleAvatar(
+                      radius: 3.5,
+                      backgroundColor: appState.isWearableConnected ? AppColors.accentTeal : AppColors.primaryContainer,
+                    ),
+                    const SizedBox(width: 6),
                     Text(
-                      appState.isSyncingVitals ? 'Syncing...' : 'Live Sync',
+                      appState.isWearableConnected
+                          ? appState.wearableDeviceName
+                          : (appState.isSyncingVitals ? 'Syncing...' : 'Connect Wearable'),
                       style: const TextStyle(
-                        fontSize: 12,
+                        fontSize: 11,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.primaryContainer,
+                        color: Colors.white,
                       ),
                     ),
                     const SizedBox(width: 4),
                     const Icon(
-                      Icons.sync_rounded,
-                      size: 15,
-                      color: AppColors.primaryContainer,
+                      Icons.watch_rounded,
+                      size: 13,
+                      color: Colors.white70,
                     ),
                   ],
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: _buildVitalTile(
-                  icon: Icons.favorite_rounded,
-                  value: '${appState.restingHeartRate}',
-                  unit: 'bpm',
-                  label: 'Resting Heart',
-                  iconColor: AppColors.accentCoral,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _buildVitalTile(
-                  icon: Icons.bedtime_rounded,
-                  value: appState.sleepDuration,
-                  unit: '',
-                  label: 'Deep & REM',
-                  iconColor: AppColors.primaryContainer,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _buildVitalTile(
-                  icon: Icons.directions_walk_rounded,
-                  value: '${(appState.dailySteps / 1000).toStringAsFixed(1)}k',
-                  unit: '',
-                  label: 'Steps (84%)',
-                  iconColor: AppColors.accentTeal,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildVitalTile({
-    required IconData icon,
-    required String value,
-    required String unit,
-    required String label,
-    required Color iconColor,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.65),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.9),
-          width: 1,
+            ),
+          ],
         ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: iconColor.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(10),
+        const SizedBox(height: 14),
+
+        // 2x2 Watch Face Grid
+        GridView.count(
+          crossAxisCount: 2,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
+          childAspectRatio: 1.18,
+          children: [
+            WatchFaceTile(
+              title: 'Heart Rate',
+              value: '${appState.restingHeartRate}',
+              unit: 'BPM',
+              subtitle: 'Resting • Optimal',
+              icon: Icons.favorite_rounded,
+              glowColor: AppColors.watchHeartRate,
+              onTap: () => appState.syncVitals(),
             ),
-            child: Icon(icon, color: iconColor, size: 16),
-          ),
-          const SizedBox(height: 14),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
-            children: [
-              Flexible(
-                child: Text(
-                  value,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
-                    letterSpacing: -0.5,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              if (unit.isNotEmpty) ...[
-                const SizedBox(width: 2),
-                Text(
-                  unit,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ],
-            ],
-          ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 11,
-              color: AppColors.textSecondary,
-              fontWeight: FontWeight.w500,
+            WatchFaceTile(
+              title: 'Sleep',
+              value: appState.sleepDuration,
+              subtitle: 'Deep & REM • 88% Qual',
+              icon: Icons.bedtime_rounded,
+              glowColor: AppColors.watchSleep,
+              onTap: () => appState.syncVitals(),
             ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
-      ),
+            WatchFaceTile(
+              title: 'Steps',
+              value: '${(appState.dailySteps / 1000).toStringAsFixed(1)}k',
+              unit: '/ 10k',
+              subtitle: '84% of daily goal',
+              icon: Icons.directions_walk_rounded,
+              glowColor: AppColors.watchActivity,
+              onTap: () => appState.syncVitals(),
+            ),
+            WatchFaceTile(
+              title: 'Blood Oxygen',
+              value: '${appState.bloodOxygen}',
+              unit: '%',
+              subtitle: 'SpO2 • Normal',
+              icon: Icons.air_rounded,
+              glowColor: AppColors.watchSpO2,
+              onTap: () => appState.syncVitals(),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
-  /// Medication tracker
+  /// Medication tracker with animated strikethrough and haptic feedback
   Widget _buildMedicationTracker(BuildContext context) {
     return GlassContainer(
       padding: const EdgeInsets.all(20),
@@ -704,12 +797,11 @@ class HomeScreen extends StatelessWidget {
             ...appState.medications.map((med) {
               return Padding(
                 padding: const EdgeInsets.only(bottom: 10),
-                child: Material(
-                  color: Colors.white.withValues(alpha: 0.65),
-                  borderRadius: BorderRadius.circular(18),
-                  child: InkWell(
+                child: BouncingTap(
+                  onTap: () => appState.toggleMedication(med.id),
+                  child: Material(
+                    color: Colors.white.withValues(alpha: 0.65),
                     borderRadius: BorderRadius.circular(18),
-                    onTap: () => appState.toggleMedication(med.id),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                       child: Row(
@@ -734,14 +826,18 @@ class HomeScreen extends StatelessWidget {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  med.name,
+                                AnimatedDefaultTextStyle(
+                                  duration: const Duration(milliseconds: 250),
+                                  curve: Curves.easeInOut,
                                   style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w600,
-                                    color: med.isTaken ? AppColors.textSecondary : AppColors.textPrimary,
-                                    decoration: med.isTaken ? TextDecoration.lineThrough : null,
+                                    fontFamily: 'Plus Jakarta Sans',
+                                    color: med.isTaken ? AppColors.textTertiary : AppColors.textPrimary,
+                                    decoration: med.isTaken ? TextDecoration.lineThrough : TextDecoration.none,
+                                    decorationColor: AppColors.textTertiary,
                                   ),
+                                  child: Text(med.name),
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
@@ -881,18 +977,90 @@ class HomeScreen extends StatelessWidget {
   Widget _buildQuickActions(BuildContext context) {
     final actions = [
       {
+        'title': 'Nutrition & Hydration',
+        'icon': Icons.local_drink_rounded,
+        'color': AppColors.accentTeal,
+        'action': () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => NutritionHydrationScreen(appState: appState)),
+        ),
+      },
+      {
+        'title': "Women's Health",
+        'icon': Icons.favorite_border_rounded,
+        'color': AppColors.accentCoral,
+        'action': () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => WomensHealthScreen(appState: appState)),
+        ),
+      },
+      {
+        'title': 'Chronic Care',
+        'icon': Icons.monitor_heart_rounded,
+        'color': AppColors.accentAmber,
+        'action': () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => ChronicCareScreen(appState: appState)),
+        ),
+      },
+      {
+        'title': 'Challenges & Streaks',
+        'icon': Icons.emoji_events_rounded,
+        'color': AppColors.primaryContainer,
+        'action': () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => CommunityChallengesScreen(appState: appState)),
+        ),
+      },
+      {
+        'title': 'Insurance & Claims',
+        'icon': Icons.shield_rounded,
+        'color': AppColors.accentTeal,
+        'action': () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => InsuranceClaimsScreen(appState: appState)),
+        ),
+      },
+      {
+        'title': 'Emergency Medical ID',
+        'icon': Icons.emergency_rounded,
+        'color': const Color(0xFFEF4444),
+        'action': () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => EmergencySafetyScreen(appState: appState)),
+        ),
+      },
+      {
+        'title': 'Export FHIR & PDF',
+        'icon': Icons.file_download_rounded,
+        'color': const Color(0xFF6366F1),
+        'action': () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => DataPortabilityScreen(appState: appState)),
+        ),
+      },
+      {
+        'title': 'Apple HealthKit Sync',
+        'icon': Icons.watch_rounded,
+        'color': const Color(0xFFEC4899),
+        'action': () => WearablePermissionsSheet.show(context, appState),
+      },
+      {
         'title': 'Feeling Tracker',
         'icon': Icons.mood_rounded,
+        'color': AppColors.primaryContainer,
         'action': () => appState.setTabIndex(1),
       },
       {
         'title': 'Symptom Triage',
         'icon': Icons.healing_rounded,
+        'color': AppColors.accentCoral,
         'action': () => appState.setTabIndex(2),
       },
       {
         'title': 'Book Specialist',
         'icon': Icons.calendar_month_rounded,
+        'color': AppColors.accentTeal,
         'action': () {
           appState.setTabIndex(3);
           BookAppointmentModal.show(context, appState);
@@ -901,6 +1069,7 @@ class HomeScreen extends StatelessWidget {
       {
         'title': 'Lab Interpreter',
         'icon': Icons.biotech_rounded,
+        'color': const Color(0xFF8B5CF6),
         'action': () => appState.setTabIndex(4),
       },
     ];
@@ -908,7 +1077,7 @@ class HomeScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Quick Access', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+        const Text('Quick Access & Clinical Care', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
         const SizedBox(height: 12),
         GridView.builder(
           shrinkWrap: true,
@@ -922,13 +1091,14 @@ class HomeScreen extends StatelessWidget {
           itemCount: actions.length,
           itemBuilder: (context, index) {
             final act = actions[index];
-            return Material(
-              color: Colors.white.withValues(alpha: 0.7),
-              borderRadius: BorderRadius.circular(18),
-              elevation: 0,
-              child: InkWell(
+            final color = (act['color'] as Color?) ?? AppColors.primaryContainer;
+
+            return BouncingTap(
+              onTap: act['action'] as VoidCallback,
+              child: Material(
+                color: Colors.white.withValues(alpha: 0.72),
                 borderRadius: BorderRadius.circular(18),
-                onTap: act['action'] as VoidCallback,
+                elevation: 0,
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   decoration: BoxDecoration(
@@ -943,19 +1113,22 @@ class HomeScreen extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.all(7),
                         decoration: BoxDecoration(
-                          color: AppColors.primaryContainer.withValues(alpha: 0.12),
+                          color: color.withValues(alpha: 0.14),
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: Icon(act['icon'] as IconData, color: AppColors.primaryContainer, size: 18),
+                        child: Icon(act['icon'] as IconData, color: color, size: 18),
                       ),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
                           act['title'] as String,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                             color: AppColors.textPrimary,
+                            height: 1.15,
                           ),
                         ),
                       ),

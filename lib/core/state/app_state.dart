@@ -52,12 +52,146 @@ class AppState extends ChangeNotifier {
 
   int unreadNotificationsCount = 0;
   int restingHeartRate = 72;
+  int activeHeartRate = 114;
+  int hrvMs = 58;
   String sleepDuration = '7h 10m';
+  String deepSleep = '1h 45m';
+  String remSleep = '2h 10m';
+  String lightSleep = '3h 15m';
   double dailySteps = 8420;
   int bloodOxygen = 98;
   String bloodPressure = '118/76';
   bool isSyncingVitals = false;
   DateTime lastSyncedTime = DateTime.now().subtract(const Duration(minutes: 8));
+
+  // 1. Real Wearables State
+  bool isWearableConnected = true;
+  String wearableDeviceName = 'Apple Watch Series 9';
+  String wearableSource = 'Apple HealthKit';
+  bool isRealHardware = false;
+
+  // 2. Nutrition & Hydration
+  int dailyHydrationMl = 1850;
+  int targetHydrationMl = 2500;
+  final List<Map<String, dynamic>> loggedMeals = [
+    {
+      'id': 'meal-1',
+      'title': 'Wild Salmon Bowl with Quinoa',
+      'category': 'Lean Protein & Whole Grains',
+      'time': '12:45 PM',
+      'sodium': 'Moderate (420mg)',
+      'insight': 'Anti-inflammatory omega-3 support for cardiovascular recovery.',
+      'calories': '~540 kcal',
+    },
+    {
+      'id': 'meal-2',
+      'title': 'Greek Yogurt & Berries',
+      'category': 'Fermented Dairy & Antioxidants',
+      'time': '08:30 AM',
+      'sodium': 'Low (90mg)',
+      'insight': 'Gut microbiome diversity and cellular antioxidant load.',
+      'calories': '~260 kcal',
+    },
+  ];
+
+  // 3. Women's Health
+  int cycleDay = 14;
+  String cyclePhase = 'Ovulatory Phase';
+  bool isPregnancyMode = false;
+  final List<String> cycleSymptoms = ['Mild Cramps', 'High Energy', 'Good Mood'];
+
+  // 4. Chronic Condition Companion (Diabetes & Hypertension)
+  int bloodGlucoseMgDl = 102;
+  String fastingStatus = 'Fasting (Morning)';
+  final List<Map<String, dynamic>> glucoseHistory = [
+    {'time': 'Today, 07:30 AM', 'val': 102, 'status': 'Fasting (Normal)'},
+    {'time': 'Yesterday, 08:00 PM', 'val': 124, 'status': '2h Post-Prandial'},
+    {'time': 'Yesterday, 07:45 AM', 'val': 98, 'status': 'Fasting (Normal)'},
+  ];
+  int systolicBp = 118;
+  int diastolicBp = 76;
+  final List<Map<String, dynamic>> bpHistory = [
+    {'time': 'Today, 08:00 AM', 'sys': 118, 'dia': 76, 'category': 'Optimal (AHA)'},
+    {'time': 'Yesterday, 06:30 PM', 'sys': 122, 'dia': 78, 'category': 'Normal (AHA)'},
+    {'time': '2 days ago', 'sys': 116, 'dia': 74, 'category': 'Optimal (AHA)'},
+  ];
+
+  // 5. Preventive Care Engine
+  final List<Map<String, dynamic>> preventiveReminders = [
+    {
+      'id': 'prev-1',
+      'title': 'Comprehensive Metabolic Panel (CMP)',
+      'due': 'Due in 2 weeks',
+      'status': 'Scheduled with Dr. Priya Sharma',
+      'guideline': 'USPSTF Hepatic & Lipid Guideline',
+      'isDismissed': false,
+    },
+    {
+      'id': 'prev-2',
+      'title': 'Annual Influenza Vaccine',
+      'due': 'Recommended Autumn 2026',
+      'status': 'Eligible at local pharmacy',
+      'guideline': 'CDC Immunization Schedule',
+      'isDismissed': false,
+    },
+  ];
+
+  // 6. Community & Neutral Health Gamification
+  int medicationStreakDays = 18;
+  int loggingStreakDays = 12;
+  int stepStreakDays = 7;
+  final List<Map<String, dynamic>> activeChallenges = [
+    {
+      'id': 'chal-1',
+      'title': '7-Day Mindful Hydration',
+      'metric': 'Daily 2,000ml logged',
+      'progress': 0.85,
+      'daysLeft': '2 days left',
+      'participants': 'Daria, Elena, Jordan',
+    },
+    {
+      'id': 'chal-2',
+      'title': 'Weekend 10k Steps Walk',
+      'metric': 'Total 20,000 weekend steps',
+      'progress': 0.65,
+      'daysLeft': 'Saturday start',
+      'participants': 'Family Care Circle',
+    },
+  ];
+
+  // 7. Insurance & Claims Tracking
+  final List<Map<String, dynamic>> claims = [
+    {
+      'id': 'CLM-88410',
+      'provider': 'BlueCross Platinum Health',
+      'date': '02 Jan 2026',
+      'service': 'Liver Panel & Hepatic Biomarkers',
+      'billed': '\$380.00',
+      'covered': '\$345.00',
+      'patientPaid': '\$35.00',
+      'status': 'Approved',
+    },
+    {
+      'id': 'CLM-79124',
+      'provider': 'BlueCross Platinum Health',
+      'date': '18 Dec 2025',
+      'service': 'Specialist Consultation (Dr. Priya Sharma)',
+      'billed': '\$260.00',
+      'covered': '\$240.00',
+      'patientPaid': '\$20.00',
+      'status': 'Processed',
+    },
+  ];
+
+  // 8. Emergency Safety & Medical ID
+  final List<String> allergies = ['Penicillin (Hives)', 'Sulfa Drugs'];
+  final List<String> chronicConditions = ['Mild Hepatic Elevation (Under Observation)'];
+  final List<String> emergencyMedications = ['CoQ10 100mg', 'Vitamin D3 2000 IU'];
+  bool isFallDetectionActive = true;
+
+  // 9. Multi-Language & Accessibility
+  Locale currentLocale = const Locale('en');
+  bool isLargeTextMode = false;
 
   final List<MedicationItem> medications = [];
   final List<Appointment> appointments = [];
@@ -594,5 +728,118 @@ class AppState extends ChangeNotifier {
       recommendedSpecialty: 'General Practice',
       audioNarrationTranscript: 'Welcome. Describe your symptoms to begin triage.',
     );
+  }
+
+  // 1. Wearables Actions
+  void connectWearable(String deviceName, String source) {
+    isWearableConnected = true;
+    wearableDeviceName = deviceName;
+    wearableSource = source;
+    lastSyncedTime = DateTime.now();
+    _persistCurrentUserData();
+    notifyListeners();
+  }
+
+  void disconnectWearable() {
+    isWearableConnected = false;
+    _persistCurrentUserData();
+    notifyListeners();
+  }
+
+  // 2. Nutrition & Hydration Actions
+  void addHydration(int ml) {
+    dailyHydrationMl = (dailyHydrationMl + ml).clamp(0, 5000);
+    _persistCurrentUserData();
+    notifyListeners();
+  }
+
+  void addMeal(Map<String, dynamic> meal) {
+    loggedMeals.insert(0, meal);
+    _persistCurrentUserData();
+    notifyListeners();
+  }
+
+  // 3. Women's Health Actions
+  void logCycleSymptom(String symptom) {
+    if (!cycleSymptoms.contains(symptom)) {
+      cycleSymptoms.add(symptom);
+    } else {
+      cycleSymptoms.remove(symptom);
+    }
+    _persistCurrentUserData();
+    notifyListeners();
+  }
+
+  void togglePregnancyMode() {
+    isPregnancyMode = !isPregnancyMode;
+    _persistCurrentUserData();
+    notifyListeners();
+  }
+
+  // 4. Chronic Care Actions
+  void logGlucose(int mgDl, String status) {
+    bloodGlucoseMgDl = mgDl;
+    fastingStatus = status;
+    glucoseHistory.insert(0, {
+      'time': 'Just now',
+      'val': mgDl,
+      'status': status,
+    });
+    _persistCurrentUserData();
+    notifyListeners();
+  }
+
+  void logBloodPressure(int sys, int dia) {
+    systolicBp = sys;
+    diastolicBp = dia;
+    bloodPressure = '$sys/$dia';
+    bpHistory.insert(0, {
+      'time': 'Just now',
+      'sys': sys,
+      'dia': dia,
+      'category': sys < 120 && dia < 80 ? 'Optimal (AHA)' : 'Elevated (AHA)',
+    });
+    _persistCurrentUserData();
+    notifyListeners();
+  }
+
+  // 5. Preventive Care Actions
+  void dismissPreventiveReminder(String id) {
+    final idx = preventiveReminders.indexWhere((r) => r['id'] == id);
+    if (idx != -1) {
+      preventiveReminders[idx]['isDismissed'] = true;
+      _persistCurrentUserData();
+      notifyListeners();
+    }
+  }
+
+  // 6. Community Actions
+  void joinChallenge(String id) {
+    notifyListeners();
+  }
+
+  // 7. Insurance Claims Actions
+  void submitClaim(Map<String, dynamic> claim) {
+    claims.insert(0, claim);
+    _persistCurrentUserData();
+    notifyListeners();
+  }
+
+  // 8. Emergency Safety Actions
+  void toggleFallDetection() {
+    isFallDetectionActive = !isFallDetectionActive;
+    _persistCurrentUserData();
+    notifyListeners();
+  }
+
+  // 9. Accessibility & Localization Actions
+  void toggleLocale() {
+    currentLocale = currentLocale.languageCode == 'en' ? const Locale('hi') : const Locale('en');
+    notifyListeners();
+  }
+
+  void toggleLargeTextMode() {
+    isLargeTextMode = !isLargeTextMode;
+    notifyListeners();
   }
 }
