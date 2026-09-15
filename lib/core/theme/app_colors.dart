@@ -73,6 +73,8 @@ class AppColors {
   static const Color accentCoral = Color(0xFFFF5E7E);      // Attention / flagged
   static const Color accentTeal = Color(0xFF28C78B);       // Normal / verified / optimal
   static const Color accentGold = Color(0xFFFFB338);       // Warning / alert
+  static const Color success = accentTeal;
+  static const Color warning = accentGold;
   static const Color accentAmber = Color(0xFFFFB300);      // Glucose / metabolic amber
   static const Color accentPurple = Color(0xFF8B5CF6);     // AI neural vibe
   static const Color accentSky = Color(0xFF38BDF8);        // Hydration / breath

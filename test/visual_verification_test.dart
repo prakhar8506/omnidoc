@@ -14,6 +14,8 @@ import 'package:health_companion/features/womens_health/screens/womens_health_sc
 import 'package:health_companion/features/womens_health/screens/pregnancy_dashboard_screen.dart';
 import 'package:health_companion/features/fitness/widgets/todays_movement_panel.dart';
 import 'package:health_companion/features/onboarding/screens/onboarding_baseline_screen.dart';
+import 'package:health_companion/features/home/screens/home_screen.dart';
+import 'package:health_companion/features/consent/screens/permission_center_screen.dart';
 
 void main() {
   setUp(() {
@@ -246,6 +248,84 @@ void main() {
     await captureWidget(
       OnboardingBaselineScreen(appState: appState),
       'screen_onboarding_baseline.png',
+    );
+  });
+
+  testWidgets('Capture visual verification of Recovery OS Phase 0 (Today, Permissions, Provisional)', (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(800, 1400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+
+    final appState = AppState();
+    await appState.register(
+      fullName: 'Daria Jenkins',
+      email: 'daria.jenkins@gmail.com',
+      password: 'pass1234',
+    );
+    appState.seedDemoEvents(days: 14);
+
+    final boundaryKey = GlobalKey();
+
+    Future<void> captureWidget(Widget widget, String fileName, {Size? size}) async {
+      await tester.pumpWidget(
+        RepaintBoundary(
+          key: boundaryKey,
+          child: MaterialApp(
+            theme: ThemeData.dark().copyWith(
+              scaffoldBackgroundColor: const Color(0xFF030712),
+            ),
+            home: Scaffold(
+              backgroundColor: const Color(0xFF030712),
+              body: SizedBox(
+                width: size?.width ?? 800,
+                height: size?.height ?? 1400,
+                child: widget,
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+      await tester.runAsync(() async {
+        final boundary = boundaryKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
+        final image = await boundary.toImage(pixelRatio: 1.0);
+        final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+        final buffer = byteData!.buffer.asUint8List();
+        final target = File('/Users/prakharjain/.gemini/antigravity-ide/brain/566ad6a4-2a3f-4c55-a7a0-c61230ae1b40/$fileName');
+        target.writeAsBytesSync(buffer);
+      });
+    }
+
+    // 1. Recovery OS Mature Baseline Today Screen (High confidence, drivers, action plan, tri-stats)
+    await captureWidget(
+      HomeScreen(appState: appState),
+      'screen_recovery_today.png',
+      size: const Size(800, 1600),
+    );
+
+    // 2. Permission Center Screen (Sensor coverage %, granular toggles, gap warnings)
+    await captureWidget(
+      PermissionCenterScreen(appState: appState),
+      'screen_permission_center.png',
+      size: const Size(800, 1600),
+    );
+
+    // 3. Provisional State Screen (< 7 days data)
+    final freshState = AppState();
+    await freshState.register(
+      fullName: 'Fresh User',
+      email: 'fresh@user.com',
+      password: 'pass1234',
+    );
+    freshState.historicalDaysCount = 0;
+    await freshState.eventStore.clear();
+    freshState.recalculateRecoveryEngine();
+
+    await captureWidget(
+      HomeScreen(appState: freshState),
+      'screen_recovery_provisional.png',
+      size: const Size(800, 1600),
     );
   });
 }

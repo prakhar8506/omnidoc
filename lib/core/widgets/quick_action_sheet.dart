@@ -8,6 +8,7 @@ import '../../features/appointments/widgets/book_appointment_modal.dart';
 import '../../features/ai_assistant/widgets/ai_chat_sheet.dart';
 import '../../features/womens_health/screens/womens_health_screen.dart';
 import '../../features/onboarding/screens/onboarding_baseline_screen.dart';
+import '../../features/consent/screens/permission_center_screen.dart';
 
 class QuickActionSheet extends StatelessWidget {
   final AppState appState;
@@ -180,6 +181,23 @@ class QuickActionSheet extends StatelessWidget {
                         behavior: SnackBarBehavior.floating,
                         backgroundColor: AppColors.surfaceCardDark,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 12),
+                _buildActionItem(
+                  context,
+                  icon: Icons.shield_rounded,
+                  title: 'Privacy & Sensor Permissions',
+                  subtitle: 'Coverage ${appState.dataQualityService.computeDataQuality(appState.consentManager).coveragePercentage}% • Granular category toggles',
+                  color: AppColors.accentTeal,
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => PermissionCenterScreen(appState: appState),
                       ),
                     );
                   },

@@ -10,6 +10,14 @@ import '../services/auth_service.dart';
 import '../services/user_data_service.dart';
 import '../services/report_interpreter_service.dart';
 import '../theme/app_colors.dart';
+import '../data/health_event.dart';
+import '../data/event_store.dart';
+import '../consent/consent_manager.dart';
+import '../domains/baseline_engine.dart';
+import '../domains/data_quality_service.dart';
+import '../domains/recovery_model.dart';
+import '../analytics/analytics_service.dart';
+import '../../features/wearables/services/wearable_service.dart';
 
 class AppState extends ChangeNotifier {
   final AuthService _auth = AuthService();
@@ -63,6 +71,20 @@ class AppState extends ChangeNotifier {
   String bloodPressure = '118/76';
   bool isSyncingVitals = false;
   DateTime lastSyncedTime = DateTime.now().subtract(const Duration(minutes: 8));
+
+  // --- Phase 0: Recovery OS Foundation ---
+  final ConsentManager consentManager = ConsentManager();
+  final EventStore eventStore = EventStore();
+  final DataQualityService dataQualityService = DataQualityService();
+  final AnalyticsService analytics = AnalyticsService();
+
+  RecoveryScoreResult? recoveryResult;
+  SleepScoreResult? sleepResult;
+  LoadScoreResult? loadResult;
+  StressScoreResult? stressResult;
+  BaselineResult? hrvBaseline;
+  BaselineResult? rhrBaseline;
+  int historicalDaysCount = 14; // Default to mature baseline for Daria Jenkins demo
 
   // 1. Real Wearables State
   bool isWearableConnected = true;
@@ -408,6 +430,7 @@ class AppState extends ChangeNotifier {
 
   AppState() {
     activeTriage = _defaultTriage();
+    seedDemoEvents(days: 14);
   }
 
   Future<void> hydrate() async {
@@ -917,36 +940,112 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  // --- PART 5 & 6: Recovery Engine & Personalized Movement ---
+  // --- Phase 0: Recovery OS Scoring & Baseline Engine ---
   void recalculateRecoveryEngine() {
-    int score = 50;
-    if (restingHeartRate <= 65) {
-      score += 20;
-    } else if (restingHeartRate <= 72) {
-      score += 10;
-    }
+    // 1. Compute Baselines from stored HealthEvents
+    final hrvEvents = eventStore.getEventsForMetric('heart_rate_variability');
+    final rhrEvents = eventStore.getEventsForMetric('resting_heart_rate');
 
-    if (hrvMs >= 55) {
-      score += 20;
-    } else if (hrvMs >= 45) {
-      score += 10;
-    }
+    hrvBaseline = BaselineEngine.computeBaseline('heart_rate_variability', hrvEvents);
+    rhrBaseline = BaselineEngine.computeBaseline('resting_heart_rate', rhrEvents);
 
-    if (sleepDuration.contains('7h') || sleepDuration.contains('8h')) {
-      score += 15;
-    }
+    // 2. Evaluate Data Quality & Sensor Coverage
+    final qualityResult = dataQualityService.computeDataQuality(
+      consentManager,
+      recentEvents: eventStore.getAllEvents(),
+      totalHistoricalDays: historicalDaysCount,
+    );
 
-    recoveryScore = score.clamp(35, 98);
-    if (recoveryScore >= 75) {
-      recoveryStatus = 'Primed for Movement';
-    } else if (recoveryScore >= 55) {
-      recoveryStatus = 'Moderate Recovery';
-    } else {
-      recoveryStatus = 'Recovery Needed';
-    }
+    // Parse sleep duration into hours
+    double sleepHours = 7.17; // default 7h 10m
+    try {
+      final parts = sleepDuration.split(' ');
+      final h = double.tryParse(parts[0].replaceAll('h', '')) ?? 7.0;
+      final m = parts.length > 1 ? (double.tryParse(parts[1].replaceAll('m', '')) ?? 10.0) : 0.0;
+      sleepHours = h + (m / 60.0);
+    } catch (_) {}
 
+    // 3. Compute Recovery v0 Score
+    recoveryResult = RecoveryModel.computeRecovery(
+      todayHrv: consentManager.isCategoryEnabled(PermissionCategory.hrv) ? hrvMs.toDouble() : null,
+      todayRestingHr: consentManager.isCategoryEnabled(PermissionCategory.heartRate) ? restingHeartRate.toDouble() : null,
+      todaySleepHours: consentManager.isCategoryEnabled(PermissionCategory.sleep) ? sleepHours : null,
+      todayRespiratoryRate: consentManager.isCategoryEnabled(PermissionCategory.respiratoryRate) ? 14.5 : null,
+      subjectiveFeeling: selectedMood,
+      hrvBaseline: hrvBaseline!,
+      rhrBaseline: rhrBaseline!,
+      totalHistoricalDays: historicalDaysCount,
+      baselineConfidence: qualityResult.confidence,
+    );
+
+    // 4. Compute Sleep Score
+    sleepResult = RecoveryModel.computeSleep(
+      sleepHours: consentManager.isCategoryEnabled(PermissionCategory.sleep) ? sleepHours : null,
+      consistencyPercentage: 88.0,
+      validNightsCount: historicalDaysCount,
+    );
+
+    // 5. Compute Adaptive Load Target
     dailyStrainScore = (dailySteps / 900).clamp(3.0, 18.5);
+    loadResult = RecoveryModel.computeLoadTarget(
+      recoveryScore: recoveryResult!.score,
+      currentStrain: dailyStrainScore,
+    );
+
+    // 6. Compute Physiological Stress
+    stressResult = RecoveryModel.computeStress(
+      hrvZScore: hrvBaseline?.computeZScore(hrvMs.toDouble()),
+      rhrZScore: rhrBaseline?.computeZScore(restingHeartRate.toDouble()),
+      hasSensorCoverage: consentManager.isCategoryEnabled(PermissionCategory.hrv),
+    );
+
+    // Synchronize legacy variables for backward-compatibility
+    recoveryScore = recoveryResult!.score;
+    recoveryStatus = recoveryResult!.readinessState;
+    dailyBalanceScore = recoveryScore;
+    balanceStatus = recoveryResult!.readinessState;
+
+    analytics.logScoreViewed(
+      scoreType: 'recovery',
+      confidence: recoveryResult!.confidence.name,
+    );
+
     notifyListeners();
+  }
+
+  void onPermissionToggled(PermissionCategory category, bool isEnabled) {
+    analytics.logPermissionToggled(category: category.name, isEnabled: isEnabled);
+    recalculateRecoveryEngine();
+    notifyListeners();
+  }
+
+  void seedDemoEvents({int days = 14}) {
+    historicalDaysCount = days;
+    final now = DateTime.now();
+    for (int i = 0; i < days; i++) {
+      final day = now.subtract(Duration(days: i + 1));
+      eventStore.recordEvent(HealthEvent(
+        metric: 'heart_rate_variability',
+        value: 58.0 + (i % 5) * 2.0 - (i % 3) * 1.5,
+        unit: 'ms',
+        start: day,
+        end: day.add(const Duration(hours: 8)),
+        source: 'healthkit',
+        sourceRecordId: 'demo-hrv-$i',
+        quality: 0.95,
+      ));
+      eventStore.recordEvent(HealthEvent(
+        metric: 'resting_heart_rate',
+        value: 58.0 + (i % 4) * 1.5 - (i % 2) * 2.0,
+        unit: 'bpm',
+        start: day,
+        end: day.add(const Duration(hours: 8)),
+        source: 'healthkit',
+        sourceRecordId: 'demo-rhr-$i',
+        quality: 0.95,
+      ));
+    }
+    recalculateRecoveryEngine();
   }
 
   Map<String, dynamic> getTodaysMovementSuggestion() {
@@ -1021,21 +1120,7 @@ class AppState extends ChangeNotifier {
   }
 
   void _recalculateBalance() {
-    int score = 70;
-    if (dailySteps > 8000) score += 5;
-    if (restingHeartRate < 75) score += 3;
-    if (selectedMood == 'Energetic' || selectedMood == 'Radiant') score += 4;
-    if (selectedMood == 'Calm' || selectedMood == 'Relaxed') score += 3;
-    if (selectedMood == 'Tired') score -= 4;
-
-    dailyBalanceScore = score.clamp(40, 99);
-    if (dailyBalanceScore >= 75) {
-      balanceStatus = 'Good balance';
-    } else if (dailyBalanceScore >= 60) {
-      balanceStatus = 'Moderate balance';
-    } else {
-      balanceStatus = 'Needs attention';
-    }
+    recalculateRecoveryEngine();
   }
 
   void clearNotifications() {
@@ -1048,13 +1133,17 @@ class AppState extends ChangeNotifier {
     isSyncingVitals = true;
     notifyListeners();
     await Future.delayed(const Duration(milliseconds: 700));
+
+    final events = await WearableService.ingestEvents(consentManager: consentManager);
+    await eventStore.recordEvents(events);
+
     restingHeartRate = 70 + (dailySteps.toInt() % 4);
     dailySteps += 350;
     sleepDuration = '7h 45m';
     bloodPressure = '116/74';
     lastSyncedTime = DateTime.now();
     isSyncingVitals = false;
-    _recalculateBalance();
+    recalculateRecoveryEngine();
     await _persistCurrentUserData();
     notifyListeners();
   }

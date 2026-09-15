@@ -1,4 +1,3 @@
-import 'dart:math' as math;
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -16,8 +15,12 @@ import '../../womens_health/screens/womens_health_screen.dart';
 import '../../chronic_care/screens/chronic_care_screen.dart';
 import '../../community/screens/community_challenges_screen.dart';
 import '../../insurance/screens/insurance_claims_screen.dart';
-import '../../emergency/screens/emergency_safety_screen.dart';
 import '../../data_portability/screens/data_portability_screen.dart';
+import '../../consent/screens/permission_center_screen.dart';
+import '../../emergency/screens/emergency_safety_screen.dart';
+import '../../../core/domains/baseline_engine.dart';
+import '../../../core/domains/recovery_model.dart';
+import '../../../core/domains/data_quality_service.dart';
 
 class HomeScreen extends StatelessWidget {
   final AppState appState;
@@ -37,8 +40,20 @@ class HomeScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Reference Screen 1 Header: Daily Balance & Circular Gauge
-              _buildDailyBalanceHeader(context),
+              // Recovery OS Phase 0: Header with Permission Center link
+              _buildRecoveryHeader(context),
+              const SizedBox(height: 16),
+
+              // Dominant Recovery Card (Score + Confidence + Drivers + One Action Plan)
+              _buildDominantRecoveryCard(context),
+              const SizedBox(height: 16),
+
+              // Tri-Stat Row: Sleep, Load, Stress
+              _buildTriStatCards(context),
+              const SizedBox(height: 16),
+
+              // Action Buttons ([Log How You Feel], [Review Week])
+              _buildRecoveryActionRow(context),
               const SizedBox(height: 20),
 
               // Clinical Preventive Care Banner (USPSTF / CDC Guidelines)
@@ -177,8 +192,12 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  /// Screen 1 Header: "Daily Balance" with semi-circular balance gauge ("78 / 100", "Good balance")
-  Widget _buildDailyBalanceHeader(BuildContext context) {
+  Widget _buildRecoveryHeader(BuildContext context) {
+    final quality = appState.dataQualityService.computeDataQuality(
+      appState.consentManager,
+      totalHistoricalDays: appState.historicalDaysCount,
+    );
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -197,89 +216,501 @@ class HomeScreen extends StatelessWidget {
               ),
               const SizedBox(height: 2),
             ],
-            Text('Daily Balance', style: AppTypography.editorialLg),
-            const SizedBox(height: 4),
-            Text(
-              'Your body state today',
-              style: AppTypography.bodyMd.copyWith(color: AppColors.textSecondary),
-            ),
+            Text('Recovery OS', style: AppTypography.editorialLg),
           ],
         ),
-        // Semi-circular gauge (Reference: "78 / 100", "Good balance")
         GestureDetector(
-          onTap: () => appState.setTabIndex(1), // Open feeling journal
-          child: Container(
-            width: 110,
-            height: 72,
-            padding: const EdgeInsets.fromLTRB(6, 4, 6, 2),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.75),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: Colors.white,
-                width: 1.2,
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => PermissionCenterScreen(appState: appState),
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.primaryContainer.withValues(alpha: 0.12),
-                  blurRadius: 18,
-                  offset: const Offset(0, 6),
+            );
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.2),
+                width: 1,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  quality.coveragePercentage >= 75 ? Icons.shield_rounded : Icons.shield_outlined,
+                  size: 14,
+                  color: quality.coveragePercentage >= 75 ? AppColors.success : AppColors.warning,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  '${quality.coveragePercentage}% Coverage',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
               ],
             ),
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                Semantics(
-                  label: 'Daily balance score: ${appState.dailyBalanceScore} out of 100',
-                  child: RepaintBoundary(
-                    child: CustomPaint(
-                      size: const Size(100, 55),
-                      painter: _BalanceArcGaugePainter(
-                        score: appState.dailyBalanceScore,
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Dominant Recovery Hero Card: Score + Confidence + Drivers + One Clear Action Plan
+  Widget _buildDominantRecoveryCard(BuildContext context) {
+    final recovery = appState.recoveryResult ??
+        RecoveryModel.computeRecovery(
+          todayHrv: appState.hrvMs.toDouble(),
+          todayRestingHr: appState.restingHeartRate.toDouble(),
+          todaySleepHours: 7.2,
+          todayRespiratoryRate: 14.5,
+          subjectiveFeeling: appState.selectedMood,
+          hrvBaseline: appState.hrvBaseline ?? BaselineEngine.computeBaseline('heart_rate_variability', []),
+          rhrBaseline: appState.rhrBaseline ?? BaselineEngine.computeBaseline('resting_heart_rate', []),
+          totalHistoricalDays: appState.historicalDaysCount,
+          baselineConfidence: ScoreConfidence.high,
+        );
+
+    final isProvisional = recovery.isProvisional;
+    final confLabel = recovery.confidence == ScoreConfidence.high
+        ? 'High confidence'
+        : (recovery.confidence == ScoreConfidence.moderate ? 'Moderate confidence' : 'Provisional');
+
+    final confColor = recovery.confidence == ScoreConfidence.high
+        ? AppColors.success
+        : (recovery.confidence == ScoreConfidence.moderate ? const Color(0xFF38BDF8) : AppColors.warning);
+
+    return GlassContainer(
+      padding: const EdgeInsets.all(22),
+      borderRadius: 26,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Top Row: Recovery Title, Readiness State, and Confidence Pill
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryContainer.withValues(alpha: 0.15),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.bolt_rounded, size: 16, color: AppColors.primaryContainer),
+                  ),
+                  const SizedBox(width: 8),
+                  const Text('Recovery', style: AppTypography.titleMd),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: confColor.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(color: confColor.withValues(alpha: 0.25)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      isProvisional ? Icons.info_outline_rounded : Icons.check_circle_rounded,
+                      size: 12,
+                      color: confColor,
+                    ),
+                    const SizedBox(width: 5),
+                    Text(
+                      confLabel,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: confColor,
                       ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+
+          // Score & Readiness Hero Display
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                '${recovery.score}',
+                style: const TextStyle(
+                  fontSize: 52,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textPrimary,
+                  height: 1.0,
+                  letterSpacing: -1.5,
+                ),
+              ),
+              const SizedBox(width: 4),
+              const Padding(
+                padding: EdgeInsets.only(bottom: 8),
+                child: Text(
+                  '/100',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textTertiary,
+                  ),
+                ),
+              ),
+              const Spacer(),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceBright,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    recovery.readinessState,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
                     ),
                   ),
                 ),
-                Positioned(
-                  bottom: 2,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            '${appState.dailyBalanceScore}',
-                            style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.textPrimary,
-                            ),
-                          ),
-                          const Text(
-                            '/100',
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w500,
-                              color: AppColors.textTertiary,
-                            ),
-                          ),
-                        ],
+              ),
+            ],
+          ),
+
+          // Provisional baseline alert notice if under 7 days
+          if (isProvisional) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: AppColors.warning.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.warning.withValues(alpha: 0.2)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.calendar_today_rounded, size: 14, color: AppColors.warning),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Provisional Score • Establishing baseline (${appState.historicalDaysCount} of 14 days recorded)',
+                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.warning),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          const SizedBox(height: 16),
+
+          // Recommended Action Box (One clear plan)
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: AppColors.primaryContainer.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.primaryContainer.withValues(alpha: 0.2)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.flag_rounded, size: 14, color: AppColors.primaryContainer),
+                    const SizedBox(width: 6),
+                    Text(
+                      'YOUR PLAN FOR TODAY',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.primaryContainer.withValues(alpha: 0.9),
+                        letterSpacing: 0.8,
                       ),
-                      Text(
-                        appState.balanceStatus,
-                        style: const TextStyle(
-                          fontSize: 9,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.primaryContainer,
-                        ),
-                      ),
-                    ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  recovery.recommendedAction,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                    height: 1.3,
                   ),
                 ),
               ],
             ),
+          ),
+          const SizedBox(height: 16),
+
+          // Drivers Section ("What influenced today")
+          const Text(
+            'What influenced today',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Column(
+            children: recovery.drivers.map((driver) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: Row(
+                  children: [
+                    Icon(
+                      driver.isPositive ? Icons.add_circle_outline_rounded : Icons.remove_circle_outline_rounded,
+                      size: 15,
+                      color: driver.isPositive ? AppColors.success : AppColors.warning,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        driver.label,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      driver.impact,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: driver.isPositive ? AppColors.success : AppColors.warning,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 14),
+
+          // Target Readiness Mode Selector ([Push] [Maintain] [Recover])
+          Row(
+            children: [
+              Expanded(child: _buildReadinessPill('Push', recovery.score >= 75)),
+              const SizedBox(width: 8),
+              Expanded(child: _buildReadinessPill('Maintain', recovery.score >= 55 && recovery.score < 75)),
+              const SizedBox(width: 8),
+              Expanded(child: _buildReadinessPill('Recover', recovery.score < 55)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReadinessPill(String label, bool isActive) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      decoration: BoxDecoration(
+        color: isActive ? AppColors.textPrimary : Colors.white.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isActive ? Colors.transparent : Colors.white.withValues(alpha: 0.15),
+        ),
+      ),
+      child: Center(
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            color: isActive ? Colors.white : AppColors.textSecondary,
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Tri-Stat Supporting Row: Sleep, Load, and Stress Cards
+  Widget _buildTriStatCards(BuildContext context) {
+    final sleep = appState.sleepResult ??
+        RecoveryModel.computeSleep(
+          sleepHours: 7.2,
+          consistencyPercentage: 88.0,
+          validNightsCount: appState.historicalDaysCount,
+        );
+
+    final load = appState.loadResult ??
+        RecoveryModel.computeLoadTarget(
+          recoveryScore: appState.recoveryResult?.score ?? 74,
+          currentStrain: 6.2,
+        );
+
+    final stress = appState.stressResult ??
+        RecoveryModel.computeStress(
+          hrvZScore: 0.4,
+          rhrZScore: -0.3,
+          hasSensorCoverage: true,
+        );
+
+    return Row(
+      children: [
+        // 1. Sleep Card
+        Expanded(
+          child: GlassContainer(
+            padding: const EdgeInsets.all(14),
+            borderRadius: 18,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Icon(Icons.bedtime_rounded, size: 16, color: Color(0xFF5C6BC0)),
+                    Text(
+                      sleep.confidence == ScoreConfidence.high ? 'High' : 'Provisional',
+                      style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: AppColors.textTertiary),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '${sleep.score}',
+                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+                ),
+                Text(
+                  sleep.durationFormatted,
+                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: AppColors.textSecondary),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  sleep.drivers.first.label,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 10, color: AppColors.textTertiary),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+
+        // 2. Load Card
+        Expanded(
+          child: GlassContainer(
+            padding: const EdgeInsets.all(14),
+            borderRadius: 18,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Icon(Icons.local_fire_department_rounded, size: 16, color: Color(0xFFFF9800)),
+                    Text('Adaptive', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: AppColors.textTertiary)),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  load.currentStrain.toStringAsFixed(1),
+                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+                ),
+                Text(
+                  'Target: ${load.targetMin.toInt()}–${load.targetMax.toInt()}',
+                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: AppColors.textSecondary),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  load.drivers.first.label,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 10, color: AppColors.textTertiary),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+
+        // 3. Stress Card
+        Expanded(
+          child: GlassContainer(
+            padding: const EdgeInsets.all(14),
+            borderRadius: 18,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Icon(Icons.spa_rounded, size: 16, color: Color(0xFF38BDF8)),
+                    Text(
+                      stress.confidence == ScoreConfidence.high ? 'High' : 'Provisional',
+                      style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: AppColors.textTertiary),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  stress.level,
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+                ),
+                Text(
+                  '${stress.score.toInt()}/100 index',
+                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: AppColors.textSecondary),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  stress.drivers.first.label,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 10, color: AppColors.textTertiary),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Action buttons: Log feeling, Permission Center, Sync Wearable
+  Widget _buildRecoveryActionRow(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: OutlinedButton.icon(
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+            ),
+            icon: const Icon(Icons.mood_rounded, size: 16, color: AppColors.textPrimary),
+            label: const Text('Log how you feel', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+            onPressed: () => appState.setTabIndex(1),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: OutlinedButton.icon(
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
+            ),
+            icon: const Icon(Icons.sync_rounded, size: 16, color: AppColors.primaryContainer),
+            label: const Text('Sync Wearable', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primaryContainer)),
+            onPressed: () => appState.syncVitals(),
           ),
         ),
       ],
@@ -1145,43 +1576,3 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
-/// Semi-circular Arc Gauge Painter (Reference: "78 / 100 Good balance")
-class _BalanceArcGaugePainter extends CustomPainter {
-  final int score;
-
-  _BalanceArcGaugePainter({required this.score});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height - 4);
-    final radius = size.width * 0.42;
-
-    final bgPaint = Paint()
-      ..color = AppColors.primaryContainer.withValues(alpha: 0.12)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 6.5
-      ..strokeCap = StrokeCap.round;
-
-    final rect = Rect.fromCircle(center: center, radius: radius);
-    canvas.drawArc(rect, math.pi, math.pi, false, bgPaint);
-
-    final sweep = math.pi * (score / 100.0).clamp(0.05, 1.0);
-    final activePaint = Paint()
-      ..shader = const LinearGradient(
-        colors: [
-          Color(0xFF818CF8),
-          AppColors.primaryContainer,
-        ],
-      ).createShader(rect)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 6.5
-      ..strokeCap = StrokeCap.round;
-
-    canvas.drawArc(rect, math.pi, sweep, false, activePaint);
-  }
-
-  @override
-  bool shouldRepaint(covariant _BalanceArcGaugePainter oldDelegate) {
-    return oldDelegate.score != score;
-  }
-}
