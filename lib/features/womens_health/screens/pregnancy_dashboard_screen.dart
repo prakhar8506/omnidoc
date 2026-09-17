@@ -52,6 +52,21 @@ class _PregnancyDashboardScreenState extends State<PregnancyDashboardScreen> {
     }
   }
 
+  Future<void> _pickDueDate() async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: now.add(const Duration(days: 180)),
+      firstDate: now,
+      lastDate: now.add(const Duration(days: 300)),
+      helpText: 'Select due date',
+    );
+    if (picked != null) {
+      widget.appState.setPregnancyDueDate(picked);
+      setState(() {});
+    }
+  }
+
   void _showLogWeightDialog() {
     final controller = TextEditingController(text: widget.appState.currentPregnancyWeightKg.toString());
     showDialog(
@@ -182,11 +197,67 @@ class _PregnancyDashboardScreenState extends State<PregnancyDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final state = widget.appState;
+    final dueDate = state.pregnancyDueDate;
+
+    if (dueDate == null) {
+      return Scaffold(
+        body: HolographicBackground(
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  BouncingTap(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.8),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 1.2),
+                      ),
+                      child: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+                    ),
+                  ),
+                  const Spacer(),
+                  Text('Pregnancy Companion', style: AppTypography.editorialLg),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Set your due date to unlock gestational week tracking, baby milestones, and prenatal tools.',
+                    style: AppTypography.bodyMd,
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFEC4899),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      ),
+                      onPressed: _pickDueDate,
+                      child: const Text(
+                        'Set due date',
+                        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+                      ),
+                    ),
+                  ),
+                  const Spacer(),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
     final weeks = state.gestationalWeeks;
     final days = state.gestationalDaysRemainder;
     final trimester = state.pregnancyTrimester;
     final babyDev = state.currentBabyDevelopment;
-    final daysRemaining = state.pregnancyDueDate.difference(DateTime.now()).inDays.clamp(0, 300);
+    final daysRemaining = dueDate.difference(DateTime.now()).inDays.clamp(0, 300);
 
     return Scaffold(
       body: HolographicBackground(
@@ -240,7 +311,7 @@ class _PregnancyDashboardScreenState extends State<PregnancyDashboardScreen> {
                 sliver: SliverList(
                   delegate: SliverChildListDelegate([
                     // 1. Gestational Age Hero Card
-                    _buildGestationalHeroCard(weeks, days, trimester, daysRemaining),
+                    _buildGestationalHeroCard(weeks, days, trimester, daysRemaining, dueDate),
                     const SizedBox(height: 18),
 
                     // 2. Baby Milestone Development Card
@@ -268,7 +339,13 @@ class _PregnancyDashboardScreenState extends State<PregnancyDashboardScreen> {
     );
   }
 
-  Widget _buildGestationalHeroCard(int weeks, int days, String trimester, int daysRemaining) {
+  Widget _buildGestationalHeroCard(
+    int weeks,
+    int days,
+    String trimester,
+    int daysRemaining,
+    DateTime dueDate,
+  ) {
     final progress = (weeks / 40.0).clamp(0.05, 1.0);
 
     return GlassContainer(
@@ -358,7 +435,7 @@ class _PregnancyDashboardScreenState extends State<PregnancyDashboardScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _metricBadge('Due Date', '${widget.appState.pregnancyDueDate.day}/${widget.appState.pregnancyDueDate.month}/${widget.appState.pregnancyDueDate.year}'),
+              _metricBadge('Due Date', '${dueDate.day}/${dueDate.month}/${dueDate.year}'),
               _metricBadge('Trimester', trimester),
               _metricBadge('Fetal Heart Rate', '154 bpm (Normal)'),
             ],

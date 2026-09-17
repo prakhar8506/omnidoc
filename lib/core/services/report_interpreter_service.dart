@@ -1,8 +1,12 @@
+import 'dart:convert';
 import 'dart:io';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, debugPrint;
+import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
+import '../env/app_env.dart';
 import '../models/prescription_document.dart';
 import '../models/biomarker_report.dart';
 
@@ -38,7 +42,6 @@ class ReportInterpreterService {
     final destName = '${DateTime.now().millisecondsSinceEpoch}_$safeName';
     final destPath = p.join(dir, destName);
 
-    // Already saved into our uploads folder
     if (p.equals(p.dirname(sourcePath), dir)) {
       return sourcePath;
     }
@@ -70,63 +73,7 @@ class ReportInterpreterService {
         ? PrescriptionDocType.labReport
         : (isRx ? PrescriptionDocType.prescription : PrescriptionDocType.other);
 
-    if (docType == PrescriptionDocType.labReport) {
-      return PrescriptionDocument(
-        id: _uuid.v4(),
-        fileName: fileName,
-        localPath: localPath,
-        source: source,
-        docType: docType,
-        uploadedAt: DateTime.now(),
-        isImage: isImage,
-        plainLanguageSummary:
-            'Your lab document was imported. Key markers look mostly within typical ranges — one value may need a routine follow-up with your clinician.',
-        detailedExplanation:
-            'We scanned your uploaded lab file and prepared a patient-friendly summary. '
-            'Numbers on lab reports are compared against reference ranges printed by the lab. '
-            'Being slightly outside a range is common and does not automatically mean illness. '
-            'Use this summary to prepare questions for your doctor — it is not a diagnosis.',
-        keyFindings: const [
-          'Most mapped biomarkers appear within typical reference windows',
-          'One marker may warrant a routine recheck in 8–12 weeks',
-          'No emergency-pattern flags were detected from this import',
-        ],
-        doctorQuestions: const [
-          'Can you confirm these values against the original lab PDF?',
-          'Do any markers need a follow-up blood draw?',
-          'Should I change diet, supplements, or activity based on this panel?',
-        ],
-      );
-    }
-
-    if (docType == PrescriptionDocType.prescription) {
-      return PrescriptionDocument(
-        id: _uuid.v4(),
-        fileName: fileName,
-        localPath: localPath,
-        source: source,
-        docType: docType,
-        uploadedAt: DateTime.now(),
-        isImage: isImage,
-        plainLanguageSummary:
-            'Your prescription was saved. Review the medicine name, dose, and timing carefully, and only take what your clinician prescribed.',
-        detailedExplanation:
-            'A prescription usually lists the medicine name, strength (dose), how often to take it, and special instructions '
-            '(with food, at bedtime, etc.). Keep the original document. If handwriting is unclear, ask your pharmacist to confirm '
-            'before taking anything new. Never share prescription medicines.',
-        keyFindings: const [
-          'Document saved to your private health profile',
-          'Check dose, frequency, and duration on the original Rx',
-          'Ask your pharmacist if any instruction is hard to read',
-        ],
-        doctorQuestions: const [
-          'What side effects should I watch for with this medicine?',
-          'Can I take this with my current supplements?',
-          'What should I do if I miss a dose?',
-        ],
-      );
-    }
-
+    // Honest pending summary — no invented biomarker values
     return PrescriptionDocument(
       id: _uuid.v4(),
       fileName: fileName,
@@ -136,21 +83,107 @@ class ReportInterpreterService {
       uploadedAt: DateTime.now(),
       isImage: isImage,
       plainLanguageSummary:
-          'Your health document was uploaded and stored on your account. Open it anytime to review details with your clinician.',
+          'Document saved. Analysis runs when lab Edge Function is configured.',
       detailedExplanation:
-          'We stored your file securely on this device under your account. '
-          'If this is a lab report or prescription, rename or re-upload with “lab” or “prescription” in the filename for a more specific summary. '
-          'Always rely on your healthcare professional for medical decisions.',
+          'Your file was stored securely on this device. '
+          'Automated OCR and clinical interpretation require the interpret-lab Edge Function. '
+          'Until that is configured, review the original document with your clinician. '
+          'This app does not invent lab values from filenames.',
       keyFindings: const [
-        'File attached to your Health Companion profile',
-        'Available offline on this device',
-        'Share only with people you trust',
+        'Awaiting OCR processing',
       ],
       doctorQuestions: const [
         'Can you help me interpret this document?',
         'Is any follow-up needed based on this file?',
       ],
     );
+  }
+
+  /// Optionally invoke the interpret-lab Edge Function when configured.
+  static Future<PrescriptionDocument> interpretUploadAsync({
+    required String fileName,
+    required String localPath,
+    required PrescriptionSource source,
+    required bool isImage,
+  }) async {
+    final pending = interpretUpload(
+      fileName: fileName,
+      localPath: localPath,
+      source: source,
+      isImage: isImage,
+    );
+
+    final base = AppEnv.functionsBaseUrl;
+    if (base.isEmpty) return pending;
+
+    try {
+      String? sessionToken;
+      try {
+        sessionToken = Supabase.instance.client.auth.currentSession?.accessToken;
+      } catch (_) {
+        sessionToken = null;
+      }
+      final bearer = (sessionToken != null && sessionToken.isNotEmpty)
+          ? sessionToken
+          : AppEnv.supabaseAnonKey;
+
+      final response = await http
+          .post(
+            Uri.parse('$base/interpret-lab'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $bearer',
+              'apikey': AppEnv.supabaseAnonKey,
+            },
+            body: jsonEncode({
+              'fileName': fileName,
+              'localPath': localPath,
+              'isImage': isImage,
+              'docType': pending.docType.name,
+            }),
+          )
+          .timeout(const Duration(seconds: 30));
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final decoded = jsonDecode(response.body);
+        if (decoded is Map) {
+          final summary = (decoded['plainLanguageSummary'] ??
+                  decoded['summary'] ??
+                  decoded['message'])
+              ?.toString();
+          final detailed = (decoded['detailedExplanation'] ?? decoded['explanation'])
+              ?.toString();
+          final findings = decoded['keyFindings'];
+          final questions = decoded['doctorQuestions'];
+
+          if (summary != null && summary.trim().isNotEmpty) {
+            return PrescriptionDocument(
+              id: pending.id,
+              fileName: pending.fileName,
+              localPath: pending.localPath,
+              source: pending.source,
+              docType: pending.docType,
+              uploadedAt: pending.uploadedAt,
+              isImage: pending.isImage,
+              plainLanguageSummary: summary.trim(),
+              detailedExplanation: detailed?.trim().isNotEmpty == true
+                  ? detailed!.trim()
+                  : pending.detailedExplanation,
+              keyFindings: findings is List
+                  ? findings.map((e) => e.toString()).toList()
+                  : pending.keyFindings,
+              doctorQuestions: questions is List
+                  ? questions.map((e) => e.toString()).toList()
+                  : pending.doctorQuestions,
+            );
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('[ReportInterpreterService] interpret-lab invoke failed: $e');
+    }
+
+    return pending;
   }
 
   static DiagnosticReport labReportFromPrescription(PrescriptionDocument doc) {
@@ -164,22 +197,22 @@ class ReportInterpreterService {
       date: doc.uploadedAt,
       totalTested: doc.keyFindings.length,
       outOfRangeCount: 0,
-      confidencePercentage: 92,
+      confidencePercentage: 0,
       overallSynthesis: doc.plainLanguageSummary,
       biomarkers: const [
         Biomarker(
           code: 'NOTE',
           name: 'Document Summary',
           fullCategory: 'Imported Record',
-          value: 'Reviewed',
+          value: 'Pending',
           unit: '',
           referenceRange: 'N/A',
           status: BiomarkerStatus.optimal,
           isAttentionFlagged: false,
-          trendText: 'New upload',
+          trendText: 'Awaiting analysis',
           plainSummary:
-              'This summary is generated from your uploaded file to help you prepare for a clinician visit. It is not a medical diagnosis.',
-          clinicalContext: 'Patient-uploaded document interpretation.',
+              'Document saved. Analysis runs when lab Edge Function is configured.',
+          clinicalContext: 'Patient-uploaded document — no invented values.',
           historyTrend: [1, 1, 1, 1, 1],
         ),
       ],

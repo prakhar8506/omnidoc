@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../models/vitals_data.dart';
 import '../models/appointment.dart';
@@ -9,7 +11,7 @@ import '../models/prescription_document.dart';
 import '../services/auth_service.dart';
 import '../services/user_data_service.dart';
 import '../services/report_interpreter_service.dart';
-import '../theme/app_colors.dart';
+import '../env/app_env.dart';
 import '../data/health_event.dart';
 import '../data/event_store.dart';
 import '../consent/consent_manager.dart';
@@ -39,45 +41,49 @@ class AppState extends ChangeNotifier {
   UserAccount? get currentUser => _currentUser;
 
   String get userEmail => _currentUser?.email ?? '';
-  String get userName => _currentUser?.fullName ?? 'Daria Jenkins';
+  String get userName => _currentUser?.fullName ?? '';
   String get firstName {
     final parts = userName.trim().split(RegExp(r'\s+'));
-    return parts.isEmpty ? 'Daria' : parts.first;
+    if (parts.isEmpty || parts.first.isEmpty) return 'there';
+    return parts.first;
   }
-  String get bloodType => _currentUser?.bloodType ?? 'O+';
+  String get bloodType => _currentUser?.bloodType ?? 'Unknown';
   String get userAvatar => _currentUser?.avatarPath ?? '';
   String? get userId => _currentUser?.id;
+  bool get hasVitalsData =>
+      isWearableConnected && (restingHeartRate > 0 || dailySteps > 0 || hrvMs > 0);
 
   int _currentTabIndex = 0;
   int get currentTabIndex => _currentTabIndex;
 
-  // Daily Balance & Apple Reference Metrics
-  int dailyBalanceScore = 78;
-  String balanceStatus = 'Good balance';
-  int stressHighest = 36;
-  int stressLowest = 6;
-  int stressAverage = 11;
-  double stressPercentage = 0.0; // matching reference "0%"
+  // Daily Balance — empty until real wearable / user data exists
+  int dailyBalanceScore = 0;
+  String balanceStatus = 'Connect a wearable to begin';
+  int stressHighest = 0;
+  int stressLowest = 0;
+  int stressAverage = 0;
+  double stressPercentage = 0.0;
 
-  // Mood & Feeling Tracker (Matching Reference Screen 2)
-  String selectedMood = 'Energetic';
-  double moodProgress = 0.62; // angle along arc
-  int feelingStep = 4;        // matching "4 of 8"
+  // Mood & Feeling Tracker
+  String selectedMood = '';
+  double moodProgress = 0.0;
+  int feelingStep = 1;
   final List<Map<String, dynamic>> feelingHistory = [];
 
   int unreadNotificationsCount = 0;
-  int restingHeartRate = 72;
-  int activeHeartRate = 114;
-  int hrvMs = 58;
-  String sleepDuration = '7h 10m';
-  String deepSleep = '1h 45m';
-  String remSleep = '2h 10m';
-  String lightSleep = '3h 15m';
-  double dailySteps = 8420;
-  int bloodOxygen = 98;
-  String bloodPressure = '118/76';
+  int restingHeartRate = 0;
+  int activeHeartRate = 0;
+  int hrvMs = 0;
+  String sleepDuration = '—';
+  String deepSleep = '—';
+  String remSleep = '—';
+  String lightSleep = '—';
+  double dailySteps = 0;
+  int bloodOxygen = 0;
+  String bloodPressure = '—';
   bool isSyncingVitals = false;
-  DateTime lastSyncedTime = DateTime.now().subtract(const Duration(minutes: 8));
+  DateTime? lastSyncedTime;
+  String lastSyncMessage = '';
 
   // --- Phase 0: Recovery OS Foundation ---
   final ConsentManager consentManager = ConsentManager();
@@ -91,194 +97,49 @@ class AppState extends ChangeNotifier {
   StressScoreResult? stressResult;
   BaselineResult? hrvBaseline;
   BaselineResult? rhrBaseline;
-  int historicalDaysCount = 14; // Default to mature baseline for Daria Jenkins demo
+  int historicalDaysCount = 0;
 
-  // 1. Real Wearables State
-  bool isWearableConnected = true;
-  String wearableDeviceName = 'Apple Watch Series 9';
-  String wearableSource = 'Apple HealthKit';
+  // 1. Wearables — disconnected until user grants Health permissions
+  bool isWearableConnected = false;
+  String wearableDeviceName = '';
+  String wearableSource = '';
   bool isRealHardware = false;
 
   // 2. Nutrition & Hydration
-  int dailyHydrationMl = 1850;
+  int dailyHydrationMl = 0;
   int targetHydrationMl = 2500;
-  final List<Map<String, dynamic>> loggedMeals = [
-    {
-      'id': 'meal-1',
-      'title': 'Wild Salmon Bowl with Quinoa',
-      'category': 'Lean Protein & Whole Grains',
-      'time': '12:45 PM',
-      'sodium': 'Moderate (420mg)',
-      'insight': 'Anti-inflammatory omega-3 support for cardiovascular recovery.',
-      'calories': '~540 kcal',
-    },
-    {
-      'id': 'meal-2',
-      'title': 'Greek Yogurt & Berries',
-      'category': 'Fermented Dairy & Antioxidants',
-      'time': '08:30 AM',
-      'sodium': 'Low (90mg)',
-      'insight': 'Gut microbiome diversity and cellular antioxidant load.',
-      'calories': '~260 kcal',
-    },
-  ];
+  final List<Map<String, dynamic>> loggedMeals = [];
 
-  // 3. Journal Reflections & Holistic Timeline (Part 2)
-  final List<Map<String, dynamic>> journalEntries = [
-    {
-      'id': 'entry-1',
-      'timestamp': DateTime.now().subtract(const Duration(hours: 3)),
-      'prompt': "What's on your mind today?",
-      'content':
-          'Morning sunlight walk and breathing exercises lowered my resting pulse to 64 bpm. Mind feels calm, clear, and energized for clinical work.',
-      'mood': 'Calm',
-      'audioRecorded': true,
-      'photoPath': null,
-      'tags': ['Mindfulness', 'Heart Rate', 'Morning'],
-    },
-    {
-      'id': 'entry-2',
-      'timestamp': DateTime.now().subtract(const Duration(days: 1, hours: 2)),
-      'prompt': "What's one thing that went well today?",
-      'content':
-          'Completed 30 minutes of low-impact cycling. Rested well last night (7h 45m) and noticed no brain fog in the afternoon.',
-      'mood': 'Energetic',
-      'audioRecorded': false,
-      'photoPath': null,
-      'tags': ['Movement', 'Recovery', 'Sleep'],
-    },
-    {
-      'id': 'entry-3',
-      'timestamp': DateTime.now().subtract(const Duration(days: 3, hours: 6)),
-      'prompt': 'Body scan & autonomic sensations',
-      'content':
-          'Felt slight neck tightness around 4 PM after long desk posture. Did 5 minutes of physiological sigh breathing which noticeably relaxed my shoulders.',
-      'mood': 'Relaxed',
-      'audioRecorded': false,
-      'photoPath': null,
-      'tags': ['Vagal Nerve', 'Posture'],
-    },
-  ];
+  // 3. Journal
+  final List<Map<String, dynamic>> journalEntries = [];
 
-  // 4. Women's Health & Menstrual Cycle Tracking (Part 3)
-  bool isMenstrualTrackingEnabled = true;
-  int cycleDay = 14;
-  String cyclePhase = 'Ovulatory Phase';
+  // 4. Women's Health
+  bool isMenstrualTrackingEnabled = false;
+  int cycleDay = 0;
+  String cyclePhase = 'Not tracking';
   int averageCycleLength = 28;
   int averagePeriodDuration = 5;
-  DateTime lastPeriodStartDate = DateTime.now().subtract(const Duration(days: 14));
-  final List<String> cycleSymptoms = ['Mild Cramps', 'High Energy', 'Good Mood'];
-  final List<Map<String, dynamic>> menstrualCycleLogs = [
-    {
-      'date': DateTime.now().subtract(const Duration(days: 14)),
-      'flow': 'Heavy',
-      'symptoms': ['Cramps', 'Fatigue'],
-      'notes': 'Day 1 of cycle',
-    },
-    {
-      'date': DateTime.now().subtract(const Duration(days: 13)),
-      'flow': 'Medium',
-      'symptoms': ['Mild Cramps'],
-      'notes': 'Restorative tea helped',
-    },
-    {
-      'date': DateTime.now().subtract(const Duration(days: 12)),
-      'flow': 'Light',
-      'symptoms': ['High Energy'],
-      'notes': 'Energy returning',
-    },
-    {
-      'date': DateTime.now().subtract(const Duration(days: 11)),
-      'flow': 'Spotting',
-      'symptoms': ['Clear Mind'],
-      'notes': 'Cycle ending',
-    },
-  ];
+  DateTime lastPeriodStartDate = DateTime.now();
+  final List<String> cycleSymptoms = [];
+  final List<Map<String, dynamic>> menstrualCycleLogs = [];
 
-  // 5. Pregnancy Mode (Part 4)
+  // 5. Pregnancy Mode
   bool isPregnancyMode = false;
-  DateTime pregnancyDueDate = DateTime.now().add(const Duration(days: 196)); // ~12 weeks in
-  double prePregnancyWeightKg = 62.0;
-  double currentPregnancyWeightKg = 64.8;
-  final List<Map<String, dynamic>> pregnancyWeightLogs = [
-    {
-      'date': DateTime.now().subtract(const Duration(days: 28)),
-      'weightKg': 62.5,
-      'week': 8,
-    },
-    {
-      'date': DateTime.now().subtract(const Duration(days: 14)),
-      'weightKg': 63.8,
-      'week': 10,
-    },
-    {
-      'date': DateTime.now().subtract(const Duration(days: 2)),
-      'weightKg': 64.8,
-      'week': 12,
-    },
-  ];
-  final List<Map<String, dynamic>> kickCounterLogs = [
-    {
-      'timestamp': DateTime.now().subtract(const Duration(hours: 5)),
-      'kicks': 10,
-      'durationMinutes': 18,
-      'status': 'Healthy active pattern',
-    },
-    {
-      'timestamp': DateTime.now().subtract(const Duration(days: 1, hours: 4)),
-      'kicks': 10,
-      'durationMinutes': 22,
-      'status': 'Healthy active pattern',
-    },
-  ];
-  final List<Map<String, dynamic>> prenatalScans = [
-    {
-      'id': 'scan-1',
-      'title': 'First Trimester Dating & Viability Scan',
-      'gestationalWeek': 'Week 8',
-      'date': DateTime.now().subtract(const Duration(days: 28)),
-      'findings': 'Single intrauterine gestational sac with fetal heart rate 158 bpm. Crown-rump length matches dates.',
-      'doctorName': 'Dr. Elena Rostova, OB-GYN',
-      'imagePath': null,
-    },
-    {
-      'id': 'scan-2',
-      'title': 'Nuchal Translucency & Early Anatomy',
-      'gestationalWeek': 'Week 12',
-      'date': DateTime.now().subtract(const Duration(days: 2)),
-      'findings': 'Normal nuchal translucency (1.4 mm). Normal nasal bone present. Low risk profile.',
-      'doctorName': 'Dr. Elena Rostova, OB-GYN',
-      'imagePath': null,
-    },
-  ];
+  DateTime? pregnancyDueDate;
+  double prePregnancyWeightKg = 0;
+  double currentPregnancyWeightKg = 0;
+  final List<Map<String, dynamic>> pregnancyWeightLogs = [];
+  final List<Map<String, dynamic>> kickCounterLogs = [];
+  final List<Map<String, dynamic>> prenatalScans = [];
 
-  // 6. Universal Smartwatch Recovery Engine (Part 6)
-  int recoveryScore = 84; // 0-100%
-  String recoveryStatus = 'Primed for Movement';
-  double dailyStrainScore = 9.8; // 0-21 scale
-  int sleepPerformanceScore = 88; // 0-100%
+  // 6. Recovery Engine
+  int recoveryScore = 0;
+  String recoveryStatus = 'Insufficient data';
+  double dailyStrainScore = 0;
+  int sleepPerformanceScore = 0;
 
-  // 7. Today's Movement & Fitness (Part 5)
-  final List<Map<String, dynamic>> completedWorkouts = [
-    {
-      'id': 'wo-1',
-      'title': 'Zone 2 Aerobic Jog',
-      'category': 'Cardio',
-      'duration': '32 min',
-      'caloriesBurned': 240,
-      'timestamp': DateTime.now().subtract(const Duration(hours: 4)),
-      'avgHr': 132,
-    },
-    {
-      'id': 'wo-2',
-      'title': 'Parasympathetic Yoga & Mobility',
-      'category': 'Recovery',
-      'duration': '20 min',
-      'caloriesBurned': 65,
-      'timestamp': DateTime.now().subtract(const Duration(days: 1, hours: 3)),
-      'avgHr': 78,
-    },
-  ];
+  // 7. Workouts (user-logged only). Exercise catalog is static content, not clinical data.
+  final List<Map<String, dynamic>> completedWorkouts = [];
 
   final List<Map<String, dynamic>> curatedExerciseLibrary = const [
     {
@@ -323,100 +184,38 @@ class AppState extends ChangeNotifier {
     },
   ];
 
-  // 8. Onboarding Baseline Data (Part 7)
-  double? userHeightCm = 170.0;
-  double? userWeightKg = 63.5;
+  // 8. Onboarding
+  double? userHeightCm;
+  double? userWeightKg;
   String? baselineProgressPhotoPath;
-  bool isOnboardingBaselineCompleted = true;
+  bool isOnboardingBaselineCompleted = false;
+  String? biologicalSex;
+  String? dateOfBirth;
+  final List<String> healthGoals = [];
 
-  // 4. Chronic Condition Companion (Diabetes & Hypertension)
-  int bloodGlucoseMgDl = 102;
-  String fastingStatus = 'Fasting (Morning)';
-  final List<Map<String, dynamic>> glucoseHistory = [
-    {'time': 'Today, 07:30 AM', 'val': 102, 'status': 'Fasting (Normal)'},
-    {'time': 'Yesterday, 08:00 PM', 'val': 124, 'status': '2h Post-Prandial'},
-    {'time': 'Yesterday, 07:45 AM', 'val': 98, 'status': 'Fasting (Normal)'},
-  ];
-  int systolicBp = 118;
-  int diastolicBp = 76;
-  final List<Map<String, dynamic>> bpHistory = [
-    {'time': 'Today, 08:00 AM', 'sys': 118, 'dia': 76, 'category': 'Optimal (AHA)'},
-    {'time': 'Yesterday, 06:30 PM', 'sys': 122, 'dia': 78, 'category': 'Normal (AHA)'},
-    {'time': '2 days ago', 'sys': 116, 'dia': 74, 'category': 'Optimal (AHA)'},
-  ];
+  // Chronic care — empty until user logs
+  int bloodGlucoseMgDl = 0;
+  String fastingStatus = '';
+  final List<Map<String, dynamic>> glucoseHistory = [];
+  int systolicBp = 0;
+  int diastolicBp = 0;
+  final List<Map<String, dynamic>> bpHistory = [];
 
-  // 5. Preventive Care Engine
-  final List<Map<String, dynamic>> preventiveReminders = [
-    {
-      'id': 'prev-1',
-      'title': 'Comprehensive Metabolic Panel (CMP)',
-      'due': 'Due in 2 weeks',
-      'status': 'Scheduled with Dr. Priya Sharma',
-      'guideline': 'USPSTF Hepatic & Lipid Guideline',
-      'isDismissed': false,
-    },
-    {
-      'id': 'prev-2',
-      'title': 'Annual Influenza Vaccine',
-      'due': 'Recommended Autumn 2026',
-      'status': 'Eligible at local pharmacy',
-      'guideline': 'CDC Immunization Schedule',
-      'isDismissed': false,
-    },
-  ];
+  // Preventive care — user-created only in v1
+  final List<Map<String, dynamic>> preventiveReminders = [];
 
-  // 6. Community & Neutral Health Gamification
-  int medicationStreakDays = 18;
-  int loggingStreakDays = 12;
-  int stepStreakDays = 7;
-  final List<Map<String, dynamic>> activeChallenges = [
-    {
-      'id': 'chal-1',
-      'title': '7-Day Mindful Hydration',
-      'metric': 'Daily 2,000ml logged',
-      'progress': 0.85,
-      'daysLeft': '2 days left',
-      'participants': 'Daria, Elena, Jordan',
-    },
-    {
-      'id': 'chal-2',
-      'title': 'Weekend 10k Steps Walk',
-      'metric': 'Total 20,000 weekend steps',
-      'progress': 0.65,
-      'daysLeft': 'Saturday start',
-      'participants': 'Family Care Circle',
-    },
-  ];
+  // Community / Insurance deferred for v1 store — empty lists, entry points hidden in UI
+  int medicationStreakDays = 0;
+  int loggingStreakDays = 0;
+  int stepStreakDays = 0;
+  final List<Map<String, dynamic>> activeChallenges = [];
+  final List<Map<String, dynamic>> claims = [];
 
-  // 7. Insurance & Claims Tracking
-  final List<Map<String, dynamic>> claims = [
-    {
-      'id': 'CLM-88410',
-      'provider': 'BlueCross Platinum Health',
-      'date': '02 Jan 2026',
-      'service': 'Liver Panel & Hepatic Biomarkers',
-      'billed': '\$380.00',
-      'covered': '\$345.00',
-      'patientPaid': '\$35.00',
-      'status': 'Approved',
-    },
-    {
-      'id': 'CLM-79124',
-      'provider': 'BlueCross Platinum Health',
-      'date': '18 Dec 2025',
-      'service': 'Specialist Consultation (Dr. Priya Sharma)',
-      'billed': '\$260.00',
-      'covered': '\$240.00',
-      'patientPaid': '\$20.00',
-      'status': 'Processed',
-    },
-  ];
-
-  // 8. Emergency Safety & Medical ID
-  final List<String> allergies = ['Penicillin (Hives)', 'Sulfa Drugs'];
-  final List<String> chronicConditions = ['Mild Hepatic Elevation (Under Observation)'];
-  final List<String> emergencyMedications = ['CoQ10 100mg', 'Vitamin D3 2000 IU'];
-  bool isFallDetectionActive = true;
+  // Emergency Medical ID — empty until user enters
+  final List<String> allergies = [];
+  final List<String> chronicConditions = [];
+  final List<String> emergencyMedications = [];
+  bool isFallDetectionActive = false;
 
   // 9. Multi-Language & Accessibility
   Locale currentLocale = const Locale('en');
@@ -437,18 +236,24 @@ class AppState extends ChangeNotifier {
 
   AppState() {
     activeTriage = _defaultTriage();
-    seedDemoEvents(days: 14);
   }
 
   Future<void> hydrate() async {
     try {
       await supabaseRepository.initialize();
       await eventStore.initialize();
+      await consentManager.initialize();
+      historicalDaysCount = _computeHistoricalDays();
       final user = await _auth.getSessionUser();
       if (user != null) {
         await _bindUser(user);
         _isSignedIn = true;
-        supabaseSyncService.syncPendingEvents(user.id);
+        if (userId != null) {
+          await supabaseSyncService.pullRemoteEvents(userId!);
+          historicalDaysCount = _computeHistoricalDays();
+          recalculateRecoveryEngine();
+          supabaseSyncService.syncPendingEvents(userId!);
+        }
       } else {
         _isSignedIn = false;
         _currentUser = null;
@@ -462,11 +267,20 @@ class AppState extends ChangeNotifier {
     }
   }
 
+  int _computeHistoricalDays() {
+    final events = eventStore.getAllEvents();
+    if (events.isEmpty) return 0;
+    final days = events
+        .map((e) => DateTime(e.start.year, e.start.month, e.start.day))
+        .toSet();
+    return days.length;
+  }
+
   Future<void> register({
     required String fullName,
     required String email,
     required String password,
-    String bloodType = 'O+',
+    String bloodType = 'Unknown',
   }) async {
     final user = await _auth.register(
       fullName: fullName,
@@ -486,35 +300,26 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Instant One-Tap Demo Access with Daria Jenkins (matching reference mockups)
+  /// Debug-only demo. Disabled in release and unless ENABLE_DEMO=true.
   Future<void> signInDemoAccount() async {
+    if (!AppEnv.enableDemo) {
+      throw AuthException('Demo mode is disabled in this build.');
+    }
     _isHydrating = true;
     notifyListeners();
-
-    final existing = await _auth.findByEmail('daria.jenkins@icloud.com');
-    UserAccount demoUser;
-    if (existing != null) {
-      demoUser = existing;
-    } else {
-      try {
-        demoUser = await _auth.register(
-          fullName: 'Daria Jenkins',
-          email: 'daria.jenkins@icloud.com',
-          password: 'password123',
-          bloodType: 'O+',
-        );
-      } catch (_) {
-        demoUser = (await _auth.findByEmail('daria.jenkins@icloud.com'))!;
-      }
+    try {
+      final demoUser = await _auth.register(
+        fullName: 'Demo User',
+        email: 'demo+${DateTime.now().millisecondsSinceEpoch}@healthcompanion.local',
+        password: 'demo-only-${DateTime.now().millisecondsSinceEpoch}',
+        bloodType: 'Unknown',
+      );
+      await _bindUser(demoUser, isNew: true);
+      _isSignedIn = true;
+    } finally {
+      _isHydrating = false;
+      notifyListeners();
     }
-
-    await _bindUser(demoUser);
-    _ensureRichSeedData();
-    await _persistCurrentUserData();
-
-    _isSignedIn = true;
-    _isHydrating = false;
-    notifyListeners();
   }
 
   Future<void> signOut() async {
@@ -533,26 +338,79 @@ class AppState extends ChangeNotifier {
     activeTriage = _defaultTriage();
 
     if (isNew) {
-      if (user.email == 'daria.jenkins@icloud.com') {
-        _ensureRichSeedData();
-      }
+      isOnboardingBaselineCompleted = false;
       await _persistCurrentUserData();
+      recalculateRecoveryEngine();
       return;
     }
 
     final data = await _userData.load(user.id);
-    restingHeartRate = data['restingHeartRate'] as int? ?? 72;
-    sleepDuration = data['sleepDuration'] as String? ?? '7h 10m';
-    dailySteps = (data['dailySteps'] as num?)?.toDouble() ?? 8420;
-    bloodOxygen = data['bloodOxygen'] as int? ?? 98;
-    bloodPressure = data['bloodPressure'] as String? ?? '118/76';
-    dailyBalanceScore = data['dailyBalanceScore'] as int? ?? 78;
-    selectedMood = data['selectedMood'] as String? ?? 'Energetic';
-    moodProgress = (data['moodProgress'] as num?)?.toDouble() ?? 0.62;
-    feelingStep = data['feelingStep'] as int? ?? 4;
-    lastSyncedTime =
-        DateTime.tryParse(data['lastSyncedTime'] as String? ?? '') ?? DateTime.now().subtract(const Duration(minutes: 8));
+    restingHeartRate = data['restingHeartRate'] as int? ?? 0;
+    sleepDuration = data['sleepDuration'] as String? ?? '—';
+    dailySteps = (data['dailySteps'] as num?)?.toDouble() ?? 0;
+    bloodOxygen = data['bloodOxygen'] as int? ?? 0;
+    bloodPressure = data['bloodPressure'] as String? ?? '—';
+    hrvMs = data['hrvMs'] as int? ?? 0;
+    dailyBalanceScore = data['dailyBalanceScore'] as int? ?? 0;
+    selectedMood = data['selectedMood'] as String? ?? '';
+    moodProgress = (data['moodProgress'] as num?)?.toDouble() ?? 0;
+    feelingStep = data['feelingStep'] as int? ?? 1;
+    lastSyncedTime = DateTime.tryParse(data['lastSyncedTime'] as String? ?? '');
     unreadNotificationsCount = data['unreadNotificationsCount'] as int? ?? 0;
+    isWearableConnected = data['isWearableConnected'] as bool? ?? false;
+    wearableDeviceName = data['wearableDeviceName'] as String? ?? '';
+    wearableSource = data['wearableSource'] as String? ?? '';
+    isRealHardware = data['isRealHardware'] as bool? ?? false;
+    dailyHydrationMl = data['dailyHydrationMl'] as int? ?? 0;
+    isOnboardingBaselineCompleted =
+        data['isOnboardingBaselineCompleted'] as bool? ?? false;
+    userHeightCm = (data['userHeightCm'] as num?)?.toDouble();
+    userWeightKg = (data['userWeightKg'] as num?)?.toDouble();
+    isMenstrualTrackingEnabled =
+        data['isMenstrualTrackingEnabled'] as bool? ?? false;
+    isPregnancyMode = data['isPregnancyMode'] as bool? ?? false;
+    isFallDetectionActive = data['isFallDetectionActive'] as bool? ?? false;
+
+    journalEntries
+      ..clear()
+      ..addAll(_decodeMapList(data['journalEntries']));
+    loggedMeals
+      ..clear()
+      ..addAll(_decodeMapList(data['loggedMeals']));
+    menstrualCycleLogs
+      ..clear()
+      ..addAll(_decodeMapList(data['menstrualCycleLogs']));
+    pregnancyWeightLogs
+      ..clear()
+      ..addAll(_decodeMapList(data['pregnancyWeightLogs']));
+    kickCounterLogs
+      ..clear()
+      ..addAll(_decodeMapList(data['kickCounterLogs']));
+    prenatalScans
+      ..clear()
+      ..addAll(_decodeMapList(data['prenatalScans']));
+    completedWorkouts
+      ..clear()
+      ..addAll(_decodeMapList(data['completedWorkouts']));
+    glucoseHistory
+      ..clear()
+      ..addAll(_decodeMapList(data['glucoseHistory']));
+    bpHistory
+      ..clear()
+      ..addAll(_decodeMapList(data['bpHistory']));
+    preventiveReminders
+      ..clear()
+      ..addAll(_decodeMapList(data['preventiveReminders']));
+    allergies
+      ..clear()
+      ..addAll(List<String>.from(data['allergies'] as List? ?? const []));
+    chronicConditions
+      ..clear()
+      ..addAll(List<String>.from(data['chronicConditions'] as List? ?? const []));
+    emergencyMedications
+      ..clear()
+      ..addAll(
+          List<String>.from(data['emergencyMedications'] as List? ?? const []));
 
     medications
       ..clear()
@@ -583,122 +441,92 @@ class AppState extends ChangeNotifier {
       activeReport = null;
     }
 
-    if (user.email == 'daria.jenkins@icloud.com' && appointments.isEmpty && prescriptions.isEmpty) {
-      _ensureRichSeedData();
-    }
+    historicalDaysCount = _computeHistoricalDays();
+    recalculateRecoveryEngine();
   }
 
-  void _ensureRichSeedData() {
-    if (appointments.isEmpty) {
-      appointments.add(
-        Appointment(
-          id: 'apt-seed-1',
-          doctorName: 'Dr. Priya Sharma, MD',
-          doctorTitle: 'Internal Medicine & Hepatology',
-          specialty: 'Internal Medicine',
-          avatarUrl: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=300',
-          dateTime: DateTime.now().add(const Duration(days: 1, hours: 4)),
-          clinicName: 'Metro Health Pavilion • Suite 300',
-          roomOrType: 'In-Person Consultation',
-          isVideoConsult: false,
-          status: 'Confirmed',
-          preparationNote: 'Follow-up regarding hepatic panel and supplement regime.',
-          themeColor: AppColors.primaryContainer,
-        ),
-      );
-    }
+  List<Map<String, dynamic>> _decodeMapList(dynamic raw) {
+    if (raw is! List) return [];
+    return raw.map((e) {
+      final m = Map<String, dynamic>.from(e as Map);
+      for (final key in ['timestamp', 'date', 'logged_at']) {
+        final v = m[key];
+        if (v is String) {
+          final parsed = DateTime.tryParse(v);
+          if (parsed != null) m[key] = parsed;
+        }
+      }
+      return m;
+    }).toList();
+  }
 
-    if (medications.isEmpty) {
-      medications.addAll([
-        MedicationItem(
-          id: 'med-1',
-          name: 'CoQ10 Ubiquinol',
-          dosage: '100mg',
-          scheduleTime: '08:00 AM with food',
-          instruction: 'Cellular energy and cardiac recovery',
-          isTaken: true,
-        ),
-        MedicationItem(
-          id: 'med-2',
-          name: 'Magnesium Glycinate',
-          dosage: '200mg',
-          scheduleTime: '09:30 PM before sleep',
-          instruction: 'Muscle recovery & deep REM sleep support',
-          isTaken: false,
-        ),
-      ]);
-    }
-
-    if (familyMembers.isEmpty) {
-      familyMembers.addAll([
-        FamilyMember(
-          id: 'fam-1',
-          name: 'Elena Jenkins',
-          relation: 'Sister',
-          avatarUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=300',
-          accessLevel: 'Full Access',
-          ageAndGender: '28, Female',
-          shareVitals: true,
-          shareLabReports: true,
-          sharePrescriptions: false,
-          emergencySosEnabled: true,
-        ),
-        FamilyMember(
-          id: 'fam-2',
-          name: 'Robert Jenkins',
-          relation: 'Father',
-          avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=300',
-          accessLevel: 'Emergency Contact',
-          ageAndGender: '62, Male',
-          shareVitals: true,
-          shareLabReports: false,
-          sharePrescriptions: false,
-          emergencySosEnabled: true,
-        ),
-      ]);
-    }
-
-    if (prescriptions.isEmpty) {
-      final doc = PrescriptionDocument(
-        id: 'doc-seed-1',
-        fileName: 'Comprehensive_Metabolic_Panel.pdf',
-        localPath: '',
-        source: PrescriptionSource.files,
-        docType: PrescriptionDocType.labReport,
-        uploadedAt: DateTime.now().subtract(const Duration(days: 2)),
-        plainLanguageSummary:
-            'Liver ALT is slightly elevated at 48 U/L (ref: 7–35 U/L). Hydration, reducing NSAIDs, and discussing with Dr. Priya Sharma is advised.',
-        detailedExplanation:
-            'Alanine Aminotransferase (ALT) is an enzyme primarily found in liver cells. An elevated value indicates mild liver cell stress or inflammation, often related to strenuous training, medications, or metabolic factors.',
-        keyFindings: const [
-          'ALT: 48 U/L (Elevated above standard 35 U/L cutoff)',
-          'Fasting Glucose: 92 mg/dL (Normal)',
-          'Serum Creatinine: 0.9 mg/dL (Optimal renal clearance)',
-        ],
-        doctorQuestions: const [
-          'Could intense weightlifting or running explain this mild elevation?',
-          'Should I temporarily discontinue fat-soluble supplements?',
-          'Do we need a follow-up hepatic re-test in 4 to 6 weeks?',
-        ],
-        isImage: false,
-      );
-      prescriptions.add(doc);
-      activeReport = ReportInterpreterService.labReportFromPrescription(doc);
-    }
+  List<Map<String, dynamic>> _encodeMapList(List<Map<String, dynamic>> list) {
+    return list.map((e) {
+      final m = Map<String, dynamic>.from(e);
+      m.forEach((k, v) {
+        if (v is DateTime) m[k] = v.toIso8601String();
+      });
+      return m;
+    }).toList();
   }
 
   void _resetInMemoryProfile() {
     unreadNotificationsCount = 0;
-    restingHeartRate = 72;
-    sleepDuration = '7h 10m';
-    dailySteps = 8420;
-    bloodOxygen = 98;
-    bloodPressure = '118/76';
-    dailyBalanceScore = 78;
-    selectedMood = 'Energetic';
-    moodProgress = 0.62;
-    feelingStep = 4;
-    lastSyncedTime = DateTime.now().subtract(const Duration(minutes: 8));
+    restingHeartRate = 0;
+    activeHeartRate = 0;
+    hrvMs = 0;
+    sleepDuration = '—';
+    deepSleep = '—';
+    remSleep = '—';
+    lightSleep = '—';
+    dailySteps = 0;
+    bloodOxygen = 0;
+    bloodPressure = '—';
+    dailyBalanceScore = 0;
+    balanceStatus = 'Connect a wearable to begin';
+    recoveryScore = 0;
+    recoveryStatus = 'Insufficient data';
+    dailyStrainScore = 0;
+    sleepPerformanceScore = 0;
+    selectedMood = '';
+    moodProgress = 0;
+    feelingStep = 1;
+    lastSyncedTime = null;
+    lastSyncMessage = '';
+    isWearableConnected = false;
+    wearableDeviceName = '';
+    wearableSource = '';
+    isRealHardware = false;
+    dailyHydrationMl = 0;
+    loggedMeals.clear();
+    journalEntries.clear();
+    feelingHistory.clear();
+    menstrualCycleLogs.clear();
+    cycleSymptoms.clear();
+    isMenstrualTrackingEnabled = false;
+    cycleDay = 0;
+    cyclePhase = 'Not tracking';
+    isPregnancyMode = false;
+    pregnancyDueDate = null;
+    pregnancyWeightLogs.clear();
+    kickCounterLogs.clear();
+    prenatalScans.clear();
+    completedWorkouts.clear();
+    glucoseHistory.clear();
+    bpHistory.clear();
+    bloodGlucoseMgDl = 0;
+    systolicBp = 0;
+    diastolicBp = 0;
+    preventiveReminders.clear();
+    activeChallenges.clear();
+    claims.clear();
+    allergies.clear();
+    chronicConditions.clear();
+    emergencyMedications.clear();
+    isFallDetectionActive = false;
+    isOnboardingBaselineCompleted = false;
+    userHeightCm = null;
+    userWeightKg = null;
     medications.clear();
     appointments.clear();
     familyMembers.clear();
@@ -706,6 +534,11 @@ class AppState extends ChangeNotifier {
     activeReport = null;
     appointmentSegmentIndex = 0;
     selectedDateIndex = DateTime.now().weekday - 1;
+    historicalDaysCount = 0;
+    recoveryResult = null;
+    sleepResult = null;
+    loadResult = null;
+    stressResult = null;
   }
 
   Future<void> _persistCurrentUserData() async {
@@ -717,12 +550,37 @@ class AppState extends ChangeNotifier {
       'dailySteps': dailySteps,
       'bloodOxygen': bloodOxygen,
       'bloodPressure': bloodPressure,
+      'hrvMs': hrvMs,
       'dailyBalanceScore': dailyBalanceScore,
       'selectedMood': selectedMood,
       'moodProgress': moodProgress,
       'feelingStep': feelingStep,
-      'lastSyncedTime': lastSyncedTime.toIso8601String(),
+      'lastSyncedTime': lastSyncedTime?.toIso8601String(),
       'unreadNotificationsCount': unreadNotificationsCount,
+      'isWearableConnected': isWearableConnected,
+      'wearableDeviceName': wearableDeviceName,
+      'wearableSource': wearableSource,
+      'isRealHardware': isRealHardware,
+      'dailyHydrationMl': dailyHydrationMl,
+      'isOnboardingBaselineCompleted': isOnboardingBaselineCompleted,
+      'userHeightCm': userHeightCm,
+      'userWeightKg': userWeightKg,
+      'isMenstrualTrackingEnabled': isMenstrualTrackingEnabled,
+      'isPregnancyMode': isPregnancyMode,
+      'isFallDetectionActive': isFallDetectionActive,
+      'journalEntries': _encodeMapList(journalEntries),
+      'loggedMeals': _encodeMapList(loggedMeals),
+      'menstrualCycleLogs': _encodeMapList(menstrualCycleLogs),
+      'pregnancyWeightLogs': _encodeMapList(pregnancyWeightLogs),
+      'kickCounterLogs': _encodeMapList(kickCounterLogs),
+      'prenatalScans': _encodeMapList(prenatalScans),
+      'completedWorkouts': _encodeMapList(completedWorkouts),
+      'glucoseHistory': _encodeMapList(glucoseHistory),
+      'bpHistory': _encodeMapList(bpHistory),
+      'preventiveReminders': _encodeMapList(preventiveReminders),
+      'allergies': allergies,
+      'chronicConditions': chronicConditions,
+      'emergencyMedications': emergencyMedications,
       'medications': UserDataService.medicationsToJson(medications),
       'appointments': appointments.map((a) => a.toJson()).toList(),
       'familyMembers': familyMembers.map((f) => f.toJson()).toList(),
@@ -793,30 +651,38 @@ class AppState extends ChangeNotifier {
   }
 
   List<Map<String, dynamic>> getJournalCorrelations() {
+    if (!hasVitalsData && journalEntries.isEmpty) {
+      return [
+        {
+          'title': 'Build your baseline',
+          'metric': 'No correlations yet',
+          'insight':
+              'Log how you feel and sync wearable data to unlock personalized sleep, mood, and HRV correlations.',
+          'icon': Icons.insights_rounded,
+          'color': const Color(0xFF818CF8),
+        },
+      ];
+    }
+    final sleepLabel = sleepDuration == '—' ? 'Sleep not synced' : '$sleepDuration rest';
+    final hrLabel = restingHeartRate > 0 ? '$restingHeartRate bpm resting' : 'HR not synced';
     return [
       {
-        'title': 'Sleep & Mood Harmony',
-        'metric': '7h 45m Restful Sleep',
-        'insight':
-            'When sleep duration exceeds 7.5 hours, your daily mood score averages "Energetic" with optimal HRV (58ms).',
+        'title': 'Sleep & Mood',
+        'metric': sleepLabel,
+        'insight': selectedMood.isEmpty
+            ? 'Log a mood after syncing sleep to see patterns.'
+            : 'Recent mood "$selectedMood" with sleep reading: $sleepLabel.',
         'icon': Icons.bedtime_rounded,
         'color': const Color(0xFF818CF8),
       },
       {
-        'title': 'Autonomic Stability',
-        'metric': '64 bpm Resting Pulse',
-        'insight':
-            'Days logged as "Calm" or "Relaxed" show a 5 bpm lower resting heart rate and stable cardiovascular load.',
+        'title': 'Heart rate context',
+        'metric': hrLabel,
+        'insight': hrvMs > 0
+            ? 'Latest HRV sample: $hrvMs ms from your connected health source.'
+            : 'Connect HealthKit / Health Connect to include HRV in insights.',
         'icon': Icons.favorite_rounded,
         'color': const Color(0xFF38BDF8),
-      },
-      {
-        'title': 'Cycle Phase Vitality',
-        'metric': 'Ovulatory Phase (Day 14)',
-        'insight':
-            'Peak estrogen levels correlate with high cognitive clarity and increased natural physical endurance.',
-        'icon': Icons.flare_rounded,
-        'color': const Color(0xFFFB7185),
       },
     ];
   }
@@ -860,17 +726,22 @@ class AppState extends ChangeNotifier {
 
   void setPregnancyDueDate(DateTime date) {
     pregnancyDueDate = date;
+    _persistCurrentUserData();
     notifyListeners();
   }
 
   int get gestationalWeeks {
-    final conceptionEst = pregnancyDueDate.subtract(const Duration(days: 280));
+    final due = pregnancyDueDate;
+    if (due == null) return 0;
+    final conceptionEst = due.subtract(const Duration(days: 280));
     final daysPassed = DateTime.now().difference(conceptionEst).inDays;
-    return (daysPassed / 7).floor().clamp(1, 42);
+    return (daysPassed / 7).floor().clamp(0, 42);
   }
 
   int get gestationalDaysRemainder {
-    final conceptionEst = pregnancyDueDate.subtract(const Duration(days: 280));
+    final due = pregnancyDueDate;
+    if (due == null) return 0;
+    final conceptionEst = due.subtract(const Duration(days: 280));
     final daysPassed = DateTime.now().difference(conceptionEst).inDays;
     return (daysPassed % 7).clamp(0, 6);
   }
@@ -966,22 +837,34 @@ class AppState extends ChangeNotifier {
       totalHistoricalDays: historicalDaysCount,
     );
 
-    // Parse sleep duration into hours
-    double sleepHours = 7.17; // default 7h 10m
-    try {
-      final parts = sleepDuration.split(' ');
-      final h = double.tryParse(parts[0].replaceAll('h', '')) ?? 7.0;
-      final m = parts.length > 1 ? (double.tryParse(parts[1].replaceAll('m', '')) ?? 10.0) : 0.0;
-      sleepHours = h + (m / 60.0);
-    } catch (_) {}
+    // Parse sleep duration into hours (empty → null)
+    double? sleepHours;
+    if (sleepDuration != '—' && sleepDuration.contains('h')) {
+      try {
+        final parts = sleepDuration.split(' ');
+        final h = double.tryParse(parts[0].replaceAll('h', '')) ?? 0;
+        final m = parts.length > 1
+            ? (double.tryParse(parts[1].replaceAll('m', '')) ?? 0.0)
+            : 0.0;
+        sleepHours = h + (m / 60.0);
+      } catch (_) {}
+    }
 
     // 3. Compute Recovery v0 Score
     recoveryResult = RecoveryModel.computeRecovery(
-      todayHrv: consentManager.isCategoryEnabled(PermissionCategory.hrv) ? hrvMs.toDouble() : null,
-      todayRestingHr: consentManager.isCategoryEnabled(PermissionCategory.heartRate) ? restingHeartRate.toDouble() : null,
-      todaySleepHours: consentManager.isCategoryEnabled(PermissionCategory.sleep) ? sleepHours : null,
-      todayRespiratoryRate: consentManager.isCategoryEnabled(PermissionCategory.respiratoryRate) ? 14.5 : null,
-      subjectiveFeeling: selectedMood,
+      todayHrv: consentManager.isCategoryEnabled(PermissionCategory.hrv) && hrvMs > 0
+          ? hrvMs.toDouble()
+          : null,
+      todayRestingHr:
+          consentManager.isCategoryEnabled(PermissionCategory.heartRate) &&
+                  restingHeartRate > 0
+              ? restingHeartRate.toDouble()
+              : null,
+      todaySleepHours: consentManager.isCategoryEnabled(PermissionCategory.sleep)
+          ? sleepHours
+          : null,
+      todayRespiratoryRate: null,
+      subjectiveFeeling: selectedMood.isEmpty ? null : selectedMood,
       hrvBaseline: hrvBaseline!,
       rhrBaseline: rhrBaseline!,
       totalHistoricalDays: historicalDaysCount,
@@ -1030,6 +913,8 @@ class AppState extends ChangeNotifier {
   }
 
   void seedDemoEvents({int days = 14}) {
+    // Never fabricate physiology in release binaries.
+    if (kReleaseMode) return;
     historicalDaysCount = days;
     final now = DateTime.now();
     for (int i = 0; i < days; i++) {
@@ -1040,8 +925,8 @@ class AppState extends ChangeNotifier {
         unit: 'ms',
         start: day,
         end: day.add(const Duration(hours: 8)),
-        source: 'healthkit',
-        sourceRecordId: 'demo-hrv-$i',
+        source: 'debug_seed',
+        sourceRecordId: 'debug-hrv-$i',
         quality: 0.95,
       ));
       eventStore.recordEvent(HealthEvent(
@@ -1050,15 +935,35 @@ class AppState extends ChangeNotifier {
         unit: 'bpm',
         start: day,
         end: day.add(const Duration(hours: 8)),
-        source: 'healthkit',
-        sourceRecordId: 'demo-rhr-$i',
+        source: 'debug_seed',
+        sourceRecordId: 'debug-rhr-$i',
         quality: 0.95,
       ));
     }
+    // Sync display fields from seeded events so Recovery UI can render in debug/tests.
+    hrvMs = 58;
+    restingHeartRate = 60;
+    sleepDuration = '7h 10m';
+    dailySteps = 5000;
+    isWearableConnected = true;
+    wearableSource = 'debug_seed';
+    wearableDeviceName = 'Debug seed source';
     recalculateRecoveryEngine();
   }
 
   Map<String, dynamic> getTodaysMovementSuggestion() {
+    if (!hasVitalsData) {
+      return {
+        'title': 'Connect health data first',
+        'subtitle': 'Movement guidance needs recovery inputs',
+        'recommendedDuration': '—',
+        'intensity': 'Unavailable',
+        'reasoning':
+            'Sync Apple Health / Health Connect (or log how you feel) so we can recommend intensity safely.',
+        'exerciseId': 'ex-3',
+        'caution': 'No fabricated strain targets are shown without your data.',
+      };
+    }
     if (recoveryScore >= 75) {
       return {
         'title': 'Zone 2 Cardio & Steady State',
@@ -1066,7 +971,7 @@ class AppState extends ChangeNotifier {
         'recommendedDuration': '35-45 min',
         'intensity': 'Moderate Aerobic (HR 120-135 bpm)',
         'reasoning':
-            'Your Recovery Score is high ($recoveryScore%) with an elevated HRV ($hrvMs ms) and resting pulse of $restingHeartRate bpm. Your autonomic system is primed for aerobic adaptation without overtraining risk.',
+            'Your Recovery Score is high ($recoveryScore%) with HRV ${hrvMs > 0 ? "$hrvMs ms" : "n/a"} and resting pulse ${restingHeartRate > 0 ? "$restingHeartRate bpm" : "n/a"}.',
         'exerciseId': 'ex-1',
         'caution': null,
       };
@@ -1077,7 +982,7 @@ class AppState extends ChangeNotifier {
         'recommendedDuration': '25-30 min',
         'intensity': 'Low Impact (HR 100-115 bpm)',
         'reasoning':
-            'Moderate recovery ($recoveryScore%). A low-intensity walk supports venous blood flow, lymphatic drainage, and gentle stress relief without taxing glycogen reserves.',
+            'Moderate recovery ($recoveryScore%). A low-intensity walk supports circulation without overreaching.',
         'exerciseId': 'ex-1',
         'caution': null,
       };
@@ -1088,7 +993,7 @@ class AppState extends ChangeNotifier {
         'recommendedDuration': '15-20 min',
         'intensity': 'Gentle / Restorative',
         'reasoning':
-            'Recovery Score is lower ($recoveryScore%). Prioritizing parasympathetic tone with diaphragmatic breathing and gentle yoga will restore neuromuscular readiness.',
+            'Recovery Score is lower ($recoveryScore%). Prioritize gentle movement and rest.',
         'exerciseId': 'ex-3',
         'caution': 'Avoid high-intensity sprints or heavy loading today.',
       };
@@ -1121,11 +1026,22 @@ class AppState extends ChangeNotifier {
     double? heightCm,
     double? weightKg,
     String? photoPath,
+    String? dob,
+    String? sex,
+    List<String>? goals,
   }) {
     if (heightCm != null) userHeightCm = heightCm;
     if (weightKg != null) userWeightKg = weightKg;
     if (photoPath != null) baselineProgressPhotoPath = photoPath;
+    if (dob != null) dateOfBirth = dob;
+    if (sex != null) biologicalSex = sex;
+    if (goals != null) {
+      healthGoals
+        ..clear()
+        ..addAll(goals);
+    }
     isOnboardingBaselineCompleted = true;
+    _persistCurrentUserData();
     notifyListeners();
   }
 
@@ -1139,26 +1055,76 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> syncVitals() async {
+  Future<String> syncVitals() async {
     isSyncingVitals = true;
+    lastSyncMessage = '';
     notifyListeners();
-    await Future.delayed(const Duration(milliseconds: 700));
 
-    final events = await WearableService.ingestEvents(consentManager: consentManager);
-    await eventStore.recordEvents(events);
-    if (userId != null) {
-      supabaseSyncService.syncPendingEvents(userId!);
+    try {
+      final authorized = await WearableService.requestAuthorization();
+      if (!authorized) {
+        lastSyncMessage = 'Health permissions were denied. Enable access in system settings.';
+        return lastSyncMessage;
+      }
+
+      final events = await WearableService.ingestEvents(consentManager: consentManager);
+      final vitals = await WearableService.fetchLatestVitals();
+
+      if (events.isEmpty && vitals['isRealHardware'] != true) {
+        lastSyncMessage = WearableService.isPlatformSupported
+            ? 'No new samples found. Wear your device and ensure it syncs to Health / Health Connect.'
+            : 'Health sync requires iOS (HealthKit) or Android (Health Connect).';
+        return lastSyncMessage;
+      }
+
+      if (events.isNotEmpty) {
+        await eventStore.recordEvents(events);
+      }
+
+      if (vitals['restingHeartRate'] is int && (vitals['restingHeartRate'] as int) > 0) {
+        restingHeartRate = vitals['restingHeartRate'] as int;
+      }
+      if (vitals['hrvMs'] is int && (vitals['hrvMs'] as int) > 0) {
+        hrvMs = vitals['hrvMs'] as int;
+      }
+      if (vitals['bloodOxygen'] is int && (vitals['bloodOxygen'] as int) > 0) {
+        bloodOxygen = vitals['bloodOxygen'] as int;
+      }
+      if (vitals['dailySteps'] is num) {
+        dailySteps = (vitals['dailySteps'] as num).toDouble();
+      }
+      if (vitals['sleepDuration'] is String &&
+          (vitals['sleepDuration'] as String).isNotEmpty) {
+        sleepDuration = vitals['sleepDuration'] as String;
+      }
+      if (vitals['bloodPressure'] is String) {
+        bloodPressure = vitals['bloodPressure'] as String;
+      }
+
+      final source = vitals['source'] as String? ?? WearableService.platformSourceLabel;
+      wearableSource = source;
+      wearableDeviceName = vitals['deviceName'] as String? ?? source;
+      isWearableConnected = true;
+      isRealHardware = vitals['isRealHardware'] == true;
+      lastSyncedTime = DateTime.now();
+      historicalDaysCount = _computeHistoricalDays();
+
+      if (userId != null) {
+        unawaited(supabaseSyncService.syncPendingEvents(userId!));
+      }
+
+      recalculateRecoveryEngine();
+      await _persistCurrentUserData();
+      lastSyncMessage =
+          'Synced ${events.length} sample(s) from $source.';
+      return lastSyncMessage;
+    } catch (e) {
+      lastSyncMessage = 'Sync failed: $e';
+      return lastSyncMessage;
+    } finally {
+      isSyncingVitals = false;
+      notifyListeners();
     }
-
-    restingHeartRate = 70 + (dailySteps.toInt() % 4);
-    dailySteps += 350;
-    sleepDuration = '7h 45m';
-    bloodPressure = '116/74';
-    lastSyncedTime = DateTime.now();
-    isSyncingVitals = false;
-    recalculateRecoveryEngine();
-    await _persistCurrentUserData();
-    notifyListeners();
   }
 
   void toggleMedication(String id) {

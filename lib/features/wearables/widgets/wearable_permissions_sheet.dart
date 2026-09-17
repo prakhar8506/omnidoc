@@ -80,7 +80,8 @@ class WearablePermissionsSheet extends StatelessWidget {
           const SizedBox(height: 20),
 
           Text(
-            'Health Companion reads the following metrics directly from your device sensors. Your health data stays encrypted on your device and is never sold to third parties.',
+            'Health Companion requests read access via Apple HealthKit (iOS) or Google Health Connect (Android). '
+            'Your health data stays encrypted on your device and is never sold to third parties.',
             style: AppTypography.bodyMd.copyWith(color: AppColors.textPrimary, height: 1.4),
           ),
           const SizedBox(height: 18),
@@ -122,14 +123,23 @@ class WearablePermissionsSheet extends StatelessWidget {
               Navigator.pop(context);
               final success = await WearableService.requestAuthorization();
               if (success) {
-                appState.connectWearable(
-                  'Apple Watch Series 9',
-                  'Apple HealthKit',
-                );
+                final source = WearableService.platformSourceLabel;
+                appState.connectWearable(source, source);
                 messenger.showSnackBar(
-                  const SnackBar(
-                    content: Text('Connected to Apple HealthKit successfully!'),
+                  SnackBar(
+                    content: Text('Connected to $source successfully.'),
                     backgroundColor: AppColors.accentTeal,
+                  ),
+                );
+              } else {
+                messenger.showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      WearableService.isPlatformSupported
+                          ? 'Health permissions were denied. Enable access in system settings for HealthKit / Health Connect.'
+                          : 'Health sync requires iOS (HealthKit) or Android (Health Connect).',
+                    ),
+                    backgroundColor: AppColors.accentCoral,
                   ),
                 );
               }
@@ -150,7 +160,7 @@ class WearablePermissionsSheet extends StatelessWidget {
               ),
               child: const Center(
                 child: Text(
-                  'Authorize & Connect Wearable',
+                  'Authorize Health Access',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
@@ -163,7 +173,7 @@ class WearablePermissionsSheet extends StatelessWidget {
           const SizedBox(height: 12),
           Center(
             child: Text(
-              'Works with Apple Health • Google Health Connect',
+              'Works with Apple HealthKit • Google Health Connect',
               style: AppTypography.labelSm.copyWith(color: AppColors.textTertiary, fontSize: 11),
             ),
           ),

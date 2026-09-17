@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/models/biomarker_report.dart';
@@ -74,7 +75,7 @@ class DoctorQuestionsModal extends StatelessWidget {
                       SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                          'AI-curated discussion prompts tailored to your CMP results and elevated ALT level.',
+                          'AI-curated discussion prompts based on your uploaded report.',
                           style: TextStyle(fontSize: 12, color: AppColors.textPrimary),
                         ),
                       ),
@@ -127,7 +128,10 @@ class DoctorQuestionsModal extends StatelessWidget {
                   ),
                   icon: const Icon(Icons.copy_rounded, size: 16),
                   label: const Text('Copy All Questions to Clipboard', style: TextStyle(fontWeight: FontWeight.w700)),
-                  onPressed: () {
+                  onPressed: () async {
+                    final questions = report.recommendedDoctorQuestions.join('\n');
+                    await Clipboard.setData(ClipboardData(text: questions));
+                    if (!context.mounted) return;
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(

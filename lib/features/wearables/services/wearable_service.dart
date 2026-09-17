@@ -1,214 +1,253 @@
 import 'package:flutter/foundation.dart';
 import 'package:health/health.dart';
+import '../../../core/consent/consent_manager.dart';
 import '../../../core/data/health_event.dart';
 
-/// Service interfacing with Apple HealthKit (iOS) and Google Health Connect (Android)
-/// using the pub.dev `health` package with graceful fallback for simulated environments.
+/// Real HealthKit (iOS) / Health Connect (Android) integration.
+/// Never invents vitals — empty results when unsupported or unauthorized.
 class WearableService {
   static final Health _health = Health();
 
   static const List<HealthDataType> requiredTypes = [
     HealthDataType.HEART_RATE,
     HealthDataType.RESTING_HEART_RATE,
+    HealthDataType.HEART_RATE_VARIABILITY_SDNN,
     HealthDataType.BLOOD_OXYGEN,
     HealthDataType.STEPS,
     HealthDataType.SLEEP_ASLEEP,
-    HealthDataType.WORKOUT,
+    HealthDataType.SLEEP_DEEP,
+    HealthDataType.SLEEP_REM,
+    HealthDataType.SLEEP_LIGHT,
+    HealthDataType.BLOOD_PRESSURE_SYSTOLIC,
+    HealthDataType.BLOOD_PRESSURE_DIASTOLIC,
   ];
 
-  /// Checks if real HealthKit / Health Connect hardware is supported on this platform.
   static bool get isPlatformSupported {
     if (kIsWeb) return false;
     return defaultTargetPlatform == TargetPlatform.iOS ||
         defaultTargetPlatform == TargetPlatform.android;
   }
 
-  /// Request permissions for required health data types
+  static String get platformSourceLabel {
+    if (!isPlatformSupported) return 'Unavailable on this platform';
+    return defaultTargetPlatform == TargetPlatform.iOS
+        ? 'Apple HealthKit'
+        : 'Google Health Connect';
+  }
+
+  static String get platformSourceId {
+    if (!isPlatformSupported) return 'none';
+    return defaultTargetPlatform == TargetPlatform.iOS
+        ? 'healthkit'
+        : 'health_connect';
+  }
+
   static Future<bool> requestAuthorization() async {
-    if (!isPlatformSupported) {
-      return true; // Virtual demo approval for Web/Desktop
-    }
+    if (!isPlatformSupported) return false;
 
     try {
-      final permissions = requiredTypes.map((_) => HealthDataAccess.READ).toList();
+      final permissions =
+          requiredTypes.map((_) => HealthDataAccess.READ).toList();
       final hasPermissions = await _health.hasPermissions(
         requiredTypes,
         permissions: permissions,
       );
+      if (hasPermissions == true) return true;
 
-      if (hasPermissions == true) {
-        return true;
-      }
-
-      final authorized = await _health.requestAuthorization(
+      return await _health.requestAuthorization(
         requiredTypes,
         permissions: permissions,
       );
-      return authorized;
     } catch (e) {
-      debugPrint('Wearable authorization exception: $e');
+      debugPrint('[WearableService] authorization error: $e');
       return false;
     }
   }
 
-  /// Fetch latest metrics from wearable
   static Future<Map<String, dynamic>> fetchLatestVitals() async {
-    final now = DateTime.now();
-    final startOfDay = DateTime(now.year, now.month, now.day);
+    final empty = <String, dynamic>{
+      'restingHeartRate': 0,
+      'hrvMs': 0,
+      'bloodOxygen': 0,
+      'dailySteps': 0.0,
+      'sleepDuration': '',
+      'bloodPressure': '',
+      'source': platformSourceLabel,
+      'deviceName': platformSourceLabel,
+      'isRealHardware': false,
+    };
 
-    if (!isPlatformSupported) {
-      return _generateSimulatedMetrics();
-    }
+    if (!isPlatformSupported) return empty;
 
     try {
+      final now = DateTime.now();
+      final start = now.subtract(const Duration(days: 2));
       final healthData = await _health.getHealthDataFromTypes(
         types: requiredTypes,
-        startTime: startOfDay,
+        startTime: start,
         endTime: now,
       );
 
       if (healthData.isEmpty) {
-        return _generateSimulatedMetrics();
+        return {...empty, 'source': platformSourceLabel};
       }
 
-      int restingHr = 72;
-      int bloodOxygen = 98;
-      int steps = 8420;
+      int? restingHr;
+      int? latestHr;
+      int? hrv;
+      int? spo2;
+      int steps = 0;
+      double sleepHours = 0;
+      int? sys;
+      int? dia;
 
-      for (var point in healthData) {
-        if (point.type == HealthDataType.RESTING_HEART_RATE ||
-            point.type == HealthDataType.HEART_RATE) {
-          final val = point.value;
-          if (val is NumericHealthValue) {
-            restingHr = val.numericValue.toInt();
-          }
-        } else if (point.type == HealthDataType.BLOOD_OXYGEN) {
-          final val = point.value;
-          if (val is NumericHealthValue) {
-            bloodOxygen = (val.numericValue * 100).toInt().clamp(90, 100);
-          }
-        } else if (point.type == HealthDataType.STEPS) {
-          final val = point.value;
-          if (val is NumericHealthValue) {
-            steps += val.numericValue.toInt();
-          }
+      for (final point in healthData) {
+        final val = point.value;
+        if (val is! NumericHealthValue) continue;
+        final n = val.numericValue.toDouble();
+
+        switch (point.type) {
+          case HealthDataType.RESTING_HEART_RATE:
+            restingHr = n.round();
+          case HealthDataType.HEART_RATE:
+            latestHr = n.round();
+          case HealthDataType.HEART_RATE_VARIABILITY_SDNN:
+            hrv = n.round();
+          case HealthDataType.BLOOD_OXYGEN:
+            spo2 = n <= 1 ? (n * 100).round() : n.round();
+          case HealthDataType.STEPS:
+            steps += n.round();
+          case HealthDataType.SLEEP_ASLEEP:
+          case HealthDataType.SLEEP_DEEP:
+          case HealthDataType.SLEEP_REM:
+          case HealthDataType.SLEEP_LIGHT:
+            final mins = point.dateTo.difference(point.dateFrom).inMinutes;
+            sleepHours += mins / 60.0;
+          case HealthDataType.BLOOD_PRESSURE_SYSTOLIC:
+            sys = n.round();
+          case HealthDataType.BLOOD_PRESSURE_DIASTOLIC:
+            dia = n.round();
+          default:
+            break;
         }
       }
 
+      String sleepLabel = '';
+      if (sleepHours > 0) {
+        final h = sleepHours.floor();
+        final m = ((sleepHours - h) * 60).round();
+        sleepLabel = '${h}h ${m}m';
+      }
+
       return {
-        'restingHeartRate': restingHr,
-        'bloodOxygen': bloodOxygen,
+        'restingHeartRate': restingHr ?? latestHr ?? 0,
+        'hrvMs': hrv ?? 0,
+        'bloodOxygen': spo2 ?? 0,
         'dailySteps': steps.toDouble(),
-        'source': defaultTargetPlatform == TargetPlatform.iOS
-            ? 'Apple HealthKit'
-            : 'Google Health Connect',
+        'sleepDuration': sleepLabel,
+        'bloodPressure': (sys != null && dia != null) ? '$sys/$dia' : '',
+        'source': platformSourceLabel,
+        'deviceName': platformSourceLabel,
         'isRealHardware': true,
       };
     } catch (e) {
-      debugPrint('Wearable data fetch fallback: $e');
-      return _generateSimulatedMetrics();
+      debugPrint('[WearableService] fetchLatestVitals error: $e');
+      return empty;
     }
   }
 
-  static Map<String, dynamic> _generateSimulatedMetrics() {
-    return {
-      'restingHeartRate': 72,
-      'activeHeartRate': 114,
-      'hrvMs': 58,
-      'bloodOxygen': 98,
-      'dailySteps': 8420.0,
-      'sleepDuration': '7h 10m',
-      'deepSleep': '1h 45m',
-      'remSleep': '2h 10m',
-      'lightSleep': '3h 15m',
-      'source': 'Apple HealthKit (Synced)',
-      'isRealHardware': false,
-    };
-  }
-
-  /// Ingests normalized HealthEvents according to active consent permissions.
+  /// Builds canonical [HealthEvent]s from platform health data. Returns [] if none.
   static Future<List<HealthEvent>> ingestEvents({
-    required dynamic consentManager,
+    required ConsentManager consentManager,
   }) async {
-    final List<HealthEvent> events = [];
-    final now = DateTime.now();
+    if (!isPlatformSupported) return [];
 
-    final sourcePlatform = isPlatformSupported
-        ? (defaultTargetPlatform == TargetPlatform.iOS ? 'healthkit' : 'health_connect')
-        : 'simulated';
+    try {
+      final now = DateTime.now();
+      final start = now.subtract(const Duration(days: 14));
+      final healthData = await _health.getHealthDataFromTypes(
+        types: requiredTypes,
+        startTime: start,
+        endTime: now,
+      );
 
-    // 1. Resting Heart Rate
-    events.add(HealthEvent(
-      metric: 'resting_heart_rate',
-      value: 58.0,
-      unit: 'bpm',
-      start: now.subtract(const Duration(hours: 6)),
-      end: now.subtract(const Duration(hours: 1)),
-      source: sourcePlatform,
-      sourceRecordId: 'rhr-${now.year}${now.month}${now.day}',
-      quality: 0.95,
-    ));
+      final events = <HealthEvent>[];
+      final source = platformSourceId;
 
-    // 2. Heart Rate Variability (HRV)
-    events.add(HealthEvent(
-      metric: 'heart_rate_variability',
-      value: 62.0,
-      unit: 'ms',
-      start: now.subtract(const Duration(hours: 7)),
-      end: now.subtract(const Duration(hours: 1)),
-      source: sourcePlatform,
-      sourceRecordId: 'hrv-${now.year}${now.month}${now.day}',
-      quality: 0.92,
-    ));
+      for (final point in healthData) {
+        final val = point.value;
+        if (val is! NumericHealthValue) continue;
+        final n = val.numericValue.toDouble();
+        final id =
+            '${point.type.name}-${point.dateFrom.millisecondsSinceEpoch}-${point.dateTo.millisecondsSinceEpoch}';
 
-    // 3. Sleep Duration
-    events.add(HealthEvent(
-      metric: 'sleep_duration',
-      value: 7.35, // 7h 21m
-      unit: 'hours',
-      start: now.subtract(const Duration(hours: 8, minutes: 30)),
-      end: now.subtract(const Duration(hours: 1, minutes: 10)),
-      source: sourcePlatform,
-      sourceRecordId: 'sleep-${now.year}${now.month}${now.day}',
-      quality: 0.98,
-    ));
+        String? metric;
+        double value = n;
+        String unit = 'count';
 
-    // 4. Daily Steps
-    events.add(HealthEvent(
-      metric: 'daily_steps',
-      value: 8420.0,
-      unit: 'steps',
-      start: DateTime(now.year, now.month, now.day),
-      end: now,
-      source: sourcePlatform,
-      sourceRecordId: 'steps-${now.year}${now.month}${now.day}',
-      quality: 1.0,
-    ));
+        switch (point.type) {
+          case HealthDataType.RESTING_HEART_RATE:
+            if (!consentManager.isCategoryEnabled(PermissionCategory.heartRate)) {
+              continue;
+            }
+            metric = 'resting_heart_rate';
+            unit = 'bpm';
+          case HealthDataType.HEART_RATE:
+            if (!consentManager.isCategoryEnabled(PermissionCategory.heartRate)) {
+              continue;
+            }
+            metric = 'heart_rate';
+            unit = 'bpm';
+          case HealthDataType.HEART_RATE_VARIABILITY_SDNN:
+            if (!consentManager.isCategoryEnabled(PermissionCategory.hrv)) {
+              continue;
+            }
+            metric = 'heart_rate_variability';
+            unit = 'ms';
+          case HealthDataType.STEPS:
+            if (!consentManager.isCategoryEnabled(PermissionCategory.steps)) {
+              continue;
+            }
+            metric = 'daily_steps';
+            unit = 'steps';
+          case HealthDataType.BLOOD_OXYGEN:
+            if (!consentManager
+                .isCategoryEnabled(PermissionCategory.bloodOxygen)) {
+              continue;
+            }
+            metric = 'blood_oxygen';
+            value = n <= 1 ? n * 100 : n;
+            unit = '%';
+          case HealthDataType.SLEEP_ASLEEP:
+          case HealthDataType.SLEEP_DEEP:
+          case HealthDataType.SLEEP_REM:
+          case HealthDataType.SLEEP_LIGHT:
+            if (!consentManager.isCategoryEnabled(PermissionCategory.sleep)) {
+              continue;
+            }
+            metric = 'sleep_duration';
+            value = point.dateTo.difference(point.dateFrom).inMinutes / 60.0;
+            unit = 'hours';
+          default:
+            continue;
+        }
 
-    // 5. Blood Oxygen (SpO2)
-    events.add(HealthEvent(
-      metric: 'blood_oxygen',
-      value: 98.0,
-      unit: '%',
-      start: now.subtract(const Duration(hours: 4)),
-      end: now,
-      source: sourcePlatform,
-      sourceRecordId: 'spo2-${now.year}${now.month}${now.day}',
-      quality: 0.90,
-    ));
+        events.add(HealthEvent(
+          metric: metric,
+          value: value,
+          unit: unit,
+          start: point.dateFrom,
+          end: point.dateTo,
+          source: source,
+          sourceRecordId: id,
+          quality: 1.0,
+        ));
+      }
 
-    // 6. Respiratory Rate
-    events.add(HealthEvent(
-      metric: 'respiratory_rate',
-      value: 14.2,
-      unit: 'brpm',
-      start: now.subtract(const Duration(hours: 6)),
-      end: now.subtract(const Duration(hours: 1)),
-      source: sourcePlatform,
-      sourceRecordId: 'resp-${now.year}${now.month}${now.day}',
-      quality: 0.88,
-    ));
-
-    return events;
+      return events;
+    } catch (e) {
+      debugPrint('[WearableService] ingestEvents error: $e');
+      return [];
+    }
   }
 }

@@ -39,6 +39,17 @@ class AuthService {
     await prefs.setString(_usersKey, UserAccount.listToJsonString(users));
   }
 
+  Future<void> _persistUserLocally(UserAccount user) async {
+    final users = await getUsers();
+    final index = users.indexWhere((u) => u.id == user.id || u.email == user.email);
+    if (index >= 0) {
+      users[index] = user;
+    } else {
+      users.add(user);
+    }
+    await _saveUsers(users);
+  }
+
   Future<String?> getSessionUserId() async {
     final prefs = await _prefs;
     return prefs.getString(_sessionUserIdKey);
@@ -65,6 +76,15 @@ class AuthService {
     }
   }
 
+  void _requireRemoteBackendInRelease() {
+    if (kReleaseMode && (backendRepository == null || !backendRepository!.isConfigured)) {
+      throw AuthException(
+        'Supabase is not configured. Supply SUPABASE_URL and SUPABASE_ANON_KEY '
+        'via --dart-define or --dart-define-from-file before signing in.',
+      );
+    }
+  }
+
   Future<UserAccount> register({
     required String fullName,
     required String email,
@@ -82,14 +102,16 @@ class AuthService {
       throw AuthException('Password must be at least 6 characters.');
     }
 
+    _requireRemoteBackendInRelease();
+
     final existing = await findByEmail(normalizedEmail);
-    if (existing != null) {
+    if (existing != null && !kReleaseMode) {
       throw AuthException('An account with this email already exists. Please sign in.');
     }
 
     String id = _uuid.v4();
 
-    // If Supabase is configured, register with hosted Auth
+    // Prefer remote auth when Supabase is configured
     if (backendRepository != null && backendRepository!.isConfigured) {
       try {
         final authRes = await backendRepository!.signUp(
@@ -100,10 +122,20 @@ class AuthService {
         );
         if (authRes?.user?.id != null) {
           id = authRes!.user!.id;
+        } else if (kReleaseMode) {
+          throw AuthException('Unable to create account. Please try again.');
         }
       } catch (e) {
+        if (kReleaseMode) {
+          if (e is AuthException) rethrow;
+          throw AuthException('Unable to create account: $e');
+        }
         debugPrint('[AuthService] Supabase remote sign up error (falling back to offline): $e');
       }
+    } else if (kReleaseMode) {
+      throw AuthException(
+        'Supabase is not configured. Please configure backend credentials.',
+      );
     }
 
     final hash = hashPassword(password, id);
@@ -116,9 +148,7 @@ class AuthService {
       createdAt: DateTime.now(),
     );
 
-    final users = await getUsers();
-    users.add(user);
-    await _saveUsers(users);
+    await _persistUserLocally(user);
 
     final prefs = await _prefs;
     await prefs.setString(_sessionUserIdKey, user.id);
@@ -137,7 +167,9 @@ class AuthService {
       throw AuthException('Please enter your password.');
     }
 
-    // Try remote sign in if configured
+    _requireRemoteBackendInRelease();
+
+    // Prefer remote sign-in when configured
     if (backendRepository != null && backendRepository!.isConfigured) {
       try {
         final authRes = await backendRepository!.signIn(
@@ -147,22 +179,43 @@ class AuthService {
         if (authRes?.user != null) {
           final remoteUser = authRes!.user!;
           final localUser = await findByEmail(normalizedEmail);
-          final user = localUser ??
-              UserAccount(
-                id: remoteUser.id,
-                fullName: (remoteUser.userMetadata?['full_name'] as String?) ?? 'User',
-                email: normalizedEmail,
-                passwordHash: hashPassword(password, remoteUser.id),
-                bloodType: (remoteUser.userMetadata?['blood_type'] as String?) ?? 'Unknown',
-                createdAt: DateTime.now(),
-              );
+          final persisted = UserAccount(
+            id: remoteUser.id,
+            fullName: (remoteUser.userMetadata?['full_name'] as String?) ??
+                localUser?.fullName ??
+                'User',
+            email: normalizedEmail,
+            passwordHash: hashPassword(password, remoteUser.id),
+            bloodType: (remoteUser.userMetadata?['blood_type'] as String?) ??
+                localUser?.bloodType ??
+                'Unknown',
+            avatarPath: localUser?.avatarPath,
+            createdAt: localUser?.createdAt ?? DateTime.now(),
+          );
+          // Always persist so getSessionUser works after remote sign-in
+          await _persistUserLocally(persisted);
+
           final prefs = await _prefs;
-          await prefs.setString(_sessionUserIdKey, user.id);
-          return user;
+          await prefs.setString(_sessionUserIdKey, persisted.id);
+          return persisted;
+        }
+        if (kReleaseMode) {
+          throw AuthException('Sign in failed. Please check your credentials.');
         }
       } catch (e) {
+        if (kReleaseMode) {
+          if (e is AuthException) rethrow;
+          throw AuthException('Unable to sign in: $e');
+        }
         debugPrint('[AuthService] Remote signIn error: $e');
       }
+    }
+
+    // Local SharedPreferences offline auth — debug/profile only
+    if (kReleaseMode) {
+      throw AuthException(
+        'Supabase is not configured. Please configure backend credentials.',
+      );
     }
 
     final user = await findByEmail(normalizedEmail);

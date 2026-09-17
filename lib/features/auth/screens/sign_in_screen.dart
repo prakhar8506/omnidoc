@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/env/app_env.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/state/app_state.dart';
@@ -160,62 +161,64 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
                           style: AppTypography.editorialLg,
                         ),
                         const SizedBox(height: 8),
-                        const Text(
-                          'Apple-grade personalized wellness, clinical triage, and AI report analysis.',
+                        Text(
+                          AppEnv.enableDemo
+                              ? 'Personalized wellness, clinical triage, and AI report analysis.'
+                              : 'Sign in with your account for personalized wellness, clinical triage, and AI report analysis.',
                           style: AppTypography.bodyMd,
                         ),
                         const SizedBox(height: 28),
 
-                        // One-Tap Demo Access Button (Matching Reference Persona)
-                        SizedBox(
-                          width: double.infinity,
-                          height: 54,
-                          child: ElevatedButton.icon(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.textPrimary,
-                              foregroundColor: Colors.white,
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(999),
+                        if (AppEnv.enableDemo) ...[
+                          SizedBox(
+                            width: double.infinity,
+                            height: 54,
+                            child: ElevatedButton.icon(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.textPrimary,
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(999),
+                                ),
+                                shadowColor: AppColors.textPrimary.withValues(alpha: 0.3),
                               ),
-                              shadowColor: AppColors.textPrimary.withValues(alpha: 0.3),
+                              icon: _isDemoLoading
+                                  ? const SizedBox.shrink()
+                                  : const Icon(Icons.auto_awesome_rounded, color: Color(0xFFFFC94A), size: 18),
+                              label: _isDemoLoading
+                                  ? const SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                    )
+                                  : const Text(
+                                      'One-Tap Demo (Daria Jenkins)',
+                                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                                    ),
+                              onPressed: _isDemoLoading ? null : _handleDemoSignIn,
                             ),
-                            icon: _isDemoLoading
-                                ? const SizedBox.shrink()
-                                : const Icon(Icons.auto_awesome_rounded, color: Color(0xFFFFC94A), size: 18),
-                            label: _isDemoLoading
-                                ? const SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                                  )
-                                : const Text(
-                                    'One-Tap Demo (Daria Jenkins)',
-                                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
-                                  ),
-                            onPressed: _isDemoLoading ? null : _handleDemoSignIn,
                           ),
-                        ),
-                        const SizedBox(height: 20),
-
-                        Row(
-                          children: [
-                            Expanded(child: Divider(color: AppColors.textTertiary.withValues(alpha: 0.3))),
-                            const Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 12),
-                              child: Text(
-                                'or sign in with email',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
-                                  color: AppColors.textSecondary,
+                          const SizedBox(height: 20),
+                          Row(
+                            children: [
+                              Expanded(child: Divider(color: AppColors.textTertiary.withValues(alpha: 0.3))),
+                              const Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 12),
+                                child: Text(
+                                  'or sign in with email',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                    color: AppColors.textSecondary,
+                                  ),
                                 ),
                               ),
-                            ),
-                            Expanded(child: Divider(color: AppColors.textTertiary.withValues(alpha: 0.3))),
-                          ],
-                        ),
-                        const SizedBox(height: 20),
+                              Expanded(child: Divider(color: AppColors.textTertiary.withValues(alpha: 0.3))),
+                            ],
+                          ),
+                          const SizedBox(height: 20),
+                        ],
 
                         const Text(
                           'Email',

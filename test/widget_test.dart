@@ -230,7 +230,7 @@ void main() {
       matching: find.byIcon(Icons.calendar_month_rounded),
     ));
     await tester.pump(const Duration(milliseconds: 300));
-    expect(find.text('Upcoming Visits'), findsOneWidget);
+    expect(find.text('Upcoming'), findsOneWidget);
   });
 
   test('AuthService isolates accounts by email', () async {

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/glass_container.dart';
@@ -25,7 +26,6 @@ class EmergencySafetyScreen extends StatelessWidget {
             child: SafeArea(
               child: CustomScrollView(
                 slivers: [
-                  // App Bar
                   SliverToBoxAdapter(
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
@@ -50,25 +50,16 @@ class EmergencySafetyScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-
-                  // Content Body
                   SliverPadding(
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                     sliver: SliverList(
                       delegate: SliverChildListDelegate([
-                        // Emergency Medical ID Hero Card
                         _buildMedicalIdCard(context),
                         const SizedBox(height: 18),
-
-                        // Wearable Fall Detection Alert Card
                         _buildFallDetectionCard(context),
                         const SizedBox(height: 18),
-
-                        // Allergies & Contraindications
                         _buildAllergiesCard(context),
                         const SizedBox(height: 18),
-
-                        // Emergency Contacts
                         _buildEmergencyContactsCard(context),
                         const SizedBox(height: 80),
                       ]),
@@ -144,6 +135,31 @@ class EmergencySafetyScreen extends StatelessWidget {
               _MedicalIdField(label: 'Language', value: appState.currentLocale.languageCode.toUpperCase()),
             ],
           ),
+          const SizedBox(height: 16),
+          BouncingTap(
+            onTap: () => _startEmergencyCallFlow(context),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              decoration: BoxDecoration(
+                color: AppColors.accentCoral,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: const Center(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.sos_rounded, color: Colors.white, size: 20),
+                    SizedBox(width: 8),
+                    Text(
+                      'Emergency SOS Call',
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Colors.white),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -199,7 +215,7 @@ class EmergencySafetyScreen extends StatelessWidget {
                     Icon(Icons.sensors_rounded, color: AppColors.accentCoral, size: 16),
                     SizedBox(width: 8),
                     Text(
-                      'Test Simulated Fall Alert',
+                      'Test Fall Alert Dial Path',
                       style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.accentCoral),
                     ),
                   ],
@@ -250,6 +266,7 @@ class EmergencySafetyScreen extends StatelessWidget {
   }
 
   Widget _buildEmergencyContactsCard(BuildContext context) {
+    final sosContacts = appState.familyMembers.where((f) => f.emergencySosEnabled).toList();
     return GlassContainer(
       padding: const EdgeInsets.all(20),
       borderRadius: 24,
@@ -259,32 +276,127 @@ class EmergencySafetyScreen extends StatelessWidget {
           const Text('Designated Emergency Contacts',
               style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
           const SizedBox(height: 12),
-          ...appState.familyMembers.where((f) => f.emergencySosEnabled).map((f) {
-            return Container(
-              margin: const EdgeInsets.only(bottom: 8),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.7),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      const Icon(Icons.phone_in_talk_rounded, color: AppColors.accentTeal, size: 18),
-                      const SizedBox(width: 10),
-                      Text('${f.name} (${f.relation})', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
-                    ],
-                  ),
-                  const Text('SOS Proxy', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.accentTeal)),
-                ],
-              ),
-            );
-          }),
+          if (sosContacts.isEmpty)
+            const Text(
+              'No SOS-enabled family contacts yet. Add them under Family Sharing.',
+              style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+            )
+          else
+            ...sosContacts.map((f) {
+              return Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.7),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.phone_in_talk_rounded, color: AppColors.accentTeal, size: 18),
+                        const SizedBox(width: 10),
+                        Text('${f.name} (${f.relation})', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
+                      ],
+                    ),
+                    const Text('SOS Proxy', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.accentTeal)),
+                  ],
+                ),
+              );
+            }),
         ],
       ),
     );
+  }
+
+  Future<void> _startEmergencyCallFlow(BuildContext context) async {
+    final sosContacts = appState.familyMembers.where((f) => f.emergencySosEnabled).toList();
+    final names = sosContacts.map((f) => f.name).join(', ');
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: const Text('Confirm Emergency Call', style: AppTypography.titleMd),
+        content: Text(
+          sosContacts.isEmpty
+              ? 'No SOS family contacts are configured. Enter a phone number to dial emergency services or a trusted contact.'
+              : 'SOS contacts: $names.\n\nEnter the phone number to dial. This opens your phone dialer.',
+          style: AppTypography.bodyMd,
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.accentCoral,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Continue'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !context.mounted) return;
+
+    final phoneController = TextEditingController();
+    final number = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: const Text('Enter number to call', style: AppTypography.titleMd),
+        content: TextField(
+          controller: phoneController,
+          keyboardType: TextInputType.phone,
+          autofocus: true,
+          decoration: InputDecoration(
+            hintText: 'e.g. 911 or +1 555 0100',
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.accentCoral,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.pop(ctx, phoneController.text.trim()),
+            child: const Text('Call'),
+          ),
+        ],
+      ),
+    );
+
+    if (number == null || number.isEmpty || !context.mounted) return;
+    await _dialNumber(context, number);
+  }
+
+  Future<void> _dialNumber(BuildContext context, String rawNumber) async {
+    final digits = rawNumber.replaceAll(RegExp(r'[^\d+]'), '');
+    if (digits.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Enter a valid phone number.'),
+          backgroundColor: AppColors.accentCoral,
+        ),
+      );
+      return;
+    }
+    final uri = Uri(scheme: 'tel', path: digits);
+    final launched = await launchUrl(uri);
+    if (!launched && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Could not open dialer for $digits'),
+          backgroundColor: AppColors.accentCoral,
+        ),
+      );
+    }
   }
 
   void _simulateFallTrigger(BuildContext context) {
@@ -302,12 +414,7 @@ class EmergencySafetyScreen extends StatelessWidget {
             } else {
               t.cancel();
               Navigator.pop(dlgCtx);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Simulation: Emergency SOS dispatched to Elena Jenkins!'),
-                  backgroundColor: AppColors.accentCoral,
-                ),
-              );
+              _startEmergencyCallFlow(context);
             }
           });
 
@@ -332,7 +439,7 @@ class EmergencySafetyScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Notifying emergency contacts in $countdown seconds...',
+                  'Opening emergency dial in $countdown seconds...',
                   style: TextStyle(fontSize: 13, color: Colors.white.withValues(alpha: 0.8)),
                   textAlign: TextAlign.center,
                 ),

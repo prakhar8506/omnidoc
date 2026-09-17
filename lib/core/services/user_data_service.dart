@@ -22,10 +22,10 @@ class UserDataService {
   }
 
   Map<String, dynamic> _emptyProfile() => {
-        'restingHeartRate': 72,
+        'restingHeartRate': 0,
         'sleepDuration': '—',
         'dailySteps': 0.0,
-        'bloodOxygen': 98,
+        'bloodOxygen': 0,
         'bloodPressure': '—',
         'lastSyncedTime': DateTime.now().toIso8601String(),
         'medications': <Map<String, dynamic>>[],

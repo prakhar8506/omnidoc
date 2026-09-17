@@ -1,6 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'core/env/app_env.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/app_colors.dart';
 import 'core/state/app_state.dart';
@@ -17,9 +19,13 @@ import 'features/appointments/screens/appointments_screen.dart';
 import 'features/lab_reports/screens/lab_reports_screen.dart';
 import 'features/ai_assistant/widgets/floating_ai_button.dart';
 import 'features/auth/screens/sign_in_screen.dart';
+import 'features/onboarding/screens/onboarding_baseline_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  if (kReleaseMode) {
+    AppEnv.validateRequired();
+  }
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
@@ -96,10 +102,15 @@ class _HealthCompanionAppState extends State<HealthCompanionApp> {
                         key: const ValueKey('sign_in_screen'),
                         appState: _appState,
                       )
-                    : HealthCompanionShell(
-                        key: const ValueKey('shell_screen'),
-                        appState: _appState,
-                      ),
+                    : (!_appState.isOnboardingBaselineCompleted)
+                        ? OnboardingBaselineScreen(
+                            key: const ValueKey('onboarding_baseline'),
+                            appState: _appState,
+                          )
+                        : HealthCompanionShell(
+                            key: const ValueKey('shell_screen'),
+                            appState: _appState,
+                          ),
           ),
         );
       },

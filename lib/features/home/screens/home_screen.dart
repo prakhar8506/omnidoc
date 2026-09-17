@@ -13,8 +13,6 @@ import '../../wearables/widgets/wearable_permissions_sheet.dart';
 import '../../nutrition/screens/nutrition_hydration_screen.dart';
 import '../../womens_health/screens/womens_health_screen.dart';
 import '../../chronic_care/screens/chronic_care_screen.dart';
-import '../../community/screens/community_challenges_screen.dart';
-import '../../insurance/screens/insurance_claims_screen.dart';
 import '../../data_portability/screens/data_portability_screen.dart';
 import '../../consent/screens/permission_center_screen.dart';
 import '../../emergency/screens/emergency_safety_screen.dart';
@@ -791,11 +789,21 @@ class HomeScreen extends StatelessWidget {
                     // Activity Pill (Reference: "🏃 Active ⌵")
                     Expanded(
                       child: GestureDetector(
-                        onTap: () {
-                          // Quick activity status toggle
+                        onTap: () async {
+                          if (!appState.isWearableConnected) {
+                            await WearablePermissionsSheet.show(context, appState);
+                          }
+                          final msg = await appState.syncVitals();
+                          if (!context.mounted) return;
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: const Text('Activity mode: Active cardio tracked via Apple Health.'),
+                              content: Text(
+                                msg.isNotEmpty
+                                    ? msg
+                                    : (appState.lastSyncMessage.isNotEmpty
+                                        ? appState.lastSyncMessage
+                                        : 'Sync complete.'),
+                              ),
                               behavior: SnackBarBehavior.floating,
                               backgroundColor: AppColors.surfaceCardDark,
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -866,32 +874,21 @@ class HomeScreen extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(
-                              Icons.wb_sunny_rounded,
-                              color: AppColors.accentGold,
+                              Icons.cloud_off_outlined,
+                              color: AppColors.textSecondary,
                               size: 18,
                             ),
                             SizedBox(width: 8),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  '30 °C',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.textPrimary,
-                                  ),
+                            Flexible(
+                              child: Text(
+                                'Weather unavailable',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textSecondary,
                                 ),
-                                Text(
-                                  'Hot & Sunny',
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w500,
-                                    color: AppColors.textSecondary,
-                                  ),
-                                ),
-                              ],
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
                           ],
                         ),
@@ -1438,19 +1435,31 @@ class HomeScreen extends StatelessWidget {
         'title': 'Challenges & Streaks',
         'icon': Icons.emoji_events_rounded,
         'color': AppColors.primaryContainer,
-        'action': () => Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => CommunityChallengesScreen(appState: appState)),
-        ),
+        'action': () {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Coming in a later version'),
+              behavior: SnackBarBehavior.floating,
+              backgroundColor: AppColors.surfaceCardDark,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+          );
+        },
       },
       {
         'title': 'Insurance & Claims',
         'icon': Icons.shield_rounded,
         'color': AppColors.accentTeal,
-        'action': () => Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => InsuranceClaimsScreen(appState: appState)),
-        ),
+        'action': () {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Coming in a later version'),
+              behavior: SnackBarBehavior.floating,
+              backgroundColor: AppColors.surfaceCardDark,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+          );
+        },
       },
       {
         'title': 'Emergency Medical ID',

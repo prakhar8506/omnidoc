@@ -1,4 +1,8 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/ai_message.dart';
+import '../../../core/env/app_env.dart';
 import '../../../core/state/app_state.dart';
 
 class AiCopilotService {
@@ -46,6 +50,87 @@ class AiCopilotService {
           'Ask any clinical question',
         ];
     }
+  }
+
+  /// Remote Edge Function path with local fallback.
+  static Future<AiMessage> processQueryAsync(String query, AppState state) async {
+    final base = AppEnv.functionsBaseUrl;
+    if (base.isEmpty) {
+      return _offlinePrefixed(processQuery(query, state));
+    }
+
+    try {
+      String? sessionToken;
+      try {
+        sessionToken = Supabase.instance.client.auth.currentSession?.accessToken;
+      } catch (_) {
+        sessionToken = null;
+      }
+
+      final bearer = (sessionToken != null && sessionToken.isNotEmpty)
+          ? sessionToken
+          : AppEnv.supabaseAnonKey;
+
+      final response = await http
+          .post(
+            Uri.parse('$base/health-ai-chat'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $bearer',
+              'apikey': AppEnv.supabaseAnonKey,
+            },
+            body: jsonEncode({
+              'message': query,
+              'context': {
+                'tabIndex': state.currentTabIndex,
+                'userName': state.userName,
+                'dailyBalanceScore': state.dailyBalanceScore,
+                'restingHeartRate': state.restingHeartRate,
+                'selectedMood': state.selectedMood,
+              },
+            }),
+          )
+          .timeout(const Duration(seconds: 20));
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final decoded = jsonDecode(response.body);
+        String text;
+        if (decoded is Map) {
+          text = (decoded['reply'] ??
+                  decoded['message'] ??
+                  decoded['text'] ??
+                  decoded['content'] ??
+                  '')
+              .toString();
+        } else {
+          text = decoded.toString();
+        }
+        if (text.trim().isNotEmpty) {
+          return AiMessage(
+            id: 'ai-${DateTime.now().millisecondsSinceEpoch}',
+            text: text.trim(),
+            sender: AiSender.assistant,
+            timestamp: DateTime.now(),
+            contextualBadge: 'Health AI • Cloud',
+          );
+        }
+      }
+    } catch (_) {
+      // Fall through to local guidance
+    }
+
+    return _offlinePrefixed(processQuery(query, state));
+  }
+
+  static AiMessage _offlinePrefixed(AiMessage local) {
+    return AiMessage(
+      id: local.id,
+      text: 'Offline assistant (local guidance only).\n\n${local.text}',
+      sender: local.sender,
+      timestamp: local.timestamp,
+      contextualBadge: local.contextualBadge,
+      actionLinks: local.actionLinks,
+    );
   }
 
   static AiMessage processQuery(String query, AppState state) {
@@ -153,7 +238,7 @@ class AiCopilotService {
         lower.contains('blood pressure')) {
       return AiMessage(
         id: 'ai-${DateTime.now().millisecondsSinceEpoch}',
-        text: "Here is your Apple biometric snapshot, **$firstName**:\n\n"
+        text: "Here is your biometric snapshot, **$firstName**:\n\n"
             "• **Daily Balance**: **${state.dailyBalanceScore}/100** (${state.balanceStatus})\n"
             "• **Resting Heart Rate**: **${state.restingHeartRate} bpm**\n"
             "• **Sleep**: **${state.sleepDuration}**\n"

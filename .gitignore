@@ -52,3 +52,4 @@ env/*.json
 !env/*.json.example
 *.env
 
+supabase/.env*

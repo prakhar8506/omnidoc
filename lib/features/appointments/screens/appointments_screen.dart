@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/state/app_state.dart';
+import '../../../core/models/appointment.dart';
 import '../../../core/widgets/avatar_image.dart';
 import '../../fitness/widgets/todays_movement_panel.dart';
 import '../widgets/book_appointment_modal.dart';
@@ -64,132 +66,79 @@ class AppointmentsScreen extends StatelessWidget {
         color: AppColors.surfaceContainerHigh,
         borderRadius: BorderRadius.circular(999),
       ),
-      child: Row(
-        children: [
-          Expanded(
-            child: GestureDetector(
-              onTap: () => appState.setAppointmentSegment(0),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 250),
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                decoration: BoxDecoration(
-                  color: currentIndex == 0 ? AppColors.primaryContainer : Colors.transparent,
-                  borderRadius: BorderRadius.circular(999),
-                  boxShadow: currentIndex == 0
-                      ? [
-                          BoxShadow(
-                            color: AppColors.primaryContainer.withValues(alpha: 0.3),
-                            blurRadius: 10,
-                            offset: const Offset(0, 2),
-                          ),
-                        ]
-                      : null,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.directions_run_rounded,
-                      size: 15,
-                      color: currentIndex == 0 ? Colors.white : AppColors.textSecondary,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Movement',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: currentIndex == 0 ? Colors.white : AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            _buildSegmentPill(
+              index: 0,
+              currentIndex: currentIndex,
+              icon: Icons.directions_run_rounded,
+              label: 'Movement',
+            ),
+            _buildSegmentPill(
+              index: 1,
+              currentIndex: currentIndex,
+              icon: Icons.calendar_today_rounded,
+              label: 'Upcoming',
+            ),
+            _buildSegmentPill(
+              index: 2,
+              currentIndex: currentIndex,
+              icon: Icons.verified_user_rounded,
+              label: 'Family',
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSegmentPill({
+    required int index,
+    required int currentIndex,
+    required IconData icon,
+    required String label,
+  }) {
+    final selected = currentIndex == index;
+    return GestureDetector(
+      onTap: () => appState.setAppointmentSegment(index),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        margin: const EdgeInsets.symmetric(horizontal: 2),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: selected ? AppColors.primaryContainer : Colors.transparent,
+          borderRadius: BorderRadius.circular(999),
+          boxShadow: selected
+              ? [
+                  BoxShadow(
+                    color: AppColors.primaryContainer.withValues(alpha: 0.3),
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 15,
+              color: selected ? Colors.white : AppColors.textSecondary,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: selected ? Colors.white : AppColors.textSecondary,
               ),
             ),
-          ),
-          Expanded(
-            child: GestureDetector(
-              onTap: () => appState.setAppointmentSegment(1),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 250),
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                decoration: BoxDecoration(
-                  color: currentIndex == 1 ? AppColors.primaryContainer : Colors.transparent,
-                  borderRadius: BorderRadius.circular(999),
-                  boxShadow: currentIndex == 1
-                      ? [
-                          BoxShadow(
-                            color: AppColors.primaryContainer.withValues(alpha: 0.3),
-                            blurRadius: 10,
-                            offset: const Offset(0, 2),
-                          ),
-                        ]
-                      : null,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.calendar_today_rounded,
-                      size: 15,
-                      color: currentIndex == 1 ? Colors.white : AppColors.textSecondary,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Upcoming Visits',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: currentIndex == 1 ? Colors.white : AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          Expanded(
-            child: GestureDetector(
-              onTap: () => appState.setAppointmentSegment(2),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 250),
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                decoration: BoxDecoration(
-                  color: currentIndex == 2 ? AppColors.primaryContainer : Colors.transparent,
-                  borderRadius: BorderRadius.circular(999),
-                  boxShadow: currentIndex == 2
-                      ? [
-                          BoxShadow(
-                            color: AppColors.primaryContainer.withValues(alpha: 0.3),
-                            blurRadius: 10,
-                            offset: const Offset(0, 2),
-                          ),
-                        ]
-                      : null,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.verified_user_rounded,
-                      size: 15,
-                      color: currentIndex == 2 ? Colors.white : AppColors.textSecondary,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Family',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: currentIndex == 2 ? Colors.white : AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -396,6 +345,54 @@ class AppointmentsScreen extends StatelessWidget {
     return 'In ${diff.inDays}d';
   }
 
+  Future<void> _joinVideoCall(BuildContext context, Appointment appt) async {
+    final note = appt.preparationNote.trim();
+    final urlMatch = RegExp(r'https?://\S+').firstMatch(note);
+    final url = urlMatch?.group(0);
+    if (url == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text(
+            'No telehealth link for this visit. Ask your clinic for a meeting URL.',
+          ),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: AppColors.surfaceCardDark,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      );
+      return;
+    }
+    final uri = Uri.parse(url);
+    final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!launched && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Could not open $url'),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: AppColors.surfaceCardDark,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      );
+    }
+  }
+
+  Future<void> _openDirections(BuildContext context, Appointment appt) async {
+    final uri = Uri.parse(
+      'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(appt.clinicName)}',
+    );
+    final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!launched && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Could not open directions to ${appt.clinicName}'),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: AppColors.surfaceCardDark,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      );
+    }
+  }
+
   Widget _buildScheduledVisitsHeader(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -570,16 +567,7 @@ class AppointmentsScreen extends StatelessWidget {
                         ),
                         icon: const Icon(Icons.videocam_rounded, size: 18),
                         label: const Text('Join Video Call', style: TextStyle(fontWeight: FontWeight.w700)),
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Opening telehealth room for ${appt.doctorName.split(',').first}...'),
-                              behavior: SnackBarBehavior.floating,
-                              backgroundColor: AppColors.surfaceCardDark,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            ),
-                          );
-                        },
+                        onPressed: () => _joinVideoCall(context, appt),
                       ),
                     ),
                   ] else ...[
@@ -594,16 +582,7 @@ class AppointmentsScreen extends StatelessWidget {
                         ),
                         icon: const Icon(Icons.directions_rounded, size: 18),
                         label: const Text('Get Directions', style: TextStyle(fontWeight: FontWeight.w700)),
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Directions to ${appt.clinicName}'),
-                              behavior: SnackBarBehavior.floating,
-                              backgroundColor: AppColors.surfaceCardDark,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            ),
-                          );
-                        },
+                        onPressed: () => _openDirections(context, appt),
                       ),
                     ),
                   ],

@@ -103,12 +103,12 @@ class _AiChatSheetState extends State<AiChatSheet> with SingleTickerProviderStat
 
     _scrollToBottom();
 
-    // Simulate AI thinking and synthesis
-    await Future.delayed(const Duration(milliseconds: 600));
+    // Brief pause for UX; remote path may take longer
+    await Future.delayed(const Duration(milliseconds: 200));
 
     if (!mounted) return;
 
-    final response = AiCopilotService.processQuery(query, widget.appState);
+    final response = await AiCopilotService.processQueryAsync(query, widget.appState);
 
     setState(() {
       _isTyping = false;
