@@ -197,26 +197,29 @@ class HomeScreen extends StatelessWidget {
     );
 
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (appState.firstName.isNotEmpty) ...[
-              Text(
-                'Good morning, ${appState.firstName}',
-                style: AppTypography.labelSm.copyWith(
-                  color: AppColors.textSecondary,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.2,
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (appState.firstName.isNotEmpty) ...[
+                Text(
+                  'Good morning, ${appState.firstName}',
+                  style: AppTypography.labelSm.copyWith(
+                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.2,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-              const SizedBox(height: 2),
+                const SizedBox(height: 2),
+              ],
+              Text('Recovery OS', style: AppTypography.editorialLg),
             ],
-            Text('Recovery OS', style: AppTypography.editorialLg),
-          ],
+          ),
         ),
+        const SizedBox(width: 8),
         GestureDetector(
           onTap: () {
             Navigator.of(context).push(

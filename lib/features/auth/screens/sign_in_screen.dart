@@ -4,6 +4,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/state/app_state.dart';
 import '../../../core/services/auth_service.dart';
+import '../../../core/branding/app_brand.dart';
 import 'sign_up_screen.dart';
 
 class SignInScreen extends StatefulWidget {
@@ -157,14 +158,14 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
                         ),
                         const SizedBox(height: 24),
                         Text(
-                          'Welcome to\nHealth Companion',
+                          'Welcome to\n${AppBrand.name}',
                           style: AppTypography.editorialLg,
                         ),
                         const SizedBox(height: 8),
                         Text(
                           AppEnv.enableDemo
-                              ? 'Personalized wellness, clinical triage, and AI report analysis.'
-                              : 'Sign in with your account for personalized wellness, clinical triage, and AI report analysis.',
+                              ? '${AppBrand.tagline} — personalized wellness, triage, and AI report analysis.'
+                              : 'Sign in with your account. ${AppBrand.tagline} for wellness, triage, and AI report analysis.',
                           style: AppTypography.bodyMd,
                         ),
                         const SizedBox(height: 28),
@@ -193,7 +194,7 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
                                       child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                                     )
                                   : const Text(
-                                      'One-Tap Demo (Daria Jenkins)',
+                                      'Try demo mode',
                                       style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
                                     ),
                               onPressed: _isDemoLoading ? null : _handleDemoSignIn,

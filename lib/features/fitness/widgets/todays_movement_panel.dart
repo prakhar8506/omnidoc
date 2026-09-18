@@ -122,9 +122,11 @@ class _TodaysMovementPanelState extends State<TodaysMovementPanel> {
 
         // 3. Curated Exercise Library Header & Filter Chips
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text('Curated Movement Library', style: AppTypography.titleMd),
+            const Expanded(
+              child: Text('Curated Movement Library', style: AppTypography.titleMd, overflow: TextOverflow.ellipsis),
+            ),
+            const SizedBox(width: 8),
             Text(
               'Clinically Safe',
               style: AppTypography.labelSm.copyWith(color: AppColors.primaryContainer),
@@ -133,7 +135,7 @@ class _TodaysMovementPanelState extends State<TodaysMovementPanel> {
         ),
         const SizedBox(height: 10),
         SizedBox(
-          height: 36,
+          height: 40,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             itemCount: _categories.length,
@@ -149,6 +151,10 @@ class _TodaysMovementPanelState extends State<TodaysMovementPanel> {
                 },
                 selectedColor: AppColors.primaryContainer,
                 backgroundColor: Colors.white.withValues(alpha: 0.7),
+                visualDensity: VisualDensity.compact,
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                labelPadding: const EdgeInsets.symmetric(horizontal: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 4),
                 labelStyle: TextStyle(
                   fontSize: 12,
                   fontWeight: isSel ? FontWeight.w700 : FontWeight.w500,
@@ -194,9 +200,15 @@ class _TodaysMovementPanelState extends State<TodaysMovementPanel> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
@@ -329,46 +341,52 @@ class _TodaysMovementPanelState extends State<TodaysMovementPanel> {
       child: Column(
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      const Icon(Icons.bolt_rounded, color: Color(0xFF10B981), size: 18),
-                      const SizedBox(width: 6),
-                      Text(
-                        'UNIVERSAL RECOVERY ENGINE',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.8,
-                          color: const Color(0xFF10B981).withValues(alpha: 0.9),
+              Flexible(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.bolt_rounded, color: Color(0xFF10B981), size: 18),
+                        const SizedBox(width: 6),
+                        Flexible(
+                          child: Text(
+                            'UNIVERSAL RECOVERY ENGINE',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.8,
+                              color: const Color(0xFF10B981).withValues(alpha: 0.9),
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      '$rec%',
+                      style: const TextStyle(
+                        fontSize: 34,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textPrimary,
+                        letterSpacing: -0.6,
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    '$rec%',
-                    style: const TextStyle(
-                      fontSize: 34,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.textPrimary,
-                      letterSpacing: -0.6,
                     ),
-                  ),
-                  Text(
-                    status,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF10B981),
+                    Text(
+                      status,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF10B981),
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
+              const SizedBox(width: 12),
               // Circular Recovery Ring
               Stack(
                 alignment: Alignment.center,
@@ -391,13 +409,23 @@ class _TodaysMovementPanelState extends State<TodaysMovementPanel> {
           const SizedBox(height: 18),
           const Divider(height: 1, color: Color(0x1A1C1A27)),
           const SizedBox(height: 14),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _metricPill('Daily Strain', '${state.dailyStrainScore.toStringAsFixed(1)} / 21'),
-              _metricPill('Sleep Score', '${state.sleepPerformanceScore}%'),
-              _metricPill('Resting HR', '${state.restingHeartRate} bpm'),
-            ],
+          LayoutBuilder(
+            builder: (context, constraints) {
+              return FittedBox(
+                fit: BoxFit.scaleDown,
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minWidth: constraints.maxWidth),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      _metricPill('Daily Strain', '${state.dailyStrainScore.toStringAsFixed(1)} / 21'),
+                      _metricPill('Sleep Score', '${state.sleepPerformanceScore}%'),
+                      _metricPill('Resting HR', '${state.restingHeartRate} bpm'),
+                    ],
+                  ),
+                ),
+              );
+            },
           ),
         ],
       ),
@@ -437,22 +465,30 @@ class _TodaysMovementPanelState extends State<TodaysMovementPanel> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryContainer.withValues(alpha: 0.12),
-                      shape: BoxShape.circle,
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryContainer.withValues(alpha: 0.12),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.fitness_center_rounded, color: AppColors.primaryContainer, size: 18),
                     ),
-                    child: const Icon(Icons.fitness_center_rounded, color: AppColors.primaryContainer, size: 18),
-                  ),
-                  const SizedBox(width: 10),
-                  const Text("Today's Movement", style: AppTypography.titleMd),
-                ],
+                    const SizedBox(width: 10),
+                    const Flexible(
+                      child: Text(
+                        "Today's Movement",
+                        style: AppTypography.titleMd,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(

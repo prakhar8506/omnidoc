@@ -29,6 +29,34 @@ class PrescriptionDocument {
     this.isImage = true,
   });
 
+  PrescriptionDocument copyWith({
+    String? id,
+    String? fileName,
+    String? localPath,
+    PrescriptionSource? source,
+    PrescriptionDocType? docType,
+    DateTime? uploadedAt,
+    String? plainLanguageSummary,
+    String? detailedExplanation,
+    List<String>? keyFindings,
+    List<String>? doctorQuestions,
+    bool? isImage,
+  }) {
+    return PrescriptionDocument(
+      id: id ?? this.id,
+      fileName: fileName ?? this.fileName,
+      localPath: localPath ?? this.localPath,
+      source: source ?? this.source,
+      docType: docType ?? this.docType,
+      uploadedAt: uploadedAt ?? this.uploadedAt,
+      plainLanguageSummary: plainLanguageSummary ?? this.plainLanguageSummary,
+      detailedExplanation: detailedExplanation ?? this.detailedExplanation,
+      keyFindings: keyFindings ?? this.keyFindings,
+      doctorQuestions: doctorQuestions ?? this.doctorQuestions,
+      isImage: isImage ?? this.isImage,
+    );
+  }
+
   Map<String, dynamic> toJson() => {
         'id': id,
         'fileName': fileName,

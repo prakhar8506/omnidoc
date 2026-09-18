@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:supabase_flutter/supabase_flutter.dart' hide AuthException;
 import '../models/vitals_data.dart';
 import '../models/appointment.dart';
 import '../models/biomarker_report.dart';
@@ -324,6 +326,47 @@ class AppState extends ChangeNotifier {
 
   Future<void> signOut() async {
     await _persistCurrentUserData();
+    await _auth.signOut();
+    _isSignedIn = false;
+    _currentUser = null;
+    _currentTabIndex = 0;
+    _resetInMemoryProfile();
+    notifyListeners();
+  }
+
+  /// Deletes cloud account via Edge Function, then clears local session.
+  Future<void> deleteAccount() async {
+    final base = AppEnv.functionsBaseUrl;
+    if (base.isEmpty || !AppEnv.isSupabaseConfigured) {
+      throw StateError('Account deletion requires a configured backend.');
+    }
+
+    String? accessToken;
+    try {
+      accessToken = Supabase.instance.client.auth.currentSession?.accessToken;
+    } catch (_) {
+      accessToken = null;
+    }
+    if (accessToken == null || accessToken.isEmpty) {
+      throw StateError('You must be signed in to delete your account.');
+    }
+
+    final response = await http
+        .post(
+          Uri.parse('$base/delete-account'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $accessToken',
+            'apikey': AppEnv.supabaseAnonKey,
+          },
+          body: '{}',
+        )
+        .timeout(const Duration(seconds: 60));
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw StateError('Delete failed (${response.statusCode}): ${response.body}');
+    }
+
     await _auth.signOut();
     _isSignedIn = false;
     _currentUser = null;
@@ -1202,16 +1245,33 @@ class AppState extends ChangeNotifier {
       originalName: originalName,
     );
 
-    final doc = ReportInterpreterService.interpretUpload(
+    // Optimistic local row, then cloud OCR when available.
+    var doc = ReportInterpreterService.interpretUpload(
       fileName: originalName,
       localPath: localPath,
       source: source,
       isImage: isImage,
     );
-
     prescriptions.insert(0, doc);
     activeReport = ReportInterpreterService.labReportFromPrescription(doc);
     unreadNotificationsCount += 1;
+    await _persistCurrentUserData();
+    notifyListeners();
+
+    doc = await ReportInterpreterService.interpretUploadAsync(
+      fileName: originalName,
+      localPath: localPath,
+      source: source,
+      isImage: isImage,
+      documentId: doc.id,
+    );
+    final idx = prescriptions.indexWhere((p) => p.id == doc.id);
+    if (idx >= 0) {
+      prescriptions[idx] = doc;
+    } else {
+      prescriptions.insert(0, doc);
+    }
+    activeReport = ReportInterpreterService.labReportFromPrescription(doc);
     await _persistCurrentUserData();
     notifyListeners();
     return doc;

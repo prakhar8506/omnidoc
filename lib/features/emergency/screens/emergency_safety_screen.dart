@@ -82,35 +82,40 @@ class EmergencySafetyScreen extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: AppColors.accentCoral.withValues(alpha: 0.15),
-                      shape: BoxShape.circle,
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppColors.accentCoral.withValues(alpha: 0.15),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.emergency_rounded, color: AppColors.accentCoral, size: 24),
                     ),
-                    child: const Icon(Icons.emergency_rounded, color: AppColors.accentCoral, size: 24),
-                  ),
-                  const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'CRITICAL MEDICAL ID',
-                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.accentCoral, letterSpacing: 0.8),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'CRITICAL MEDICAL ID',
+                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.accentCoral, letterSpacing: 0.8),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            appState.userName,
+                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        appState.userName,
-                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
-                      ),
-                    ],
-                  ),
-                ],
+                    ),
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
@@ -173,17 +178,21 @@ class EmergencySafetyScreen extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Row(
-                children: [
-                  Icon(Icons.accessibility_new_rounded, color: AppColors.watchHeartRate, size: 22),
-                  SizedBox(width: 10),
-                  Text(
-                    'Wearable Fall Detection',
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
-                  ),
-                ],
+              const Expanded(
+                child: Row(
+                  children: [
+                    Icon(Icons.accessibility_new_rounded, color: AppColors.watchHeartRate, size: 22),
+                    SizedBox(width: 10),
+                    Flexible(
+                      child: Text(
+                        'Wearable Fall Detection',
+                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
               ),
               Switch.adaptive(
                 value: appState.isFallDetectionActive,
@@ -194,7 +203,9 @@ class EmergencySafetyScreen extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'When enabled, connected wearable accelerometers will sound an emergency siren upon detecting a hard impact, notifying designated family members if unresponsive for 30 seconds.',
+            'Optional preference only. Fall alerts require a connected wearable, OS motion/notification permissions, '
+            'and at least one SOS-enabled family contact. Cura will not automatically notify family unless those '
+            'are configured and a real alert path is available — use Emergency SOS Call to dial manually.',
             style: TextStyle(fontSize: 12.5, height: 1.4, color: AppColors.textSecondary.withValues(alpha: 0.9)),
           ),
           const SizedBox(height: 16),
@@ -215,7 +226,7 @@ class EmergencySafetyScreen extends StatelessWidget {
                     Icon(Icons.sensors_rounded, color: AppColors.accentCoral, size: 16),
                     SizedBox(width: 8),
                     Text(
-                      'Test Fall Alert Dial Path',
+                      'Practice dialer path (not a real fall sensor)',
                       style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.accentCoral),
                     ),
                   ],

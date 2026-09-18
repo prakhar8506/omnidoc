@@ -53,3 +53,4 @@ env/*.json
 *.env
 
 supabase/.env*
+build/

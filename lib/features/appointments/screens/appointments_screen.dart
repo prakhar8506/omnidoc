@@ -179,71 +179,76 @@ class AppointmentsScreen extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 6),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: List.generate(days.length, (index) {
-            final date = days[index];
-            final isSelected = appState.selectedDateIndex == index;
-            final isToday = date.year == today.year &&
-                date.month == today.month &&
-                date.day == today.day;
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: List.generate(days.length, (index) {
+              final date = days[index];
+              final isSelected = appState.selectedDateIndex == index;
+              final isToday = date.year == today.year &&
+                  date.month == today.month &&
+                  date.day == today.day;
 
-            return GestureDetector(
-              onTap: () => appState.setSelectedDateIndex(index),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                decoration: BoxDecoration(
-                  color: isSelected ? AppColors.primaryContainer : AppColors.surfaceContainerLow,
-                  borderRadius: BorderRadius.circular(999),
-                  boxShadow: isSelected
-                      ? [
-                          BoxShadow(
-                            color: AppColors.primaryContainer.withValues(alpha: 0.35),
-                            blurRadius: 12,
-                            offset: const Offset(0, 4),
+              return Padding(
+                padding: EdgeInsets.only(right: index == days.length - 1 ? 0 : 6),
+                child: GestureDetector(
+                  onTap: () => appState.setSelectedDateIndex(index),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: isSelected ? AppColors.primaryContainer : AppColors.surfaceContainerLow,
+                      borderRadius: BorderRadius.circular(999),
+                      boxShadow: isSelected
+                          ? [
+                              BoxShadow(
+                                color: AppColors.primaryContainer.withValues(alpha: 0.35),
+                                blurRadius: 12,
+                                offset: const Offset(0, 4),
+                              ),
+                            ]
+                          : null,
+                      border: isToday && !isSelected
+                          ? Border.all(color: AppColors.primaryContainer.withValues(alpha: 0.4))
+                          : null,
+                    ),
+                    child: Column(
+                      children: [
+                        Text(
+                          DateFormat('E').format(date),
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                            color: isSelected ? Colors.white.withValues(alpha: 0.9) : AppColors.textSecondary,
                           ),
-                        ]
-                      : null,
-                  border: isToday && !isSelected
-                      ? Border.all(color: AppColors.primaryContainer.withValues(alpha: 0.4))
-                      : null,
-                ),
-                child: Column(
-                  children: [
-                    Text(
-                      DateFormat('E').format(date),
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
-                        color: isSelected ? Colors.white.withValues(alpha: 0.9) : AppColors.textSecondary,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${date.day}',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: isSelected ? Colors.white : AppColors.textPrimary,
-                      ),
-                    ),
-                    if (isSelected) ...[
-                      const SizedBox(height: 3),
-                      Container(
-                        width: 4,
-                        height: 4,
-                        decoration: const BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
                         ),
-                      ),
-                    ],
-                  ],
+                        const SizedBox(height: 4),
+                        Text(
+                          '${date.day}',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            color: isSelected ? Colors.white : AppColors.textPrimary,
+                          ),
+                        ),
+                        if (isSelected) ...[
+                          const SizedBox(height: 3),
+                          Container(
+                            width: 4,
+                            height: 4,
+                            decoration: const BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
                 ),
-              ),
-            );
-          }),
+              );
+            }),
+          ),
         ),
       ],
     );
@@ -347,21 +352,34 @@ class AppointmentsScreen extends StatelessWidget {
 
   Future<void> _joinVideoCall(BuildContext context, Appointment appt) async {
     final note = appt.preparationNote.trim();
-    final urlMatch = RegExp(r'https?://\S+').firstMatch(note);
-    final url = urlMatch?.group(0);
-    if (url == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+    final urlMatch = RegExp(r'https://[^\s<>"]+').firstMatch(note);
+    final url = urlMatch?.group(0)?.replaceAll(RegExp(r'[.,;:!?)]+$'), '');
+    final isHttps = url != null && Uri.tryParse(url)?.scheme == 'https';
+
+    if (!isHttps) {
+      if (!context.mounted) return;
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          backgroundColor: AppColors.surface,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          title: const Text('Video link unavailable', style: AppTypography.titleMd),
           content: const Text(
-            'No telehealth link for this visit. Ask your clinic for a meeting URL.',
+            'A secure video meeting link has not been provided for this visit yet. '
+            'Please contact your clinic for the telehealth URL, or check back closer to your appointment time.',
+            style: AppTypography.bodyMd,
           ),
-          behavior: SnackBarBehavior.floating,
-          backgroundColor: AppColors.surfaceCardDark,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('OK'),
+            ),
+          ],
         ),
       );
       return;
     }
+
     final uri = Uri.parse(url);
     final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (!launched && context.mounted) {
@@ -395,14 +413,23 @@ class AppointmentsScreen extends StatelessWidget {
 
   Widget _buildScheduledVisitsHeader(BuildContext context) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Row(
-          children: [
-            const Text('Scheduled Visits', style: AppTypography.titleLg),
-            const SizedBox(width: 8),
-            Text('(${appState.appointments.length} confirmed)', style: AppTypography.labelSm),
-          ],
+        Expanded(
+          child: Row(
+            children: [
+              const Flexible(
+                child: Text('Scheduled Visits', style: AppTypography.titleLg, overflow: TextOverflow.ellipsis),
+              ),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  '(${appState.appointments.length} confirmed)',
+                  style: AppTypography.labelSm,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
         ),
         TextButton.icon(
           style: TextButton.styleFrom(
@@ -566,7 +593,10 @@ class AppointmentsScreen extends StatelessWidget {
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
                         ),
                         icon: const Icon(Icons.videocam_rounded, size: 18),
-                        label: const Text('Join Video Call', style: TextStyle(fontWeight: FontWeight.w700)),
+                        label: const FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text('Join Video Call', style: TextStyle(fontWeight: FontWeight.w700)),
+                        ),
                         onPressed: () => _joinVideoCall(context, appt),
                       ),
                     ),
@@ -620,16 +650,21 @@ class AppointmentsScreen extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Family Health Sharing', style: AppTypography.titleLg),
-                SizedBox(height: 2),
-                Text('Encrypted caregiver and dependent access', style: AppTypography.labelSm),
-              ],
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Family Health Sharing', style: AppTypography.titleLg),
+                  SizedBox(height: 2),
+                  Text(
+                    'Local demo sharing — real encrypted invites coming soon',
+                    style: AppTypography.labelSm,
+                  ),
+                ],
+              ),
             ),
+            const SizedBox(width: 8),
             ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primaryContainer,
@@ -669,9 +704,12 @@ class AppointmentsScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Emergency Broadcast Enabled', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.accentCoral)),
+                    Text('SOS contacts (local)', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.accentCoral)),
                     SizedBox(height: 2),
-                    Text('In case of critical vitals alert, 3 family contacts will receive immediate SMS & GPS location.', style: TextStyle(fontSize: 11, color: AppColors.textPrimary)),
+                    Text(
+                      'Family SOS flags are stored on this device. Automatic SMS/GPS broadcast is not wired yet — use Emergency Safety to dial configured contacts.',
+                      style: TextStyle(fontSize: 11, color: AppColors.textPrimary),
+                    ),
                   ],
                 ),
               ),
@@ -707,7 +745,13 @@ class AppointmentsScreen extends StatelessWidget {
                         children: [
                           Row(
                             children: [
-                              Text(member.name, style: AppTypography.titleMd),
+                              Flexible(
+                                child: Text(
+                                  member.name,
+                                  style: AppTypography.titleMd,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
                               const SizedBox(width: 6),
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),

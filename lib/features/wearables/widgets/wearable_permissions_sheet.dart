@@ -80,7 +80,7 @@ class WearablePermissionsSheet extends StatelessWidget {
           const SizedBox(height: 20),
 
           Text(
-            'Health Companion requests read access via Apple HealthKit (iOS) or Google Health Connect (Android). '
+            'Cura requests read access via Apple HealthKit (iOS) or Google Health Connect (Android). '
             'Your health data stays encrypted on your device and is never sold to third parties.',
             style: AppTypography.bodyMd.copyWith(color: AppColors.textPrimary, height: 1.4),
           ),

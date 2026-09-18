@@ -154,11 +154,13 @@ class _FamilyConnectScreenState extends State<FamilyConnectScreen> {
           ),
           const SizedBox(height: 16),
           const Text(
-            'You control exactly which records each family member sees. No blanket access. Grant precise views into vitals, prescriptions, or lab files at any moment.',
+            'Sharing preferences are saved to your Cura account when signed in. '
+            'Members only see categories you enable. Invite links and live remote sync '
+            'require both people to have Cura accounts — this screen manages your local permissions first.',
             style: TextStyle(
               fontSize: 13,
-              color: AppColors.textSecondary,
-              height: 1.4,
+              height: 1.45,
+              color: Colors.white70,
             ),
           ),
           const SizedBox(height: 12),
@@ -398,7 +400,7 @@ class _FamilyConnectScreenState extends State<FamilyConnectScreen> {
           const Text('Invite a Family Member', style: AppTypography.titleMd),
           const SizedBox(height: 8),
           const Text(
-            'Send a secure, encrypted invite link. They\'ll be able to create their own account and connect to your health profile.',
+            'Generate a local demo invite code on this device. Real account invites and encrypted sharing are not enabled yet.',
             style: TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.35),
           ),
           const SizedBox(height: 16),
@@ -414,7 +416,7 @@ class _FamilyConnectScreenState extends State<FamilyConnectScreen> {
               ),
               icon: const Icon(Icons.person_add_rounded, size: 18),
               label: const Text(
-                'Send Invite Link',
+                'Create Local Invite (Demo)',
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
               ),
               onPressed: () => _showInviteDialog(),
@@ -432,13 +434,15 @@ class _FamilyConnectScreenState extends State<FamilyConnectScreen> {
               ),
               icon: const Icon(Icons.qr_code_rounded, size: 18),
               label: const Text(
-                'Share via QR Code',
+                'Show Demo QR Code',
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
               ),
               onPressed: () {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: const Text('QR invite code generated. Show this to your family member.'),
+                    content: const Text(
+                      'Demo QR only — local placeholder. Real invite linking is pending.',
+                    ),
                     behavior: SnackBarBehavior.floating,
                     backgroundColor: AppColors.surfaceCardDark,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -463,83 +467,14 @@ class _FamilyConnectScreenState extends State<FamilyConnectScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text('Pending Invites', style: AppTypography.titleMd),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.accentGold.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: const Text(
-                  '1 Pending',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: AppColors.surfaceContainerLow,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Row(
-              children: [
-                const CircleAvatar(
-                  radius: 20,
-                  backgroundColor: AppColors.surfaceContainerHigh,
-                  child: Icon(Icons.person_outline_rounded, color: AppColors.textSecondary, size: 22),
-                ),
-                const SizedBox(width: 12),
-                const Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Robert Jenkins',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                      SizedBox(height: 2),
-                      Text(
-                        'Father • Invite sent 2 days ago',
-                        style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
-                      ),
-                    ],
-                  ),
-                ),
-                TextButton(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: const Text('Invite resent to Robert Jenkins.'),
-                        behavior: SnackBarBehavior.floating,
-                        backgroundColor: AppColors.surfaceCardDark,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                    );
-                  },
-                  child: const Text(
-                    'Resend',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.primaryContainer,
-                    ),
-                  ),
-                ),
-              ],
+          const Text('Pending Invites', style: AppTypography.titleMd),
+          const SizedBox(height: 12),
+          Text(
+            'No pending invites. When you invite someone, they’ll appear here until they accept.',
+            style: TextStyle(
+              fontSize: 13,
+              height: 1.4,
+              color: AppColors.textSecondary.withValues(alpha: 0.95),
             ),
           ),
         ],
@@ -560,7 +495,7 @@ class _FamilyConnectScreenState extends State<FamilyConnectScreen> {
           SizedBox(width: 10),
           Expanded(
             child: Text(
-              'Sharing permissions are stored on this device for demo purposes. Always review access with your care team before sharing clinical records.',
+              'Sharing preferences are saved with your Cura account when signed in. Review access with your care team before sharing clinical records.',
               style: TextStyle(fontSize: 11, color: AppColors.textSecondary, height: 1.3),
             ),
           ),
@@ -628,7 +563,7 @@ class _FamilyConnectScreenState extends State<FamilyConnectScreen> {
                     controller: nameController,
                     style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
                     decoration: InputDecoration(
-                      hintText: 'e.g. John Jenkins',
+                      hintText: 'e.g. Alex Rivera',
                       hintStyle: const TextStyle(color: AppColors.textSecondary),
                       filled: true,
                       fillColor: AppColors.surfaceContainerLow,
@@ -718,7 +653,9 @@ class _FamilyConnectScreenState extends State<FamilyConnectScreen> {
                     Navigator.pop(context);
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('Invite sent to ${nameController.text.trim()}!'),
+                        content: Text(
+                          'Local demo member "${nameController.text.trim()}" added. Real invite delivery is pending.',
+                        ),
                         behavior: SnackBarBehavior.floating,
                         backgroundColor: AppColors.surfaceCardDark,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -726,7 +663,7 @@ class _FamilyConnectScreenState extends State<FamilyConnectScreen> {
                     );
                   }
                 },
-                child: const Text('Send Invite', style: TextStyle(fontWeight: FontWeight.w700)),
+                child: const Text('Add Local (Demo)', style: TextStyle(fontWeight: FontWeight.w700)),
               ),
             ],
           );

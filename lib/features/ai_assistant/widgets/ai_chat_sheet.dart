@@ -48,7 +48,7 @@ class _AiChatSheetState extends State<AiChatSheet> with SingleTickerProviderStat
     _messages.add(
       AiMessage(
         id: 'msg-welcome',
-        text: "Hello ${widget.appState.userName.split(' ').first}! I'm your **Health Companion AI Copilot**.\n\n"
+        text: "Hello ${widget.appState.userName.split(' ').first}! I'm your **Cura AI Copilot**.\n\n"
               "I can help with your vitals, appointments, uploaded prescriptions/labs, and symptom questions.\n\n"
               "Currently viewing: **$tabName**.",
         sender: AiSender.assistant,
@@ -72,7 +72,7 @@ class _AiChatSheetState extends State<AiChatSheet> with SingleTickerProviderStat
   String _getTabName(int index) {
     switch (index) {
       case 0:
-        return 'Health Companion Home';
+        return 'Cura Home';
       case 1:
         return 'Symptom Triage Assistant';
       case 2:

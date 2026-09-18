@@ -252,15 +252,32 @@ class _LabReportsScreenState extends State<LabReportsScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppColors.accentTeal.withValues(alpha: 0.15),
+                  color: (report.confidencePercentage >= 50
+                          ? AppColors.accentTeal
+                          : AppColors.accentGold)
+                      .withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(999),
                 ),
-                child: const Row(
+                child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    CircleAvatar(radius: 3, backgroundColor: AppColors.accentTeal),
-                    SizedBox(width: 4),
-                    Text('Verified', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+                    CircleAvatar(
+                      radius: 3,
+                      backgroundColor: report.confidencePercentage >= 50
+                          ? AppColors.accentTeal
+                          : AppColors.accentGold,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      report.confidencePercentage >= 50
+                          ? 'AI draft — review with clinician'
+                          : 'Pending clinician review',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
                   ],
                 ),
               ),

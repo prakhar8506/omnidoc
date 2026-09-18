@@ -1,5 +1,5 @@
 name: health_companion
-description: "Serene Clinical & Health Companion production-ready application with Omni AI Copilot."
+description: "Cura — quiet care for everyday health."
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -26,6 +26,8 @@ dependencies:
   supabase_flutter: ^2.8.0
   url_launcher: ^6.3.2
   http: ^1.6.0
+  app_links: ^6.4.0
+  sentry_flutter: ^9.6.0
 
 dev_dependencies:
   flutter_test:
@@ -34,3 +36,5 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/branding/

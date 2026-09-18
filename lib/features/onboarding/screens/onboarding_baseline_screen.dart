@@ -33,10 +33,10 @@ class _OnboardingBaselineScreenState extends State<OnboardingBaselineScreen> {
   void initState() {
     super.initState();
     _heightController = TextEditingController(
-      text: widget.appState.userHeightCm?.toStringAsFixed(0) ?? '172',
+      text: widget.appState.userHeightCm?.toStringAsFixed(0) ?? '',
     );
     _weightController = TextEditingController(
-      text: widget.appState.userWeightKg?.toStringAsFixed(1) ?? '65.0',
+      text: widget.appState.userWeightKg?.toStringAsFixed(1) ?? '',
     );
     _progressPhotoPath = widget.appState.baselineProgressPhotoPath;
     _labUploaded = widget.appState.prescriptions.isNotEmpty;

@@ -7,7 +7,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Health Companion</string>
+	<string>Cura</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -15,7 +15,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>health_companion</string>
+	<string>Cura</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -24,6 +24,19 @@
 	<string>????</string>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>com.healthcompanion.health_companion</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>cura</string>
+			</array>
+		</dict>
+	</array>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>UIApplicationSceneManifest</key>
@@ -59,11 +72,15 @@
 		<false/>
 	</dict>
 	<key>NSCameraUsageDescription</key>
-	<string>Health Companion needs camera access to photograph prescriptions and lab reports.</string>
+	<string>Cura needs camera access to photograph prescriptions and lab reports.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Health Companion needs photo library access to upload prescriptions and lab reports.</string>
+	<string>Cura needs photo library access to upload prescriptions and lab reports.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Microphone access may be used when capturing media with your camera.</string>
+	<key>NSHealthShareUsageDescription</key>
+	<string>Cura reads heart rate, HRV, steps, sleep, and oxygen saturation from Apple Health so you can track recovery trends. Data stays under your account controls.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>Cura does not write clinical diagnoses to Apple Health. Write access is unused unless you explicitly enable a future sync feature.</string>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>

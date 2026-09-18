@@ -303,7 +303,7 @@ class AiCopilotService {
         lower.contains('what can you do')) {
       return AiMessage(
         id: 'ai-${DateTime.now().millisecondsSinceEpoch}',
-        text: "Welcome to **Health Companion**, **$firstName**.\n\n"
+        text: "Welcome to **Cura**, **$firstName**.\n\n"
             "1. **Daily Balance (Home)** — vitals, medications, stress telemetry\n"
             "2. **Feeling Journal** — interactive mood arc dial & mental telemetry\n"
             "3. **Symptom Triage** — describe symptoms for clinical evaluation\n"
@@ -311,7 +311,7 @@ class AiCopilotService {
             "5. **Biology & Labs** — upload prescriptions & interpret biomarkers",
         sender: AiSender.assistant,
         timestamp: DateTime.now(),
-        contextualBadge: 'Health Companion Guide',
+        contextualBadge: 'Cura Guide',
         actionLinks: const [
           AiActionLink(label: 'Explore Home', targetTabIndex: 0),
           AiActionLink(label: 'Open Journal', targetTabIndex: 1),

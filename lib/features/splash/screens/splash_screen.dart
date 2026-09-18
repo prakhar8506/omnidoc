@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/branding/app_brand.dart';
 
 /// Cold-Start Branded Splash Screen featuring the Bold Aurora Gradient
 /// and spring-scale logo animation with seamless cross-fade transition.
@@ -74,24 +75,24 @@ class _SplashScreenState extends State<SplashScreen>
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // Bold Aurora Gradient Background (Moment 1.2)
+          // Teal / sage aurora background
           Container(
             decoration: const BoxDecoration(
               gradient: RadialGradient(
-                center: Alignment(0.2, -0.3),
-                radius: 1.4,
+                center: Alignment(0.15, -0.35),
+                radius: 1.35,
                 colors: [
-                  AppColors.auroraHeroViolet,
-                  AppColors.auroraHeroMagenta,
-                  AppColors.auroraHeroIndigo,
-                  Color(0xFF0D0C15),
+                  Color(0xFF0F766E), // deep teal
+                  Color(0xFF2D6A5A), // sage
+                  Color(0xFF1A3A36), // forest mist
+                  Color(0xFF0A1412),
                 ],
-                stops: [0.0, 0.38, 0.72, 1.0],
+                stops: [0.0, 0.36, 0.70, 1.0],
               ),
             ),
           ),
 
-          // Luminous Ambient Light Orb
+          // Soft sage ambient orb
           Positioned(
             top: MediaQuery.of(context).size.height * 0.25,
             left: MediaQuery.of(context).size.width * 0.2,
@@ -102,7 +103,7 @@ class _SplashScreenState extends State<SplashScreen>
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    AppColors.auroraHeroTeal.withValues(alpha: 0.45),
+                    AppColors.accentTeal.withValues(alpha: 0.40),
                     Colors.transparent,
                   ],
                 ),
@@ -135,42 +136,48 @@ class _SplashScreenState extends State<SplashScreen>
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: AppColors.auroraHeroMagenta.withValues(alpha: 0.45),
+                                color: AppColors.accentTeal.withValues(alpha: 0.45),
                                 blurRadius: 42,
                                 spreadRadius: 4,
                                 offset: const Offset(0, 10),
                               ),
                               BoxShadow(
-                                color: AppColors.accentSky.withValues(alpha: 0.30),
+                                color: const Color(0xFF86EFAC).withValues(alpha: 0.25),
                                 blurRadius: 32,
                                 offset: const Offset(-8, -8),
                               ),
                             ],
                           ),
-                          child: const Center(
-                            child: Icon(
-                              Icons.spa_rounded,
-                              size: 44,
-                              color: Colors.white,
+                          child: ClipOval(
+                            child: Image.asset(
+                              'assets/branding/cura_icon_1024.png',
+                              width: 72,
+                              height: 72,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => const Icon(
+                                Icons.spa_rounded,
+                                size: 44,
+                                color: Colors.white,
+                              ),
                             ),
                           ),
                         ),
                         const SizedBox(height: 26),
 
-                        // Bold White Editorial Headline (Newsreader)
+                        // Brand name + tagline
                         FadeTransition(
                           opacity: _textFadeAnimation,
                           child: Column(
                             children: [
                               Text(
-                                'Health Companion',
+                                AppBrand.name,
                                 style: AppTypography.editorialLg.copyWith(
                                   color: Colors.white,
-                                  fontSize: 34,
-                                  letterSpacing: -0.6,
+                                  fontSize: 40,
+                                  letterSpacing: -0.8,
                                   shadows: [
                                     Shadow(
-                                      color: Colors.black.withValues(alpha: 0.5),
+                                      color: Colors.black.withValues(alpha: 0.45),
                                       blurRadius: 16,
                                       offset: const Offset(0, 4),
                                     ),
@@ -179,12 +186,12 @@ class _SplashScreenState extends State<SplashScreen>
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                'Apple-Caliber Personal Wellness',
+                                AppBrand.tagline,
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w500,
-                                  letterSpacing: 1.2,
-                                  color: Colors.white.withValues(alpha: 0.75),
+                                  letterSpacing: 0.6,
+                                  color: Colors.white.withValues(alpha: 0.78),
                                 ),
                               ),
                               const SizedBox(height: 36),

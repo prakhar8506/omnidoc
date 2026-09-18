@@ -7,17 +7,23 @@ import '../state/app_state.dart';
 import 'avatar_image.dart';
 import '../../features/family/screens/family_connect_screen.dart';
 import '../../features/ai_assistant/widgets/ai_chat_sheet.dart';
+import '../../features/legal/screens/privacy_policy_screen.dart';
+import '../../features/legal/screens/terms_of_use_screen.dart';
 
 class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
   final String subtitle;
   final AppState appState;
 
+  /// Optional override for Delete Account. Defaults to [AppState.deleteAccount].
+  final Future<void> Function()? onDeleteAccount;
+
   const GlassAppBar({
     super.key,
     required this.title,
     required this.subtitle,
     required this.appState,
+    this.onDeleteAccount,
   });
 
   @override
@@ -57,9 +63,7 @@ class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
               ],
             ),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Left: Avatar initial ("D" in reference)
                 GestureDetector(
                   onTap: () => _showProfileDialog(context),
                   child: Container(
@@ -78,64 +82,61 @@ class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
                     ),
                   ),
                 ),
-
-                // Center: Title or Date with chevron ("Today, 05 Jan ⌵" in reference)
-                GestureDetector(
-                  onTap: () {
-                    // Open date picker or jump to today
-                    appState.setSelectedDateIndex(DateTime.now().weekday - 1);
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.65),
-                      borderRadius: BorderRadius.circular(999),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.9),
-                        width: 1,
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          appState.currentTabIndex == 0
-                              ? 'Today, $nowFormatted'
-                              : appState.currentTabIndex == 1
-                                  ? "${appState.firstName}'s Journal"
-                                  : subtitle,
-                          style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary,
-                            letterSpacing: -0.2,
+                Expanded(
+                  child: Center(
+                    child: GestureDetector(
+                      onTap: () {
+                        appState.setSelectedDateIndex(DateTime.now().weekday - 1);
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.65),
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.9),
+                            width: 1,
                           ),
                         ),
-                        const SizedBox(width: 4),
-                        const Icon(
-                          Icons.keyboard_arrow_down_rounded,
-                          size: 16,
-                          color: AppColors.textSecondary,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Flexible(
+                              child: Text(
+                                appState.currentTabIndex == 0
+                                    ? 'Today, $nowFormatted'
+                                    : appState.currentTabIndex == 1
+                                        ? "${appState.firstName}'s Journal"
+                                        : subtitle,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textPrimary,
+                                  letterSpacing: -0.2,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            const Icon(
+                              Icons.keyboard_arrow_down_rounded,
+                              size: 16,
+                              color: AppColors.textSecondary,
+                            ),
+                          ],
                         ),
-                      ],
+                      ),
                     ),
                   ),
                 ),
-
-                // Right: Search & AI Copilot icon
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      icon: const Icon(
-                        Icons.auto_awesome_rounded,
-                        color: AppColors.primaryContainer,
-                        size: 20,
-                      ),
-                      tooltip: 'Omni AI Copilot',
-                      onPressed: () => AiChatSheet.show(context, appState),
-                    ),
-                  ],
+                IconButton(
+                  icon: const Icon(
+                    Icons.auto_awesome_rounded,
+                    color: AppColors.primaryContainer,
+                    size: 20,
+                  ),
+                  tooltip: 'Omni AI Copilot',
+                  onPressed: () => AiChatSheet.show(context, appState),
                 ),
               ],
             ),
@@ -201,7 +202,11 @@ class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
                       borderRadius: BorderRadius.circular(999),
                     ),
                     child: Text(
-                      'Apple Health Linked • ID ${appState.bloodType}',
+                      appState.isWearableConnected
+                          ? 'Wearable linked • ${appState.bloodType.isEmpty ? 'Blood type unset' : 'ID ${appState.bloodType}'}'
+                          : (appState.bloodType.isEmpty
+                              ? 'Profile'
+                              : 'Blood type ${appState.bloodType}'),
                       style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
@@ -229,11 +234,45 @@ class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
                       );
                     },
                   ),
-                  const ListTile(
+                  ListTile(
                     dense: true,
-                    leading: Icon(Icons.shield_outlined, color: AppColors.primaryContainer),
-                    title: Text('Privacy & Clinical Protection', style: TextStyle(fontWeight: FontWeight.w600)),
-                    subtitle: Text('Encrypted biometric storage', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                    leading: const Icon(Icons.privacy_tip_outlined, color: AppColors.primaryContainer),
+                    title: const Text('Privacy Policy', style: TextStyle(fontWeight: FontWeight.w600)),
+                    trailing: const Icon(Icons.chevron_right_rounded, size: 20, color: AppColors.textSecondary),
+                    onTap: () {
+                      Navigator.pop(dialogContext);
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const PrivacyPolicyScreen()),
+                      );
+                    },
+                  ),
+                  ListTile(
+                    dense: true,
+                    leading: const Icon(Icons.description_outlined, color: AppColors.primaryContainer),
+                    title: const Text('Terms of Use', style: TextStyle(fontWeight: FontWeight.w600)),
+                    trailing: const Icon(Icons.chevron_right_rounded, size: 20, color: AppColors.textSecondary),
+                    onTap: () {
+                      Navigator.pop(dialogContext);
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const TermsOfUseScreen()),
+                      );
+                    },
+                  ),
+                  ListTile(
+                    dense: true,
+                    leading: const Icon(Icons.delete_forever_outlined, color: AppColors.accentCoral),
+                    title: const Text(
+                      'Delete Account',
+                      style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.accentCoral),
+                    ),
+                    subtitle: const Text(
+                      'Permanently remove your account',
+                      style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                    ),
+                    onTap: () {
+                      Navigator.pop(dialogContext);
+                      _confirmDeleteAccount(context);
+                    },
                   ),
                   const SizedBox(height: 12),
                   SizedBox(
@@ -261,5 +300,62 @@ class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _confirmDeleteAccount(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: const Text('Delete account?', style: AppTypography.titleMd),
+        content: const Text(
+          'This will permanently delete your Cura account and local health data on this device. This action cannot be undone.',
+          style: AppTypography.bodyMd,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(foregroundColor: AppColors.accentCoral),
+            child: const Text('Delete', style: TextStyle(fontWeight: FontWeight.w700)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !context.mounted) return;
+
+    try {
+      if (onDeleteAccount != null) {
+        await onDeleteAccount!();
+      } else {
+        await appState.deleteAccount();
+      }
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Your account has been deleted.'),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: AppColors.surfaceCardDark,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Could not delete account: $e'),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: AppColors.surfaceCardDark,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        );
+      }
+    }
   }
 }

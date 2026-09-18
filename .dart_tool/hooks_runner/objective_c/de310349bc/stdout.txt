@@ -1,53 +1,47 @@
-Running `(cd /Users/prakharjain/.pub-cache/hosted/pub.dev/objective_c-9.5.0/; TMPDIR=/var/folders/jn/71s2v31j5x9_6zpgj7g7c67h0000gn/T/ PATH=/Users/prakharjain/.local/bin:/Users/prakharjain/.antigravity-ide/antigravity-ide/bin:/Users/prakharjain/.antigravity-ide/antigravity-ide/bin:/Users/prakharjain/.antigravity-ide/antigravity-ide/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/Users/prakharjain/.local/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/opt/pkg/env/active/bin:/opt/pmk/env/global/bin:/Applications/Cursor.app/Contents/Resources/app/node_modules/@vscode/ripgrep/bin:/Users/prakharjain/.local/bin:/Users/prakharjain/.antigravity-ide/antigravity-ide/bin HOME=/Users/prakharjain /opt/homebrew/share/flutter/bin/cache/dart-sdk/bin/dart '--packages=/Users/prakharjain/Documents/health companion/.dart_tool/package_config.json' '/Users/prakharjain/Documents/health companion/.dart_tool/hooks_runner/objective_c/de310349bc/hook.dill' '--config=/Users/prakharjain/Documents/health companion/.dart_tool/hooks_runner/objective_c/de310349bc/input.json' )`.
-INFO: 2026-09-18 02:14:08.497337: Using compiler /Library/Developer/CommandLineTools/usr/bin/clang from BuildInput.cCompiler.cc.
+Running `(cd /Users/prakharjain/.pub-cache/hosted/pub.dev/objective_c-9.5.0/; ANDROID_HOME=/opt/homebrew/share/android-commandlinetools TMPDIR=/var/folders/jn/71s2v31j5x9_6zpgj7g7c67h0000gn/T/ PATH=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home/bin:/opt/homebrew/share/android-commandlinetools/platform-tools:/opt/homebrew/share/android-commandlinetools/platform-tools:/opt/homebrew/share/android-commandlinetools/platform-tools:/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home/bin:/opt/homebrew/share/android-commandlinetools/platform-tools:/opt/homebrew/share/android-commandlinetools/platform-tools:/opt/homebrew/bin:/Users/prakharjain/.local/bin:/Users/prakharjain/.antigravity-ide/antigravity-ide/bin:/Users/prakharjain/.antigravity-ide/antigravity-ide/bin:/Users/prakharjain/.antigravity-ide/antigravity-ide/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/Users/prakharjain/.local/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/opt/pkg/env/active/bin:/opt/pmk/env/global/bin:/Applications/Cursor.app/Contents/Resources/app/node_modules/@vscode/ripgrep/bin:/Users/prakharjain/.local/bin:/Users/prakharjain/.antigravity-ide/antigravity-ide/bin HOME=/Users/prakharjain /opt/homebrew/share/flutter/bin/cache/dart-sdk/bin/dart '--packages=/Users/prakharjain/Documents/health companion/.dart_tool/package_config.json' '/Users/prakharjain/Documents/health companion/.dart_tool/hooks_runner/objective_c/de310349bc/hook.dill' '--config=/Users/prakharjain/Documents/health companion/.dart_tool/hooks_runner/objective_c/de310349bc/input.json' )`.
+INFO: 2026-09-18 05:07:57.762779: Using compiler /Library/Developer/CommandLineTools/usr/bin/clang from BuildInput.cCompiler.cc.
 
-INFO: 2026-09-18 02:14:08.501027: Running: /Library/Developer/CommandLineTools/usr/bin/clang -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk -target arm64-apple-darwin -mmacos-version-min=13 -c /Users/prakharjain/.pub-cache/hosted/pub.dev/objective_c-9.5.0/src/include/dart_api_dl.c -fpic -gline-tables-only -I src -o /Users/prakharjain/Documents/health companion/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/include/dart_api_dl.c.o
+INFO: 2026-09-18 05:07:57.766605: Running: /Library/Developer/CommandLineTools/usr/bin/clang -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk -target arm64-apple-darwin -mmacos-version-min=13 -c /Users/prakharjain/.pub-cache/hosted/pub.dev/objective_c-9.5.0/src/include/dart_api_dl.c -fpic -gline-tables-only -I src -o /Users/prakharjain/Documents/health companion/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/include/dart_api_dl.c.o
 
-INFO: 2026-09-18 02:14:08.502161: Running: /Library/Developer/CommandLineTools/usr/bin/clang -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk -target arm64-apple-darwin -mmacos-version-min=13 -c /Users/prakharjain/.pub-cache/hosted/pub.dev/objective_c-9.5.0/src/objective_c.c -fpic -gline-tables-only -I src -o /Users/prakharjain/Documents/health companion/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/objective_c.c.o
+INFO: 2026-09-18 05:07:57.767888: Running: /Library/Developer/CommandLineTools/usr/bin/clang -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk -target arm64-apple-darwin -mmacos-version-min=13 -c /Users/prakharjain/.pub-cache/hosted/pub.dev/objective_c-9.5.0/src/objective_c.c -fpic -gline-tables-only -I src -o /Users/prakharjain/Documents/health companion/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/objective_c.c.o
 
-INFO: 2026-09-18 02:14:08.502481: Running: /Library/Developer/CommandLineTools/usr/bin/clang -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk -target arm64-apple-darwin -mmacos-version-min=13 -x objective-c -fobjc-arc -c /Users/prakharjain/.pub-cache/hosted/pub.dev/objective_c-9.5.0/src/input_stream_adapter.m -fpic -gline-tables-only -I src -o /Users/prakharjain/Documents/health companion/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/input_stream_adapter.m.o
+INFO: 2026-09-18 05:07:57.768210: Running: /Library/Developer/CommandLineTools/usr/bin/clang -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk -target arm64-apple-darwin -mmacos-version-min=13 -x objective-c -fobjc-arc -c /Users/prakharjain/.pub-cache/hosted/pub.dev/objective_c-9.5.0/src/objective_c.m -fpic -gline-tables-only -I src -o /Users/prakharjain/Documents/health companion/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/objective_c.m.o
 
-INFO: 2026-09-18 02:14:08.502652: Running: /Library/Developer/CommandLineTools/usr/bin/clang -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk -target arm64-apple-darwin -mmacos-version-min=13 -x objective-c -fobjc-arc -c /Users/prakharjain/.pub-cache/hosted/pub.dev/objective_c-9.5.0/src/objective_c.m -fpic -gline-tables-only -I src -o /Users/prakharjain/Documents/health companion/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/objective_c.m.o
+ream_adapter.m.o
 
-INFO: 2026-09-18 02:14:08.502878: Running: /Library/Developer/CommandLineTools/usr/bin/clang -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk -target arm64-apple-darwin -mmacos-version-min=13 -x objective-c -fobjc-arc -c /Users/prakharjain/.pub-cache/hosted/pub.dev/objective_c-9.5.0/src/observer.m -fpic -gline-tables-only -I src -o /Users/prakharjain/Documents/health companion/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/observer.m.o
+INFO: 2026-09-18 05:07:57.768331: Running: /Library/Developer/CommandLineTools/usr/bin/clang -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk -target arm64-apple-darwin -mmacos-version-min=13 -x objective-c -fobjc-arc -c /Users/prakharjain/.pub-cache/hosted/pub.dev/objective_c-9.5.0/src/observer.m -fpic -gline-tables-only -I src -o /Users/prakharjain/Documents/health companion/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/observer.m.o
+INFO: 2026-09-18 05:07:57.768459: Running: /Library/Developer/CommandLineTools/usr/bin/clang -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk -target arm64-apple-darwin -mmacos-version-min=13 -x objective-c -fobjc-arc -c /Users/prakharjain/.pub-cache/hosted/pub.dev/objective_c-9.5.0/src/ns_number.m -fpic -gline-tables-only -I src -o /Users/prakharjain/Documents/health companion/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/ns_number.m.o
 
-INFO: 2026-09-18 02:14:08.503150: Running: /Library/Developer/CommandLineTools/usr/bin/clang -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk -target arm64-apple-darwin -mmacos-version-min=13 -x objective-c -fobjc-arc -c /Users/prakharjain/.pub-cache/hosted/pub.dev/objective_c-9.5.0/src/ns_number.m -fpic -gline-tables-only -I src -o /Users/prakharjain/Documents/health companion/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/ns_number.m.o
+INFO: 2026-09-18 05:07:57.769180: Running: /Library/Developer/CommandLineTools/usr/bin/clang -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk -target arm64-apple-darwin -mmacos-version-min=13 -x objective-c -fobjc-arc -c /Users/prakharjain/.pub-cache/hosted/pub.dev/objective_c-9.5.0/src/objective_c_bindings_generated.m -fpic -gline-tables-only -I src -o /Users/prakharjain/Documents/health companion/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/objective_c_bindings_generated.m.o
 
-INFO: 2026-09-18 02:14:08.503294: Running: /Library/Developer/CommandLineTools/usr/bin/clang -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk -target arm64-apple-darwin -mmacos-version-min=13 -x objective-c -fobjc-arc -c /Users/prakharjain/.pub-cache/hosted/pub.dev/objective_c-9.5.0/src/protocol.m -fpic -gline-tables-only -I src -o /Users/prakharjain/Documents/health companion/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/protocol.m.o
+INFO: 2026-09-18 05:07:58.486353: 
+INFO: 2026-09-18 05:07:58.486541: 
+INFO: 2026-09-18 05:07:58.486575: Generated /Users/prakharjain/Documents/health companion/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/observer.m.o
+INFO: 2026-09-18 05:07:58.487365: 
+INFO: 2026-09-18 05:07:58.487386: 
+INFO: 2026-09-18 05:07:58.487396: Generated /Users/prakharjain/Documents/health companion/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/protocol.m.o
+INFO: 2026-09-18 05:07:58.487445: 
+INFO: 2026-09-18 05:07:58.487464: 
+INFO: 2026-09-18 05:07:58.487477: Generated /Users/prakharjain/Documents/health companion/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/include/dart_api_dl.c.o
+INFO: 2026-09-18 05:07:58.487822: 
+INFO: 2026-09-18 05:07:58.488160: 
+INFO: 2026-09-18 05:07:58.488172: Generated /Users/prakharjain/Documents/health companion/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/objective_c.c.o
 
-INFO: 2026-09-18 02:14:08.503409: Running: /Library/Developer/CommandLineTools/usr/bin/clang -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk -target arm64-apple-darwin -mmacos-version-min=13 -x objective-c -fobjc-arc -c /Users/prakharjain/.pub-cache/hosted/pub.dev/objective_c-9.5.0/src/objective_c_bindings_generated.m -fpic -gline-tables-only -I src -o /Users/prakharjain/Documents/health companion/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/objective_c_bindings_generated.m.o
+INFO: 2026-09-18 05:07:59.233804: 
+INFO: 2026-09-18 05:07:59.233998: 
+INFO: 2026-09-18 05:07:59.234015: Generated /Users/prakharjain/Documents/health companion/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/ns_number.m.o
 
-INFO: 2026-09-18 02:14:08.805898: 
-INFO: 2026-09-18 02:14:08.806015: 
-INFO: 2026-09-18 02:14:08.806046: Generated /Users/prakharjain/Documents/health companion/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/objective_c.c.o
+INFO: 2026-09-18 05:07:59.247394: 
+INFO: 2026-09-18 05:07:59.247436: 
+INFO: 2026-09-18 05:07:59.247447: Generated /Users/prakharjain/Documents/health companion/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/input_stream_adapter.m.o
 
-INFO: 2026-09-18 02:14:08.806260: 
-INFO: 2026-09-18 02:14:08.806274: 
-INFO: 2026-09-18 02:14:08.806287: Generated /Users/prakharjain/Documents/health companion/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/include/dart_api_dl.c.o
+INFO: 2026-09-18 05:07:59.288901: 
+INFO: 2026-09-18 05:07:59.288944: 
+INFO: 2026-09-18 05:07:59.288955: Generated /Users/prakharjain/Documents/health companion/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/objective_c_bindings_generated.m.o
 
-INFO: 2026-09-18 02:14:08.806786: 
-INFO: 2026-09-18 02:14:08.806803: 
-INFO: 2026-09-18 02:14:08.806812: Generated /Users/prakharjain/Documents/health companion/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/observer.m.o
+INFO: 2026-09-18 05:07:59.289513: Running: /Library/Developer/CommandLineTools/usr/bin/clang -shared -Wl,-encryptable -undefined dynamic_lookup -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk -target arm64-apple-darwin -mmacos-version-min=13 /Users/prakharjain/Documents/health companion/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/include/dart_api_dl.c.o /Users/prakharjain/Documents/health companion/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/objective_c.c.o /Users/prakharjain/Documents/health companion/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/input_stream_adapter.m.o /Users/prakharjain/Documents/health companion/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/objective_c.m.o /Users/prakharjain/Documents/health companion/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/observer.m.o /Users/prakharjain/Documents/health companion/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/ns_number.m.o /Users/prakharjain/Documents/health companion/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/protocol.m.o /Users/prakharjain/Documents/health companion/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/objective_c_bindings_generated.m.o -o /Users/prakharjain/Documents/health companion/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/objective_c.dylib
 
-INFO: 2026-09-18 02:14:08.806884: 
-INFO: 2026-09-18 02:14:08.806897: 
-INFO: 2026-09-18 02:14:08.806911: Generated /Users/prakharjain/Documents/health companion/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/protocol.m.o
-
-INFO: 2026-09-18 02:14:09.150081: 
-INFO: 2026-09-18 02:14:09.150124: 
-INFO: 2026-09-18 02:14:09.150135: Generated /Users/prakharjain/Documents/health companion/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/ns_number.m.o
-
-INFO: 2026-09-18 02:14:09.166623: Generated /Users/prakharjain/Documents/health companion/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/objective_c.m.o
-
-s_runner/shared/objective_c/build/de310349bc/obj/src/input_stream_adapter.m.o
-
-INFO: 2026-09-18 02:14:09.208474: 
-INFO: 2026-09-18 02:14:09.208515: 
-INFO: 2026-09-18 02:14:09.208525: Generated /Users/prakharjain/Documents/health companion/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/objective_c_bindings_generated.m.o
-
-INFO: 2026-09-18 02:14:09.208875: Running: /Library/Developer/CommandLineTools/usr/bin/clang -shared -Wl,-encryptable -undefined dynamic_lookup -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk -target arm64-apple-darwin -mmacos-version-min=13 /Users/prakharjain/Documents/health companion/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/include/dart_api_dl.c.o /Users/prakharjain/Documents/health companion/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/objective_c.c.o /Users/prakharjain/Documents/health companion/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/input_stream_adapter.m.o /Users/prakharjain/Documents/health companion/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/objective_c.m.o /Users/prakharjain/Documents/health companion/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/observer.m.o /Users/prakharjain/Documents/health companion/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/ns_number.m.o /Users/prakharjain/Documents/health companion/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/protocol.m.o /Users/prakharjain/Documents/health companion/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/obj/src/objective_c_bindings_generated.m.o -o /Users/prakharjain/Documents/health companion/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/objective_c.dylib
-
-INFO: 2026-09-18 02:14:09.395126: 
-INFO: 2026-09-18 02:14:09.395192: 
-INFO: 2026-09-18 02:14:09.395206: Generated /Users/prakharjain/Documents/health companion/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/objective_c.dylib
+INFO: 2026-09-18 05:07:59.549671: 
+INFO: 2026-09-18 05:07:59.549747: 
+INFO: 2026-09-18 05:07:59.549762: Generated /Users/prakharjain/Documents/health companion/.dart_tool/hooks_runner/shared/objective_c/build/de310349bc/objective_c.dylib
 

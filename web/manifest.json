@@ -1,11 +1,11 @@
 {
-  "name": "Health Companion",
-  "short_name": "HealthCompanion",
+  "name": "Cura",
+  "short_name": "Cura",
   "start_url": ".",
   "display": "standalone",
   "background_color": "#EAEBF5",
-  "theme_color": "#2E5BFF",
-  "description": "Serene Clinical & Health Companion production-ready application.",
+  "theme_color": "#0F766E",
+  "description": "Cura — quiet care for everyday health.",
   "orientation": "portrait-primary",
   "prefer_related_applications": false,
   "icons": [

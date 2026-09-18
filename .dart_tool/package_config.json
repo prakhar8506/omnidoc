@@ -9,9 +9,9 @@
     },
     {
       "name": "app_links",
-      "rootUri": "file:///Users/prakharjain/.pub-cache/hosted/pub.dev/app_links-7.2.1",
+      "rootUri": "file:///Users/prakharjain/.pub-cache/hosted/pub.dev/app_links-6.4.1",
       "packageUri": "lib/",
-      "languageVersion": "3.12"
+      "languageVersion": "3.5"
     },
     {
       "name": "app_links_linux",
@@ -375,19 +375,7 @@
     },
     {
       "name": "jni",
-      "rootUri": "file:///Users/prakharjain/.pub-cache/hosted/pub.dev/jni-1.0.3",
-      "packageUri": "lib/",
-      "languageVersion": "3.3"
-    },
-    {
-      "name": "jni_flutter",
-      "rootUri": "file:///Users/prakharjain/.pub-cache/hosted/pub.dev/jni_flutter-1.0.3",
-      "packageUri": "lib/",
-      "languageVersion": "3.3"
-    },
-    {
-      "name": "jni_util",
-      "rootUri": "file:///Users/prakharjain/.pub-cache/hosted/pub.dev/jni_util-1.0.0",
+      "rootUri": "file:///Users/prakharjain/.pub-cache/hosted/pub.dev/jni-0.14.2",
       "packageUri": "lib/",
       "languageVersion": "3.3"
     },
@@ -459,9 +447,21 @@
     },
     {
       "name": "package_config",
-      "rootUri": "file:///Users/prakharjain/.pub-cache/hosted/pub.dev/package_config-3.0.0",
+      "rootUri": "file:///Users/prakharjain/.pub-cache/hosted/pub.dev/package_config-2.2.0",
       "packageUri": "lib/",
-      "languageVersion": "3.11"
+      "languageVersion": "3.4"
+    },
+    {
+      "name": "package_info_plus",
+      "rootUri": "file:///Users/prakharjain/.pub-cache/hosted/pub.dev/package_info_plus-10.2.1",
+      "packageUri": "lib/",
+      "languageVersion": "3.10"
+    },
+    {
+      "name": "package_info_plus_platform_interface",
+      "rootUri": "file:///Users/prakharjain/.pub-cache/hosted/pub.dev/package_info_plus_platform_interface-4.1.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.10"
     },
     {
       "name": "passkeys_platform_interface",
@@ -489,7 +489,7 @@
     },
     {
       "name": "path_provider_android",
-      "rootUri": "file:///Users/prakharjain/.pub-cache/hosted/pub.dev/path_provider_android-2.3.1",
+      "rootUri": "file:///Users/prakharjain/.pub-cache/hosted/pub.dev/path_provider_android-2.2.23",
       "packageUri": "lib/",
       "languageVersion": "3.9"
     },
@@ -582,6 +582,18 @@
       "rootUri": "file:///Users/prakharjain/.pub-cache/hosted/pub.dev/record_use-0.6.0",
       "packageUri": "lib/",
       "languageVersion": "3.10"
+    },
+    {
+      "name": "sentry",
+      "rootUri": "file:///Users/prakharjain/.pub-cache/hosted/pub.dev/sentry-9.30.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.5"
+    },
+    {
+      "name": "sentry_flutter",
+      "rootUri": "file:///Users/prakharjain/.pub-cache/hosted/pub.dev/sentry_flutter-9.30.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.5"
     },
     {
       "name": "shared_preferences",

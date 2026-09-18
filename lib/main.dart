@@ -1,7 +1,12 @@
+import 'dart:async';
+import 'package:app_links/app_links.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'core/branding/app_brand.dart';
 import 'core/env/app_env.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/app_colors.dart';
@@ -21,11 +26,12 @@ import 'features/ai_assistant/widgets/floating_ai_button.dart';
 import 'features/auth/screens/sign_in_screen.dart';
 import 'features/onboarding/screens/onboarding_baseline_screen.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   if (kReleaseMode) {
     AppEnv.validateRequired();
   }
+
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
@@ -38,7 +44,23 @@ void main() {
       systemNavigationBarIconBrightness: Brightness.dark,
     ),
   );
-  runApp(const HealthCompanionApp());
+
+  Future<void> start() async {
+    runApp(const HealthCompanionApp());
+  }
+
+  if (AppEnv.sentryDsn.isNotEmpty) {
+    await SentryFlutter.init(
+      (options) {
+        options.dsn = AppEnv.sentryDsn;
+        options.environment = kReleaseMode ? 'production' : 'debug';
+        options.tracesSampleRate = 0.2;
+      },
+      appRunner: start,
+    );
+  } else {
+    await start();
+  }
 }
 
 class HealthCompanionApp extends StatefulWidget {
@@ -51,16 +73,42 @@ class HealthCompanionApp extends StatefulWidget {
 class _HealthCompanionAppState extends State<HealthCompanionApp> {
   late final AppState _appState;
   bool _splashCompleted = false;
+  StreamSubscription<Uri>? _linkSub;
 
   @override
   void initState() {
     super.initState();
     _appState = AppState();
     _appState.hydrate();
+    _initDeepLinks();
+  }
+
+  Future<void> _initDeepLinks() async {
+    try {
+      final appLinks = AppLinks();
+      final initial = await appLinks.getInitialLink();
+      if (initial != null) {
+        await _handleAuthDeepLink(initial);
+      }
+      _linkSub = appLinks.uriLinkStream.listen(_handleAuthDeepLink);
+    } catch (e) {
+      debugPrint('[Cura] deep link init failed: $e');
+    }
+  }
+
+  Future<void> _handleAuthDeepLink(Uri uri) async {
+    if (uri.scheme != AppBrand.deepLinkScheme) return;
+    try {
+      await Supabase.instance.client.auth.getSessionFromUrl(uri);
+      await _appState.hydrate();
+    } catch (e) {
+      debugPrint('[Cura] auth deep link failed: $e');
+    }
   }
 
   @override
   void dispose() {
+    _linkSub?.cancel();
     _appState.dispose();
     super.dispose();
   }
@@ -71,7 +119,7 @@ class _HealthCompanionAppState extends State<HealthCompanionApp> {
       listenable: _appState,
       builder: (context, _) {
         return MaterialApp(
-          title: 'Health Companion',
+          title: AppBrand.name,
           debugShowCheckedModeBanner: false,
           theme: AppTheme.lightTheme,
           locale: _appState.currentLocale,
@@ -140,7 +188,7 @@ class HealthCompanionShell extends StatelessWidget {
       case 4:
         return 'Biology & Labs';
       default:
-        return loc.translate('app_title');
+        return AppBrand.tagline;
     }
   }
 
@@ -163,14 +211,13 @@ class HealthCompanionShell extends StatelessWidget {
           extendBody: true,
           backgroundColor: AppColors.background,
           appBar: GlassAppBar(
-            title: 'Health Companion',
+            title: AppBrand.name,
             subtitle: _getSubTitle(context, currentTab),
             appState: appState,
           ),
           body: HolographicBackground(
             child: Stack(
               children: [
-                // Fluid, ghosting-free tab transition with strict z-ordering and sequential crossfade
                 AnimatedSwitcher(
                   duration: const Duration(milliseconds: 240),
                   layoutBuilder: (Widget? currentChild, List<Widget> previousChildren) {
@@ -189,7 +236,6 @@ class HealthCompanionShell extends StatelessWidget {
                     final isCurrent = keyVal == currentTab;
 
                     if (isCurrent) {
-                      // Incoming screen fades and slides in smoothly after outgoing has dropped
                       final inFade = CurvedAnimation(
                         parent: animation,
                         curve: const Interval(0.25, 1.0, curve: Curves.easeOutCubic),
@@ -207,7 +253,6 @@ class HealthCompanionShell extends StatelessWidget {
                         ),
                       );
                     } else {
-                      // Outgoing screen drops to 0 opacity rapidly, guaranteeing no ghosting
                       final outFade = CurvedAnimation(
                         parent: animation,
                         curve: const Interval(0.75, 1.0, curve: Curves.easeInQuad),
@@ -223,7 +268,7 @@ class HealthCompanionShell extends StatelessWidget {
                     child: screens[currentTab.clamp(0, screens.length - 1)],
                   ),
                 ),
-                if (currentTab != 1) // Serene focus on feeling journal screen
+                if (currentTab != 1)
                   Positioned(
                     right: 18,
                     bottom: 96,

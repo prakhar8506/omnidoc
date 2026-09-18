@@ -1,69 +1,49 @@
-# Launch setup — current status
+# Launch setup — Cura
 
-## Done on this machine (local)
+## Done
 
 | Step | Status |
 |------|--------|
-| Supabase CLI installed | ✅ |
-| Local Supabase via Docker | ✅ `http://127.0.0.1:54321` |
-| Migrations applied (schema, RLS, domain tables, storage, auth trigger) | ✅ |
-| Storage buckets `lab-uploads`, `avatars`, `exports` | ✅ |
-| Edge Functions served (`interpret-lab`, `health-ai-chat`, `delete-account`) | ✅ |
-| Auth signup → profile auto-create verified | ✅ |
-| AI function returns honest offline reply (no provider key yet) | ✅ |
-| `env/local.json` + `env/local.android.json` written (gitignored) | ✅ |
-| Debug cleartext HTTP for Android emulator | ✅ |
-| Helper scripts `scripts/run_local.sh`, `scripts/deploy_cloud_supabase.sh` | ✅ |
+| Cloud Supabase project | ✅ |
+| Migrations + RLS + storage | ✅ |
+| Edge Functions deployed | ✅ |
+| Gemini live AI chat | ✅ |
+| Gemini lab OCR (`interpret-lab`) | ✅ (redeploy after code changes) |
+| `env/production.json` (gitignored) | ✅ |
+| Demo mode off in release | ✅ |
+| Brand: **Cura** + icons | ✅ |
+| Privacy / Terms in-app | ✅ |
+| Account deletion Edge Function + UI | ✅ |
+| iOS HealthKit usage strings + PrivacyInfo | ✅ |
+| Auth deep link scheme `cura://` | ✅ |
+| Upload keystore for Play | ✅ |
 
-### Run the app against local Supabase
+## Remaining (manual / accounts)
 
-```bash
-# Terminal A — keep Supabase up
-supabase start
-supabase functions serve --env-file supabase/.env.local --no-verify-jwt
+1. Create Play Console listing + upload **AAB** (not APK)
+2. Apple Developer + App Store Connect + TestFlight IPA
+3. Host public Privacy Policy URL for store forms (in-app copy already ships)
+4. Set Supabase Auth Site URL / redirect: `cura://auth-callback`
+5. Optional SMTP for auth emails (avoid rate limits)
+6. Optional `SENTRY_DSN` in production defines
+7. Rotate any keys that were pasted in shell history
 
-# Terminal B — Flutter
-./scripts/run_local.sh
-# or Android emulator:
-flutter run -d <emulator-id> --dart-define-from-file=env/local.android.json
-```
-
-Studio UI: http://127.0.0.1:54323  
-Mailpit (email confirmations): http://127.0.0.1:54324
-
----
-
-## Hosted (Play/App Store) — needs your Supabase account
-
-Cloud project creation requires **your** login (cannot be completed without browser auth).
-
-1. Open https://supabase.com/dashboard and create a free project (a browser tab may already be open).
-2. In this repo:
+## Build commands
 
 ```bash
-supabase login
-supabase link --project-ref YOUR_PROJECT_REF
-./scripts/deploy_cloud_supabase.sh
-```
-
-3. Copy Project URL + `anon` `public` key into `env/production.json` (see `env/production.json.example`).
-4. Optional AI:
-
-```bash
-supabase secrets set OPENAI_API_KEY=sk-...
-# or
-supabase secrets set GEMINI_API_KEY=...
-```
-
-5. Release build:
-
-```bash
+# Play Store
 flutter build appbundle --release --obfuscate --split-debug-info=build/symbols \
+  --dart-define-from-file=env/production.json
+
+# App Store
+flutter build ipa --release --obfuscate --split-debug-info=build/symbols \
   --dart-define-from-file=env/production.json
 ```
 
----
+## Redeploy AI / OCR functions
 
-## AI provider note
-
-No `OPENAI_API_KEY` / `GEMINI_API_KEY` was found in this environment. Lab OCR + live LLM stay in **honest offline mode** until you set those secrets. The app will not invent biomarkers.
+```bash
+supabase functions deploy health-ai-chat --project-ref fpvcyxjatjajsaziblzg
+supabase functions deploy interpret-lab --project-ref fpvcyxjatjajsaziblzg
+supabase functions deploy delete-account --project-ref fpvcyxjatjajsaziblzg
+```

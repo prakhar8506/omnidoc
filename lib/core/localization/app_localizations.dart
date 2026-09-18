@@ -20,7 +20,7 @@ class AppLocalizations {
 
   static final Map<String, Map<String, String>> _localizedValues = {
     'en': {
-      'app_title': 'Health Companion',
+      'app_title': 'Cura',
       'daily_balance': 'Daily Balance',
       'body_state_today': 'Your body state today',
       'feeling_tracker': 'Feeling Journal',
@@ -55,7 +55,7 @@ class AppLocalizations {
       'language_toggle': 'Language / भाषा',
     },
     'hi': {
-      'app_title': 'हेल्थ कम्पेनियन',
+      'app_title': 'क्यूरा',
       'daily_balance': 'दैनिक संतुलन',
       'body_state_today': 'आज आपके शरीर की स्थिति',
       'feeling_tracker': 'मनोदशा पत्रिका',

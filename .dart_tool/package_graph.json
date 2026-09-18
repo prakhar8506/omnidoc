@@ -7,6 +7,7 @@
       "name": "health_companion",
       "version": "1.0.0+1",
       "dependencies": [
+        "app_links",
         "crypto",
         "cupertino_icons",
         "file_picker",
@@ -20,6 +21,7 @@
         "path",
         "path_provider",
         "pdf",
+        "sentry_flutter",
         "shared_preferences",
         "supabase_flutter",
         "url_launcher",
@@ -53,6 +55,31 @@
         "stream_channel",
         "test_api",
         "vector_math"
+      ]
+    },
+    {
+      "name": "sentry_flutter",
+      "version": "9.30.0",
+      "dependencies": [
+        "ffi",
+        "flutter",
+        "flutter_web_plugins",
+        "http",
+        "jni",
+        "meta",
+        "package_info_plus",
+        "sentry",
+        "web"
+      ]
+    },
+    {
+      "name": "app_links",
+      "version": "6.4.1",
+      "dependencies": [
+        "app_links_linux",
+        "app_links_platform_interface",
+        "app_links_web",
+        "flutter"
       ]
     },
     {
@@ -326,9 +353,88 @@
       ]
     },
     {
+      "name": "jni",
+      "version": "0.14.2",
+      "dependencies": [
+        "args",
+        "ffi",
+        "meta",
+        "package_config",
+        "path",
+        "plugin_platform_interface"
+      ]
+    },
+    {
       "name": "web",
       "version": "1.1.1",
       "dependencies": []
+    },
+    {
+      "name": "ffi",
+      "version": "2.2.0",
+      "dependencies": []
+    },
+    {
+      "name": "package_info_plus",
+      "version": "10.2.1",
+      "dependencies": [
+        "clock",
+        "ffi",
+        "flutter",
+        "flutter_web_plugins",
+        "http",
+        "meta",
+        "package_info_plus_platform_interface",
+        "path",
+        "web",
+        "win32"
+      ]
+    },
+    {
+      "name": "sentry",
+      "version": "9.30.0",
+      "dependencies": [
+        "ffi",
+        "http",
+        "meta",
+        "stack_trace",
+        "uuid",
+        "web"
+      ]
+    },
+    {
+      "name": "flutter_web_plugins",
+      "version": "0.0.0",
+      "dependencies": [
+        "flutter"
+      ]
+    },
+    {
+      "name": "app_links_web",
+      "version": "1.0.4",
+      "dependencies": [
+        "app_links_platform_interface",
+        "flutter",
+        "flutter_web_plugins",
+        "web"
+      ]
+    },
+    {
+      "name": "app_links_platform_interface",
+      "version": "2.0.4",
+      "dependencies": [
+        "flutter",
+        "plugin_platform_interface"
+      ]
+    },
+    {
+      "name": "app_links_linux",
+      "version": "1.0.3",
+      "dependencies": [
+        "app_links_platform_interface",
+        "flutter",
+        "gtk"
+      ]
     },
     {
       "name": "http_parser",
@@ -447,16 +553,6 @@
         "flutter",
         "json_annotation",
         "plugin_platform_interface"
-      ]
-    },
-    {
-      "name": "app_links",
-      "version": "7.2.1",
-      "dependencies": [
-        "app_links_linux",
-        "app_links_platform_interface",
-        "app_links_web",
-        "flutter"
       ]
     },
     {
@@ -583,11 +679,9 @@
     },
     {
       "name": "path_provider_android",
-      "version": "2.3.1",
+      "version": "2.2.23",
       "dependencies": [
         "flutter",
-        "jni",
-        "jni_flutter",
         "path_provider_platform_interface"
       ]
     },
@@ -870,16 +964,48 @@
       ]
     },
     {
-      "name": "flutter_web_plugins",
-      "version": "0.0.0",
-      "dependencies": [
-        "flutter"
-      ]
-    },
-    {
       "name": "plugin_platform_interface",
       "version": "2.1.8",
       "dependencies": [
+        "meta"
+      ]
+    },
+    {
+      "name": "package_config",
+      "version": "2.2.0",
+      "dependencies": [
+        "path"
+      ]
+    },
+    {
+      "name": "args",
+      "version": "2.7.0",
+      "dependencies": []
+    },
+    {
+      "name": "win32",
+      "version": "6.4.0",
+      "dependencies": [
+        "ffi",
+        "ffi_leak_tracker",
+        "meta"
+      ]
+    },
+    {
+      "name": "package_info_plus_platform_interface",
+      "version": "4.1.0",
+      "dependencies": [
+        "flutter",
+        "meta",
+        "plugin_platform_interface"
+      ]
+    },
+    {
+      "name": "gtk",
+      "version": "2.2.0",
+      "dependencies": [
+        "ffi",
+        "flutter",
         "meta"
       ]
     },
@@ -949,33 +1075,6 @@
       ]
     },
     {
-      "name": "app_links_web",
-      "version": "1.0.4",
-      "dependencies": [
-        "app_links_platform_interface",
-        "flutter",
-        "flutter_web_plugins",
-        "web"
-      ]
-    },
-    {
-      "name": "app_links_platform_interface",
-      "version": "2.0.4",
-      "dependencies": [
-        "flutter",
-        "plugin_platform_interface"
-      ]
-    },
-    {
-      "name": "app_links_linux",
-      "version": "1.0.3",
-      "dependencies": [
-        "app_links_platform_interface",
-        "flutter",
-        "gtk"
-      ]
-    },
-    {
       "name": "petitparser",
       "version": "7.0.2",
       "dependencies": [
@@ -1011,26 +1110,12 @@
       ]
     },
     {
-      "name": "win32",
-      "version": "6.4.0",
-      "dependencies": [
-        "ffi",
-        "ffi_leak_tracker",
-        "meta"
-      ]
-    },
-    {
       "name": "file",
       "version": "7.0.1",
       "dependencies": [
         "meta",
         "path"
       ]
-    },
-    {
-      "name": "ffi",
-      "version": "2.2.0",
-      "dependencies": []
     },
     {
       "name": "device_info_plus_platform_interface",
@@ -1067,28 +1152,6 @@
         "logging",
         "meta",
         "pub_semver"
-      ]
-    },
-    {
-      "name": "jni_flutter",
-      "version": "1.0.3",
-      "dependencies": [
-        "flutter",
-        "jni"
-      ]
-    },
-    {
-      "name": "jni",
-      "version": "1.0.3",
-      "dependencies": [
-        "args",
-        "collection",
-        "ffi",
-        "jni_util",
-        "meta",
-        "package_config",
-        "path",
-        "plugin_platform_interface"
       ]
     },
     {
@@ -1159,6 +1222,13 @@
       "dependencies": []
     },
     {
+      "name": "ffi_leak_tracker",
+      "version": "0.1.2",
+      "dependencies": [
+        "ffi"
+      ]
+    },
+    {
       "name": "web_socket_channel",
       "version": "3.0.3",
       "dependencies": [
@@ -1176,22 +1246,6 @@
         "clock",
         "convert",
         "pointycastle"
-      ]
-    },
-    {
-      "name": "gtk",
-      "version": "2.2.0",
-      "dependencies": [
-        "ffi",
-        "flutter",
-        "meta"
-      ]
-    },
-    {
-      "name": "ffi_leak_tracker",
-      "version": "0.1.2",
-      "dependencies": [
-        "ffi"
       ]
     },
     {
@@ -1221,25 +1275,6 @@
         "collection",
         "hooks"
       ]
-    },
-    {
-      "name": "package_config",
-      "version": "3.0.0",
-      "dependencies": [
-        "meta"
-      ]
-    },
-    {
-      "name": "jni_util",
-      "version": "1.0.0",
-      "dependencies": [
-        "path"
-      ]
-    },
-    {
-      "name": "args",
-      "version": "2.7.0",
-      "dependencies": []
     },
     {
       "name": "web_socket",

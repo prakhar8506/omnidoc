@@ -171,7 +171,7 @@ class _ChronicCareScreenState extends State<ChronicCareScreen> {
 
       // Non-prescriptive Safety Notice
       _buildClinicalSafetyNotice(
-        'For logging and clinician collaboration only. Health Companion never calculates, recommends, or adjusts insulin dosing or prescription medications.',
+        'For logging and clinician collaboration only. Cura never calculates, recommends, or adjusts insulin dosing or prescription medications.',
       ),
       const SizedBox(height: 18),
 

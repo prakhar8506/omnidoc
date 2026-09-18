@@ -112,7 +112,7 @@ class _FamilyMemberModalState extends State<FamilyMemberModal> {
                   controller: _nameController,
                   decoration: InputDecoration(
                     labelText: 'Full Name',
-                    hintText: 'e.g. Liam Jenkins',
+                    hintText: 'e.g. Alex Rivera',
                     filled: true,
                     fillColor: AppColors.surfaceContainerLow,
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
