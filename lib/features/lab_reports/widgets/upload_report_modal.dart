@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -15,8 +16,8 @@ class UploadReportModal extends StatefulWidget {
 
   const UploadReportModal({super.key, required this.appState});
 
-  static void show(BuildContext context, AppState appState) {
-    showModalBottomSheet(
+  static Future<void> show(BuildContext context, AppState appState) {
+    return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
@@ -97,17 +98,21 @@ class _UploadReportModalState extends State<UploadReportModal> {
           _statusText = 'Saving your document...';
           _errorText = null;
         });
-        final dir = await ReportInterpreterService.userDocsDir(userId);
-        final safeName = file.name.replaceAll(RegExp(r'[^\w\.\-]'), '_');
-        final destPath = p.join(dir, '${DateTime.now().millisecondsSinceEpoch}_$safeName');
-        try {
-          await File(destPath).writeAsBytes(bytes);
-        } catch (_) {}
+        String destPath = file.name;
+        if (!kIsWeb) {
+          final dir = await ReportInterpreterService.userDocsDir(userId);
+          final safeName = file.name.replaceAll(RegExp(r'[^\w\.\-]'), '_');
+          destPath = p.join(dir, '${DateTime.now().millisecondsSinceEpoch}_$safeName');
+          try {
+            await File(destPath).writeAsBytes(bytes);
+          } catch (_) {}
+        }
         await _finishInterpretation(
           path: destPath,
           name: file.name,
           source: PrescriptionSource.files,
           isImage: isImage,
+          fileBytes: Uint8List.fromList(bytes),
         );
         return;
       }
@@ -138,11 +143,18 @@ class _UploadReportModalState extends State<UploadReportModal> {
     });
 
     try {
+      Uint8List? bytes;
+      if (!kIsWeb) {
+        try {
+          bytes = await File(path).readAsBytes();
+        } catch (_) {}
+      }
       await _finishInterpretation(
         path: path,
         name: name,
         source: source,
         isImage: isImage,
+        fileBytes: bytes,
       );
     } catch (_) {
       if (!mounted) return;
@@ -158,18 +170,12 @@ class _UploadReportModalState extends State<UploadReportModal> {
     required String name,
     required PrescriptionSource source,
     required bool isImage,
+    Uint8List? fileBytes,
   }) async {
     if (!mounted) return;
     setState(() {
-      _uploadProgress = 0.55;
-      _statusText = 'Reading your prescription / report...';
-    });
-    await Future.delayed(const Duration(milliseconds: 500));
-
-    if (!mounted) return;
-    setState(() {
-      _uploadProgress = 0.85;
-      _statusText = 'Writing plain-language explanation...';
+      _uploadProgress = 0.45;
+      _statusText = 'AI is reading every value on your report…';
     });
 
     final doc = await widget.appState.uploadHealthDocument(
@@ -177,19 +183,27 @@ class _UploadReportModalState extends State<UploadReportModal> {
       originalName: name,
       source: source,
       isImage: isImage,
+      fileBytes: fileBytes,
     );
 
     if (!mounted) return;
     setState(() {
       _uploadProgress = 1.0;
-      _statusText = 'Ready — ${doc.docType.name} explained';
+      _statusText = doc.analysisStatus == 'ready'
+          ? 'Your plain-language PDF is ready'
+          : doc.plainLanguageSummary;
     });
     await Future.delayed(const Duration(milliseconds: 350));
     if (!mounted) return;
     Navigator.pop(context);
+    widget.appState.setTabIndex(4);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Uploaded “${doc.fileName}”. Open Labs to read the explanation.'),
+        content: Text(
+          doc.analysisStatus == 'ready'
+              ? 'Lab analysis ready for “${doc.fileName}”'
+              : 'Uploaded “${doc.fileName}”. ${doc.plainLanguageSummary}',
+        ),
         behavior: SnackBarBehavior.floating,
         backgroundColor: AppColors.surfaceCardDark,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -255,44 +269,94 @@ class _UploadReportModalState extends State<UploadReportModal> {
   }
 
   Widget _buildProcessing() {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        if (_previewPath != null && !kIsWeb) ...[
-          ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: Image.file(
-              File(_previewPath!),
-              height: 120,
-              width: 120,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+    const stages = [
+      'Analysing your report',
+      'Reading each test and number',
+      'Calculating what is normal, mild, or severe',
+      'Contemplating causes, precautions, and which doctor to see',
+      'Writing the explanation in simple words',
+      'Building your plain-language PDF',
+    ];
+    return ListenableBuilder(
+      listenable: widget.appState,
+      builder: (context, _) {
+        final live = widget.appState.labAnalysisStage;
+        final progress = widget.appState.labAnalysisProgress > 0
+            ? widget.appState.labAnalysisProgress
+            : _uploadProgress;
+        final current = live.isNotEmpty ? live : _statusText;
+        return Column(
+          children: [
+            if (_previewPath != null && !kIsWeb) ...[
+              ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Image.file(
+                  File(_previewPath!),
+                  height: 96,
+                  width: 96,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                ),
+              ),
+              const SizedBox(height: 14),
+            ],
+            Text(current, style: AppTypography.titleMd, textAlign: TextAlign.center),
+            const SizedBox(height: 12),
+            LinearProgressIndicator(
+              value: progress.clamp(0.05, 1),
+              backgroundColor: AppColors.surfaceContainerHigh,
+              color: AppColors.primaryContainer,
+              borderRadius: BorderRadius.circular(999),
             ),
-          ),
-          const SizedBox(height: 16),
-        ],
-        const SizedBox(
-          width: 54,
-          height: 54,
-          child: CircularProgressIndicator(
-            strokeWidth: 4,
-            color: AppColors.primaryContainer,
-          ),
-        ),
-        const SizedBox(height: 20),
-        Text(_statusText, style: AppTypography.titleMd, textAlign: TextAlign.center),
-        const SizedBox(height: 12),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 40),
-          child: LinearProgressIndicator(
-            value: _uploadProgress,
-            backgroundColor: AppColors.surfaceContainerHigh,
-            color: AppColors.primaryContainer,
-            borderRadius: BorderRadius.circular(999),
-          ),
-        ),
-      ],
+            const SizedBox(height: 16),
+            ...stages.map((stage) {
+              final reached = current.toLowerCase().contains(stage.split(' ').first.toLowerCase()) ||
+                  progress >= _stageFloor(stage);
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  children: [
+                    Icon(
+                      reached ? Icons.check_circle_rounded : Icons.radio_button_unchecked,
+                      size: 16,
+                      color: reached ? AppColors.accentTeal : AppColors.textTertiary,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        stage,
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: reached ? FontWeight.w700 : FontWeight.w500,
+                          color: reached ? AppColors.textPrimary : AppColors.textSecondary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+          ],
+        );
+      },
     );
+  }
+
+  double _stageFloor(String stage) {
+    switch (stage) {
+      case 'Analysing your report':
+        return 0.3;
+      case 'Reading each test and number':
+        return 0.4;
+      case 'Calculating what is normal, mild, or severe':
+        return 0.52;
+      case 'Contemplating causes, precautions, and which doctor to see':
+        return 0.64;
+      case 'Writing the explanation in simple words':
+        return 0.74;
+      default:
+        return 0.9;
+    }
   }
 
   Widget _buildPickerOptions() {

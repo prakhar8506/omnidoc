@@ -152,6 +152,10 @@ void main() {
     await tester.enterText(fields.at(2), 'secret12');
     await tester.enterText(fields.at(3), 'secret12');
 
+    await tester.ensureVisible(find.byType(Checkbox));
+    await tester.tap(find.byType(Checkbox));
+    await tester.pump();
+
     final createBtn = find.descendant(
       of: find.byType(SignUpScreen),
       matching: find.widgetWithText(ElevatedButton, 'Create Account'),

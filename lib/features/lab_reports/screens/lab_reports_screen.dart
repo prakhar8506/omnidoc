@@ -4,6 +4,7 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/state/app_state.dart';
 import '../../../core/models/biomarker_report.dart';
 import '../../../core/models/prescription_document.dart';
+import '../../../core/services/lab_report_pdf.dart';
 import '../widgets/upload_report_modal.dart';
 import '../widgets/doctor_questions_modal.dart';
 import '../../ai_assistant/widgets/ai_chat_sheet.dart';
@@ -21,7 +22,21 @@ class LabReportsScreen extends StatefulWidget {
 }
 
 class _LabReportsScreenState extends State<LabReportsScreen> {
-  String? _expandedBiomarkerCode = 'ALT';
+  String? _expandedBiomarkerCode;
+  String? _boundReportId;
+
+  void _ensureExpanded(DiagnosticReport report) {
+    if (_boundReportId == report.id && _expandedBiomarkerCode != null) return;
+    final flagged = report.biomarkers.where((b) => b.isAttentionFlagged);
+    final next = (flagged.isNotEmpty ? flagged.first : report.biomarkers.first).code;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      setState(() {
+        _boundReportId = report.id;
+        _expandedBiomarkerCode ??= next;
+      });
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,20 +45,64 @@ class _LabReportsScreenState extends State<LabReportsScreen> {
       builder: (context, _) {
         final report = widget.appState.activeReport;
         final docs = widget.appState.prescriptions;
+        if (report != null && report.biomarkers.isNotEmpty) {
+          _ensureExpanded(report);
+        }
 
         return SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 110),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 160),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildTopHeader(context),
               const SizedBox(height: 14),
+              if (widget.appState.labAnalysisProgress > 0 &&
+                  widget.appState.labAnalysisProgress < 1) ...[
+                _buildLiveProgress(widget.appState.labAnalysisStage, widget.appState.labAnalysisProgress),
+                const SizedBox(height: 14),
+              ],
               _buildDisclaimerBanner(),
               const SizedBox(height: 18),
               if (report == null) ...[
                 _buildEmptyUploadCard(context),
               ] else ...[
                 _buildActiveReportCard(report),
+                const SizedBox(height: 14),
+                _buildUrgencyAndSpecialistCard(report),
+                if (report.overallSynthesis.isNotEmpty) ...[
+                  const SizedBox(height: 14),
+                  _buildPlainLanguageOverview(report),
+                ],
+                if (report.carePlan.isNotEmpty) ...[
+                  const SizedBox(height: 14),
+                  _buildBulletCard(
+                    title: 'What you can do now',
+                    icon: Icons.health_and_safety_outlined,
+                    items: report.carePlan,
+                    accent: AppColors.accentTeal,
+                  ),
+                ],
+                if (report.medicineEducation.isNotEmpty) ...[
+                  const SizedBox(height: 14),
+                  _buildBulletCard(
+                    title: 'Medicines clinicians often discuss',
+                    icon: Icons.medication_outlined,
+                    items: [
+                      ...report.medicineEducation,
+                      'Not a prescription from Cura — confirm every medicine with your doctor.',
+                    ],
+                    accent: AppColors.accentCoral,
+                  ),
+                ],
+                if (report.redFlags.isNotEmpty) ...[
+                  const SizedBox(height: 14),
+                  _buildBulletCard(
+                    title: 'Red flags — seek care sooner',
+                    icon: Icons.warning_amber_rounded,
+                    items: report.redFlags,
+                    accent: AppColors.accentCoral,
+                  ),
+                ],
                 const SizedBox(height: 22),
                 if (docs.isNotEmpty) ...[
                   const Text('Your Uploads', style: AppTypography.titleLg),
@@ -54,7 +113,7 @@ class _LabReportsScreenState extends State<LabReportsScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('What this means', style: AppTypography.titleLg),
+                    const Text('Each test, explained', style: AppTypography.titleLg),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
@@ -62,7 +121,7 @@ class _LabReportsScreenState extends State<LabReportsScreen> {
                         borderRadius: BorderRadius.circular(999),
                       ),
                       child: Text(
-                        '${report.biomarkers.length} Insights',
+                        '${report.biomarkers.length} markers',
                         style: AppTypography.labelSm,
                       ),
                     ),
@@ -77,6 +136,156 @@ class _LabReportsScreenState extends State<LabReportsScreen> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildUrgencyAndSpecialistCard(DiagnosticReport report) {
+    final urgent = report.overallUrgency == 'urgent' ||
+        report.overallUrgency == 'emergency' ||
+        report.overallUrgency == 'soon';
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: (urgent ? AppColors.accentCoral : AppColors.accentTeal)
+            .withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: (urgent ? AppColors.accentCoral : AppColors.accentTeal)
+              .withValues(alpha: 0.25),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                urgent ? Icons.schedule_rounded : Icons.check_circle_outline_rounded,
+                size: 18,
+                color: urgent ? AppColors.accentCoral : AppColors.accentTeal,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  report.urgencyBanner.isNotEmpty
+                      ? report.urgencyBanner
+                      : 'Review timing: ${report.overallUrgency}',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: urgent ? AppColors.accentCoral : AppColors.textPrimary,
+                    height: 1.35,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'Suggested clinician: ${report.recommendedSpecialist}',
+            style: const TextStyle(
+              fontSize: 12.5,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPlainLanguageOverview(DiagnosticReport report) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceCard,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: AppColors.cardShadow,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('In plain language', style: AppTypography.titleMd),
+          const SizedBox(height: 8),
+          Text(
+            report.overallSynthesis,
+            style: const TextStyle(
+              fontSize: 13,
+              height: 1.45,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          if (report.detailedExplanation.isNotEmpty &&
+              report.detailedExplanation != report.overallSynthesis) ...[
+            const SizedBox(height: 10),
+            Text(
+              report.detailedExplanation,
+              style: const TextStyle(
+                fontSize: 12.5,
+                height: 1.45,
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBulletCard({
+    required String title,
+    required IconData icon,
+    required List<String> items,
+    required Color accent,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceCard,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: AppColors.cardShadow,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 18, color: accent),
+              const SizedBox(width: 8),
+              Expanded(child: Text(title, style: AppTypography.titleMd)),
+            ],
+          ),
+          const SizedBox(height: 10),
+          ...items.map(
+            (item) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(top: 6),
+                    child: Icon(Icons.circle, size: 6, color: accent),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      item,
+                      style: const TextStyle(
+                        fontSize: 12.5,
+                        height: 1.4,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -194,6 +403,34 @@ class _LabReportsScreenState extends State<LabReportsScreen> {
     );
   }
 
+  Widget _buildLiveProgress(String stage, double progress) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceCard,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: AppColors.cardShadow,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            stage.isEmpty ? 'Analysing your report' : stage,
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+          ),
+          const SizedBox(height: 8),
+          LinearProgressIndicator(
+            value: progress.clamp(0.05, 0.98),
+            backgroundColor: AppColors.surfaceContainerHigh,
+            color: AppColors.primaryContainer,
+            borderRadius: BorderRadius.circular(999),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildDisclaimerBanner() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -245,12 +482,18 @@ class _LabReportsScreenState extends State<LabReportsScreen> {
                   children: [
                     Text(report.title, style: AppTypography.titleMd),
                     const SizedBox(height: 2),
-                    Text(report.laboratory, style: AppTypography.labelSm),
+                    Text(
+                      report.laboratory,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTypography.labelSm,
+                    ),
                   ],
                 ),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                constraints: const BoxConstraints(maxWidth: 140),
                 decoration: BoxDecoration(
                   color: (report.confidencePercentage >= 50
                           ? AppColors.accentTeal
@@ -268,14 +511,18 @@ class _LabReportsScreenState extends State<LabReportsScreen> {
                           : AppColors.accentGold,
                     ),
                     const SizedBox(width: 4),
-                    Text(
-                      report.confidencePercentage >= 50
-                          ? 'AI draft — review with clinician'
-                          : 'Pending clinician review',
-                      style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
+                    Flexible(
+                      child: Text(
+                        report.confidencePercentage >= 50
+                            ? 'AI draft — review'
+                            : 'Pending review',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
+                        ),
                       ),
                     ),
                   ],
@@ -295,13 +542,54 @@ class _LabReportsScreenState extends State<LabReportsScreen> {
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: _buildReportMetricTile('Confidence', '${report.confidencePercentage}%', AppColors.textPrimary, AppColors.surfaceContainerLow),
+                child: _buildReportMetricTile(
+                  'OCR confidence',
+                  report.confidencePercentage > 0
+                      ? '${report.confidencePercentage}%'
+                      : '—',
+                  AppColors.textPrimary,
+                  AppColors.surfaceContainerLow,
+                ),
               ),
             ],
           ),
+          if (report.biomarkers.any((b) => b.code != 'OCR')) ...[
+          const SizedBox(height: 14),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () => _openOrCreatePdf(report),
+              icon: const Icon(Icons.picture_as_pdf_outlined, size: 18),
+              label: const Text(
+                'Open plain-language PDF',
+                style: TextStyle(fontWeight: FontWeight.w700),
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.primaryContainer,
+                side: const BorderSide(color: AppColors.outlineVariant),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+              ),
+            ),
+          ),
+          ],
         ],
       ),
     );
+  }
+
+  Future<void> _openOrCreatePdf(DiagnosticReport report) async {
+    final path = await LabReportPdf.write(
+      userId: widget.appState.userId ?? 'local',
+      report: report,
+      patientName: widget.appState.userName.isEmpty ? 'Patient' : widget.appState.userName,
+    );
+    final opened = await LabReportPdf.open(path);
+    if (!opened && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not open the PDF. It was saved in the app documents.')),
+      );
+    }
   }
 
   Widget _buildReportMetricTile(String label, String value, Color valueColor, Color bgColor) {
@@ -331,6 +619,9 @@ class _LabReportsScreenState extends State<LabReportsScreen> {
   Widget _buildBiomarkerCard(Biomarker bm) {
     final isExpanded = _expandedBiomarkerCode == bm.code;
     final isFlagged = bm.isAttentionFlagged;
+    final isPending = bm.value.toLowerCase().contains('awaiting') ||
+        bm.name.toLowerCase().contains('awaiting') ||
+        bm.trendText.toLowerCase().contains('awaiting');
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -348,7 +639,9 @@ class _LabReportsScreenState extends State<LabReportsScreen> {
               // Left status accent bar
               Container(
                 width: 5,
-                color: isFlagged ? AppColors.accentCoral : AppColors.accentTeal,
+                color: isPending
+                    ? AppColors.accentGold
+                    : (isFlagged ? AppColors.accentCoral : AppColors.accentTeal),
               ),
               Expanded(
                 child: Padding(
@@ -364,74 +657,128 @@ class _LabReportsScreenState extends State<LabReportsScreen> {
                         },
                         behavior: HitTestBehavior.opaque,
                         child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Text(bm.code, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
-                                    const SizedBox(width: 6),
-                                    Text(bm.name, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
-                                  ],
-                                ),
-                                const SizedBox(height: 2),
-                                Text('Ref: ${bm.referenceRange}', style: AppTypography.labelSm),
-                              ],
-                            ),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                Row(
-                                  crossAxisAlignment: CrossAxisAlignment.baseline,
-                                  textBaseline: TextBaseline.alphabetic,
-                                  children: [
-                                    Text(
-                                      bm.value,
-                                      style: TextStyle(
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.w700,
-                                        color: isFlagged ? AppColors.accentCoral : AppColors.textPrimary,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 2),
-                                    Text(
-                                      bm.unit,
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w500,
-                                        color: isFlagged ? AppColors.accentCoral : AppColors.textSecondary,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                Container(
-                                  margin: const EdgeInsets.only(top: 2),
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color: isFlagged
-                                        ? AppColors.accentCoral.withValues(alpha: 0.15)
-                                        : AppColors.accentTeal.withValues(alpha: 0.15),
-                                    borderRadius: BorderRadius.circular(999),
-                                  ),
-                                  child: Text(
-                                    isFlagged ? 'Above Range' : 'Optimal',
-                                    style: TextStyle(
-                                      fontSize: 10,
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    isPending ? 'Processing' : bm.code,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      fontSize: 16,
                                       fontWeight: FontWeight.w700,
-                                      color: isFlagged ? AppColors.accentCoral : const Color(0xFF0F766E),
+                                      color: AppColors.textPrimary,
                                     ),
                                   ),
-                                ),
-                              ],
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    isPending
+                                        ? 'OCR & AI analysis in progress'
+                                        : bm.name,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    'Ref: ${bm.referenceRange}',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: AppTypography.labelSm,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 120),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  if (isPending)
+                                    const Icon(
+                                      Icons.hourglass_top_rounded,
+                                      size: 22,
+                                      color: AppColors.accentGold,
+                                    )
+                                  else
+                                    FittedBox(
+                                      fit: BoxFit.scaleDown,
+                                      alignment: Alignment.centerRight,
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        crossAxisAlignment: CrossAxisAlignment.baseline,
+                                        textBaseline: TextBaseline.alphabetic,
+                                        children: [
+                                          Text(
+                                            bm.value,
+                                            style: TextStyle(
+                                              fontSize: 20,
+                                              fontWeight: FontWeight.w700,
+                                              color: isFlagged
+                                                  ? AppColors.accentCoral
+                                                  : AppColors.textPrimary,
+                                            ),
+                                          ),
+                                          if (bm.unit.isNotEmpty) ...[
+                                            const SizedBox(width: 2),
+                                            Text(
+                                              bm.unit,
+                                              style: TextStyle(
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w500,
+                                                color: isFlagged
+                                                    ? AppColors.accentCoral
+                                                    : AppColors.textSecondary,
+                                              ),
+                                            ),
+                                          ],
+                                        ],
+                                      ),
+                                    ),
+                                  Container(
+                                    margin: const EdgeInsets.only(top: 4),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: isPending
+                                          ? AppColors.accentGold.withValues(alpha: 0.15)
+                                          : isFlagged
+                                              ? AppColors.accentCoral.withValues(alpha: 0.15)
+                                              : AppColors.accentTeal.withValues(alpha: 0.15),
+                                      borderRadius: BorderRadius.circular(999),
+                                    ),
+                                    child: Text(
+                                      isPending
+                                          ? 'Pending'
+                                          : bm.trendText,
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w700,
+                                        color: isPending
+                                            ? const Color(0xFFB45309)
+                                            : isFlagged
+                                                ? AppColors.accentCoral
+                                                : const Color(0xFF0F766E),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ],
                         ),
                       ),
                       if (isExpanded) ...[
                         const SizedBox(height: 14),
-                        // Plain language summary
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
@@ -445,7 +792,7 @@ class _LabReportsScreenState extends State<LabReportsScreen> {
                                 children: [
                                   Icon(Icons.psychology_rounded, size: 16, color: AppColors.primaryContainer),
                                   SizedBox(width: 6),
-                                  Text('Plain-Language Summary', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                                  Text('What this test measures', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
                                 ],
                               ),
                               const SizedBox(height: 6),
@@ -453,21 +800,83 @@ class _LabReportsScreenState extends State<LabReportsScreen> {
                                 bm.plainSummary,
                                 style: const TextStyle(fontSize: 12, color: AppColors.onSurfaceVariant, height: 1.4),
                               ),
+                              if (bm.whatItMeans.isNotEmpty || bm.clinicalContext.isNotEmpty) ...[
+                                const SizedBox(height: 10),
+                                const Text('What your number means', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                                const SizedBox(height: 4),
+                                Text(
+                                  bm.whatItMeans.isNotEmpty ? bm.whatItMeans : bm.clinicalContext,
+                                  style: const TextStyle(fontSize: 12, color: AppColors.onSurfaceVariant, height: 1.4),
+                                ),
+                              ],
+                              if (bm.possibleCauses.isNotEmpty) ...[
+                                const SizedBox(height: 10),
+                                const Text('What can cause this', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+                                const SizedBox(height: 4),
+                                ...bm.possibleCauses.map((c) => Text('• $c', style: const TextStyle(fontSize: 12, height: 1.35, color: AppColors.textSecondary))),
+                              ],
+                              if (bm.lifestyleMeasures.isNotEmpty) ...[
+                                const SizedBox(height: 10),
+                                const Text('Lifestyle measures', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+                                const SizedBox(height: 4),
+                                ...bm.lifestyleMeasures.map((c) => Text('• $c', style: const TextStyle(fontSize: 12, height: 1.35, color: AppColors.textSecondary))),
+                              ],
+                              if (bm.precautions.isNotEmpty) ...[
+                                const SizedBox(height: 10),
+                                const Text('Precautions', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+                                const SizedBox(height: 4),
+                                ...bm.precautions.map((c) => Text('• $c', style: const TextStyle(fontSize: 12, height: 1.35, color: AppColors.textSecondary))),
+                              ],
+                              const SizedBox(height: 10),
+                              Text(
+                                'See: ${bm.specialist} · Urgency: ${bm.consultUrgency}',
+                                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.primaryContainer),
+                              ),
+                              if (bm.commonlyDiscussedMedicines.isNotEmpty) ...[
+                                const SizedBox(height: 10),
+                                const Text('Medicines often discussed (not a prescription)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+                                const SizedBox(height: 4),
+                                ...bm.commonlyDiscussedMedicines.map(
+                                  (m) => Padding(
+                                    padding: const EdgeInsets.only(bottom: 6),
+                                    child: Text(
+                                      '• ${m.name} — ${m.whyDiscussed}. ${m.note}',
+                                      style: const TextStyle(fontSize: 12, height: 1.35, color: AppColors.textSecondary),
+                                    ),
+                                  ),
+                                ),
+                              ],
                               const SizedBox(height: 8),
                               Row(
                                 children: [
                                   Icon(
-                                    isFlagged ? Icons.trending_up_rounded : Icons.check_circle_outline_rounded,
+                                    isPending
+                                        ? Icons.schedule_rounded
+                                        : isFlagged
+                                            ? Icons.trending_up_rounded
+                                            : Icons.check_circle_outline_rounded,
                                     size: 14,
-                                    color: isFlagged ? AppColors.accentCoral : AppColors.accentTeal,
+                                    color: isPending
+                                        ? AppColors.accentGold
+                                        : isFlagged
+                                            ? AppColors.accentCoral
+                                            : AppColors.accentTeal,
                                   ),
                                   const SizedBox(width: 4),
-                                  Text(
-                                    'Trend: ${bm.trendText}',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w600,
-                                      color: isFlagged ? AppColors.accentCoral : AppColors.accentTeal,
+                                  Expanded(
+                                    child: Text(
+                                      'Status: ${bm.trendText}',
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                        color: isPending
+                                            ? AppColors.accentGold
+                                            : isFlagged
+                                                ? AppColors.accentCoral
+                                                : AppColors.accentTeal,
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -527,10 +936,24 @@ class _LabReportsScreenState extends State<LabReportsScreen> {
             ],
           ),
           const SizedBox(height: 6),
-          const Text(
-            'We generated 4 targeted questions for Dr. Priya Sharma regarding your liver ALT elevation and supplement intake.',
-            style: TextStyle(fontSize: 12, color: AppColors.textSecondary, height: 1.35),
+          Text(
+            report.recommendedDoctorQuestions.isEmpty
+                ? 'Ask your ${report.recommendedSpecialist} to walk through these results with you.'
+                : 'We prepared ${report.recommendedDoctorQuestions.length} questions for your ${report.recommendedSpecialist} based on this report.',
+            style: const TextStyle(fontSize: 12, color: AppColors.textSecondary, height: 1.35),
           ),
+          if (report.recommendedDoctorQuestions.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            ...report.recommendedDoctorQuestions.take(3).map(
+                  (q) => Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: Text(
+                      '• $q',
+                      style: const TextStyle(fontSize: 12.5, height: 1.35, color: AppColors.textPrimary),
+                    ),
+                  ),
+                ),
+          ],
           const SizedBox(height: 12),
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(

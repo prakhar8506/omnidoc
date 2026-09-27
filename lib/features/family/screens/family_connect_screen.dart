@@ -56,7 +56,7 @@ class _FamilyConnectScreenState extends State<FamilyConnectScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('CONNECTED MEMBERS', style: TextStyle(
+                    const Text('FAMILY MEMBERS', style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 0.8,
@@ -69,7 +69,7 @@ class _FamilyConnectScreenState extends State<FamilyConnectScreen> {
                         borderRadius: BorderRadius.circular(999),
                       ),
                       child: Text(
-                        '${widget.appState.familyMembers.length} Active',
+                        '${widget.appState.familyMembers.length} saved',
                         style: const TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
@@ -82,17 +82,39 @@ class _FamilyConnectScreenState extends State<FamilyConnectScreen> {
                 const SizedBox(height: 16),
 
                 // Family Member Cards
-                ...widget.appState.familyMembers.map(
-                  (member) => _buildFamilyMemberCard(member),
-                ),
+                if (widget.appState.familyMembers.isEmpty)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceCard,
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: AppColors.cardShadow,
+                    ),
+                    child: const Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('No family members yet', style: AppTypography.titleMd),
+                        SizedBox(height: 6),
+                        Text(
+                          'Add the people you care for to keep their details and your sharing preferences in one place.',
+                          style: TextStyle(
+                            fontSize: 13,
+                            height: 1.4,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                else
+                  ...widget.appState.familyMembers.map(
+                    (member) => _buildFamilyMemberCard(member),
+                  ),
                 const SizedBox(height: 24),
 
-                // Invite New Member CTA
+                // Add New Member CTA
                 _buildInviteSection(),
-                const SizedBox(height: 24),
-
-                // Pending Invites
-                _buildPendingInvitesSection(),
                 const SizedBox(height: 24),
 
                 // Security Footer
@@ -132,7 +154,7 @@ class _FamilyConnectScreenState extends State<FamilyConnectScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Per-Record Granular Sharing',
+                      'Your care circle',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
@@ -141,7 +163,7 @@ class _FamilyConnectScreenState extends State<FamilyConnectScreen> {
                     ),
                     SizedBox(height: 2),
                     Text(
-                      'Privacy-first sharing controls',
+                      'Kept on this device',
                       style: TextStyle(
                         fontSize: 12,
                         color: AppColors.textSecondary,
@@ -154,9 +176,9 @@ class _FamilyConnectScreenState extends State<FamilyConnectScreen> {
           ),
           const SizedBox(height: 16),
           const Text(
-            'Sharing preferences are saved to your Cura account when signed in. '
-            'Members only see categories you enable. Invite links and live remote sync '
-            'require both people to have Cura accounts — this screen manages your local permissions first.',
+            'Note down the people you care for and what you would be willing to '
+            'share with each of them. Nothing is sent anywhere — these records and '
+            'preferences stay on your phone until account-to-account sharing ships.',
             style: TextStyle(
               fontSize: 13,
               height: 1.45,
@@ -168,8 +190,8 @@ class _FamilyConnectScreenState extends State<FamilyConnectScreen> {
             spacing: 8,
             runSpacing: 8,
             children: [
-              _buildBadgePill('Instant Revocation', Icons.lock_reset_rounded),
-              _buildBadgePill('Isolated Histories', Icons.history_rounded),
+              _buildBadgePill('Stays on device', Icons.phone_iphone_rounded),
+              _buildBadgePill('Nothing shared yet', Icons.lock_outline_rounded),
             ],
           ),
         ],
@@ -335,7 +357,10 @@ class _FamilyConnectScreenState extends State<FamilyConnectScreen> {
                 onPressed: () {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('Opened granular permissions for ${member.name}'),
+                      content: Text(
+                        'Granular remote grants for ${member.name} are not available yet. '
+                        'Sharing preferences on this device are local only.',
+                      ),
                       behavior: SnackBarBehavior.floating,
                       backgroundColor: AppColors.surfaceCardDark,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -397,10 +422,10 @@ class _FamilyConnectScreenState extends State<FamilyConnectScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Invite a Family Member', style: AppTypography.titleMd),
+          const Text('Add a family member', style: AppTypography.titleMd),
           const SizedBox(height: 8),
           const Text(
-            'Generate a local demo invite code on this device. Real account invites and encrypted sharing are not enabled yet.',
+            'Saves their name and your sharing preferences on this phone so they are ready when account-to-account sharing ships.',
             style: TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.35),
           ),
           const SizedBox(height: 16),
@@ -416,65 +441,10 @@ class _FamilyConnectScreenState extends State<FamilyConnectScreen> {
               ),
               icon: const Icon(Icons.person_add_rounded, size: 18),
               label: const Text(
-                'Create Local Invite (Demo)',
+                'Add family member',
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
               ),
               onPressed: () => _showInviteDialog(),
-            ),
-          ),
-          const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.primaryContainer,
-                side: const BorderSide(color: AppColors.outlineVariant),
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
-              ),
-              icon: const Icon(Icons.qr_code_rounded, size: 18),
-              label: const Text(
-                'Show Demo QR Code',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
-              ),
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: const Text(
-                      'Demo QR only — local placeholder. Real invite linking is pending.',
-                    ),
-                    behavior: SnackBarBehavior.floating,
-                    backgroundColor: AppColors.surfaceCardDark,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPendingInvitesSection() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceCard,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: AppColors.cardShadow,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('Pending Invites', style: AppTypography.titleMd),
-          const SizedBox(height: 12),
-          Text(
-            'No pending invites. When you invite someone, they’ll appear here until they accept.',
-            style: TextStyle(
-              fontSize: 13,
-              height: 1.4,
-              color: AppColors.textSecondary.withValues(alpha: 0.95),
             ),
           ),
         ],
@@ -495,7 +465,7 @@ class _FamilyConnectScreenState extends State<FamilyConnectScreen> {
           SizedBox(width: 10),
           Expanded(
             child: Text(
-              'Sharing preferences are saved with your Cura account when signed in. Review access with your care team before sharing clinical records.',
+              'These preferences are stored on this phone only. No family member can see your records until account-to-account sharing is released.',
               style: TextStyle(fontSize: 11, color: AppColors.textSecondary, height: 1.3),
             ),
           ),
@@ -512,7 +482,7 @@ class _FamilyConnectScreenState extends State<FamilyConnectScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         title: const Text('Remove Family Member?', style: AppTypography.titleMd),
         content: Text(
-          'This will revoke all access for ${member.name}. They will no longer be able to view any of your health records.',
+          'This removes ${member.name} and their sharing preferences from this phone.',
           style: const TextStyle(fontSize: 14, color: AppColors.textSecondary, height: 1.4),
         ),
         actions: [
@@ -540,7 +510,6 @@ class _FamilyConnectScreenState extends State<FamilyConnectScreen> {
 
   void _showInviteDialog() {
     final nameController = TextEditingController();
-    final emailController = TextEditingController();
     String selectedRelation = 'Parent';
 
     showDialog(
@@ -550,7 +519,7 @@ class _FamilyConnectScreenState extends State<FamilyConnectScreen> {
           return AlertDialog(
             backgroundColor: AppColors.surfaceCard,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-            title: const Text('Invite Family Member', style: AppTypography.titleMd),
+            title: const Text('Add Family Member', style: AppTypography.titleMd),
             content: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -564,27 +533,6 @@ class _FamilyConnectScreenState extends State<FamilyConnectScreen> {
                     style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
                     decoration: InputDecoration(
                       hintText: 'e.g. Alex Rivera',
-                      hintStyle: const TextStyle(color: AppColors.textSecondary),
-                      filled: true,
-                      fillColor: AppColors.surfaceContainerLow,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide.none,
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Email
-                  const Text('Email Address', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: emailController,
-                    keyboardType: TextInputType.emailAddress,
-                    style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
-                    decoration: InputDecoration(
-                      hintText: 'email@example.com',
                       hintStyle: const TextStyle(color: AppColors.textSecondary),
                       filled: true,
                       fillColor: AppColors.surfaceContainerLow,
@@ -641,29 +589,30 @@ class _FamilyConnectScreenState extends State<FamilyConnectScreen> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
                 ),
                 onPressed: () {
-                  if (nameController.text.trim().isNotEmpty) {
-                    widget.appState.addFamilyMember(FamilyMember(
-                      id: 'fam-${DateTime.now().millisecondsSinceEpoch}',
-                      name: nameController.text.trim(),
-                      relation: selectedRelation,
-                      avatarUrl: '',
-                      accessLevel: 'Pending Verification',
-                      ageAndGender: 'N/A',
-                    ));
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          'Local demo member "${nameController.text.trim()}" added. Real invite delivery is pending.',
-                        ),
-                        behavior: SnackBarBehavior.floating,
-                        backgroundColor: AppColors.surfaceCardDark,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  final name = nameController.text.trim();
+                  if (name.isEmpty) return;
+                  widget.appState.addFamilyMember(FamilyMember(
+                    id: 'fam-${DateTime.now().millisecondsSinceEpoch}',
+                    name: name,
+                    relation: selectedRelation,
+                    avatarUrl: '',
+                    accessLevel: 'Saved on this device',
+                    ageAndGender: 'N/A',
+                  ));
+                  final messenger = ScaffoldMessenger.of(context);
+                  Navigator.pop(context);
+                  messenger.showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        '$name was added to your care circle on this phone.',
                       ),
-                    );
-                  }
+                      behavior: SnackBarBehavior.floating,
+                      backgroundColor: AppColors.surfaceCardDark,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  );
                 },
-                child: const Text('Add Local (Demo)', style: TextStyle(fontWeight: FontWeight.w700)),
+                child: const Text('Add member', style: TextStyle(fontWeight: FontWeight.w700)),
               ),
             ],
           );

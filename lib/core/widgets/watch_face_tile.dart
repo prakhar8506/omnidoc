@@ -40,7 +40,7 @@ class WatchFaceTile extends StatelessWidget {
         child: Container(
           width: width,
           height: height,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
           decoration: BoxDecoration(
             color: AppColors.watchFaceDarkBg,
             borderRadius: BorderRadius.circular(26),
@@ -78,40 +78,43 @@ class WatchFaceTile extends StatelessWidget {
             children: [
               // Top Row: Icon with circular glow pill + Title + Trailing Badge
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: glowColor.withValues(alpha: 0.18),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          icon,
-                          color: glowColor,
-                          size: 15,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        title.toUpperCase(),
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 1.0,
-                          color: Colors.white.withValues(alpha: 0.70),
-                        ),
-                      ),
-                    ],
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: glowColor.withValues(alpha: 0.18),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      icon,
+                      color: glowColor,
+                      size: 15,
+                    ),
                   ),
-                  if (trailingBadge != null) trailingBadge!,
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      title.toUpperCase(),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.6,
+                        color: Colors.white.withValues(alpha: 0.70),
+                      ),
+                    ),
+                  ),
+                  if (trailingBadge != null) ...[
+                    const SizedBox(width: 4),
+                    trailingBadge!,
+                  ],
                 ],
               ),
 
               // Center: Bold Watch Number with optional unit
-              Center(
+              FittedBox(
+                fit: BoxFit.scaleDown,
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.baseline,
@@ -149,16 +152,15 @@ class WatchFaceTile extends StatelessWidget {
 
               // Bottom: Subtitle / trend indicator
               if (subtitle != null)
-                Center(
-                  child: Text(
-                    subtitle!,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w500,
-                      color: glowColor.withValues(alpha: 0.90),
-                    ),
+                Text(
+                  subtitle!,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                    color: glowColor.withValues(alpha: 0.90),
                   ),
                 )
               else

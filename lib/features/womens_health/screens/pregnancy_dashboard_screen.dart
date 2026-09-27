@@ -8,8 +8,9 @@ import '../../../core/state/app_state.dart';
 
 class PregnancyDashboardScreen extends StatefulWidget {
   final AppState appState;
+  final VoidCallback? onLeave;
 
-  const PregnancyDashboardScreen({super.key, required this.appState});
+  const PregnancyDashboardScreen({super.key, required this.appState, this.onLeave});
 
   @override
   State<PregnancyDashboardScreen> createState() => _PregnancyDashboardScreenState();
@@ -20,6 +21,15 @@ class _PregnancyDashboardScreenState extends State<PregnancyDashboardScreen> {
   int _currentSessionKicks = 0;
   bool _isKickSessionActive = false;
   DateTime? _kickSessionStart;
+
+  void _leave() {
+    final leave = widget.onLeave;
+    if (leave != null) {
+      leave();
+      return;
+    }
+    Navigator.pop(context);
+  }
 
   void _recordKick() {
     if (!_isKickSessionActive) {
@@ -209,7 +219,7 @@ class _PregnancyDashboardScreenState extends State<PregnancyDashboardScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   BouncingTap(
-                    onTap: () => Navigator.pop(context),
+                    onTap: _leave,
                     child: Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
@@ -272,7 +282,7 @@ class _PregnancyDashboardScreenState extends State<PregnancyDashboardScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       BouncingTap(
-                        onTap: () => Navigator.pop(context),
+                        onTap: _leave,
                         child: Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
@@ -538,15 +548,22 @@ class _PregnancyDashboardScreenState extends State<PregnancyDashboardScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Fetal Kick Counter', style: AppTypography.titleMd),
-                  SizedBox(height: 2),
-                  Text('Clinical target: 10 movements in under 2 hours', style: AppTypography.labelSm),
-                ],
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Fetal Kick Counter', style: AppTypography.titleMd),
+                    SizedBox(height: 2),
+                    Text(
+                      'Clinical target: 10 movements in under 2 hours',
+                      style: AppTypography.labelSm,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
               ),
               if (_isKickSessionActive)
                 Container(
@@ -556,7 +573,7 @@ class _PregnancyDashboardScreenState extends State<PregnancyDashboardScreen> {
                     borderRadius: BorderRadius.circular(999),
                   ),
                   child: const Text(
-                    'Session Active',
+                    'Active',
                     style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF15803D)),
                   ),
                 ),
@@ -616,16 +633,27 @@ class _PregnancyDashboardScreenState extends State<PregnancyDashboardScreen> {
               return Padding(
                 padding: const EdgeInsets.symmetric(vertical: 4),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      children: [
-                        const Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 14),
-                        const SizedBox(width: 6),
-                        Text('${k['kicks']} kicks in ${k['durationMinutes']} mins', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
-                      ],
+                    const Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 14),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        '${k['kicks']} kicks in ${k['durationMinutes']} mins',
+                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                    Text(k['status'] as String, style: const TextStyle(fontSize: 11, color: AppColors.textTertiary)),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        k['status'] as String,
+                        style: const TextStyle(fontSize: 11, color: AppColors.textTertiary),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.end,
+                      ),
+                    ),
                   ],
                 ),
               );
@@ -725,15 +753,16 @@ class _PregnancyDashboardScreenState extends State<PregnancyDashboardScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Prenatal Scan Vault', style: AppTypography.titleMd),
-                  SizedBox(height: 2),
-                  Text('Verified imaging & clinical summaries', style: AppTypography.labelSm),
-                ],
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Prenatal Scan Vault', style: AppTypography.titleMd),
+                    SizedBox(height: 2),
+                    Text('Uploaded imaging & notes', style: AppTypography.labelSm),
+                  ],
+                ),
               ),
               IconButton(
                 onPressed: _showAddScanDialog,
@@ -742,7 +771,13 @@ class _PregnancyDashboardScreenState extends State<PregnancyDashboardScreen> {
             ],
           ),
           const SizedBox(height: 14),
+          if (state.prenatalScans.isEmpty)
+            const Text(
+              'No scans yet. Tap + to add ultrasound notes.',
+              style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+            ),
           ...state.prenatalScans.map((scan) {
+            final scanId = scan['id'] as String? ?? '';
             return Container(
               margin: const EdgeInsets.only(bottom: 12),
               padding: const EdgeInsets.all(14),
@@ -755,30 +790,53 @@ class _PregnancyDashboardScreenState extends State<PregnancyDashboardScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        scan['gestationalWeek'] as String,
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.primaryContainer,
+                      Expanded(
+                        child: Text(
+                          scan['gestationalWeek'] as String? ?? '',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.primaryContainer,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      Text(
-                        scan['doctorName'] as String,
-                        style: const TextStyle(fontSize: 11, color: AppColors.textTertiary),
+                      Flexible(
+                        child: Text(
+                          scan['doctorName'] as String? ?? '',
+                          style: const TextStyle(fontSize: 11, color: AppColors.textTertiary),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.end,
+                        ),
+                      ),
+                      IconButton(
+                        visualDensity: VisualDensity.compact,
+                        tooltip: 'Delete scan',
+                        onPressed: () {
+                          if (scanId.isEmpty) return;
+                          widget.appState.deletePrenatalScan(scanId);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Scan removed from vault'),
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.delete_outline_rounded, size: 18, color: AppColors.accentCoral),
                       ),
                     ],
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    scan['title'] as String,
+                    scan['title'] as String? ?? '',
                     style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    scan['findings'] as String,
+                    scan['findings'] as String? ?? '',
                     style: const TextStyle(fontSize: 12, color: AppColors.textSecondary, height: 1.35),
                   ),
                 ],

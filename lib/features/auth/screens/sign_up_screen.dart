@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/state/app_state.dart';
 import '../../../core/services/auth_service.dart';
+import '../../legal/screens/privacy_policy_screen.dart';
+import '../../legal/screens/terms_of_use_screen.dart';
 
 class SignUpScreen extends StatefulWidget {
   final AppState appState;
@@ -26,6 +28,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   bool _isLoading = false;
   bool _obscurePassword = true;
   bool _obscureConfirm = true;
+  bool _termsAccepted = false;
   String _bloodType = 'Unknown';
   String? _errorText;
 
@@ -43,6 +46,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
   Future<void> _handleSignUp() async {
     setState(() => _errorText = null);
     if (!(_formKey.currentState?.validate() ?? false)) return;
+    if (!_termsAccepted) {
+      setState(() => _errorText =
+          'Please confirm you are 18 or older and accept the Terms and Privacy Policy.');
+      return;
+    }
 
     setState(() => _isLoading = true);
     try {
@@ -54,6 +62,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
       );
       // MaterialApp home switches to the shell automatically when signed in.
       // Do not pop — that can remove the new home route.
+      if (widget.appState.welcomeNoteSent && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Cura sent a welcome note to your email.')),
+        );
+      }
     } on AuthException catch (e) {
       if (mounted) setState(() => _errorText = e.message);
     } catch (_) {
@@ -111,7 +124,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  'Your account stays on this device. Each email has its own private profile.',
+                  'Use your email. Your account opens right away. There is nothing to confirm.',
                   style: TextStyle(fontSize: 14, color: AppColors.textSecondary, height: 1.4),
                 ),
                 const SizedBox(height: 28),
@@ -202,6 +215,53 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     ),
                   ),
                 ),
+                const SizedBox(height: 16),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Checkbox(
+                      value: _termsAccepted,
+                      onChanged: (v) => setState(() => _termsAccepted = v ?? false),
+                      visualDensity: VisualDensity.compact,
+                    ),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 12),
+                        child: Wrap(
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            const Text(
+                              'I am 18 or older and I accept the ',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: AppColors.textSecondary,
+                                height: 1.4,
+                              ),
+                            ),
+                            _legalLink('Terms of Use', const TermsOfUseScreen()),
+                            const Text(
+                              ' and ',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: AppColors.textSecondary,
+                                height: 1.4,
+                              ),
+                            ),
+                            _legalLink('Privacy Policy', const PrivacyPolicyScreen()),
+                            const Text(
+                              '.',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: AppColors.textSecondary,
+                                height: 1.4,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
                 if (_errorText != null) ...[
                   const SizedBox(height: 12),
                   Text(
@@ -264,6 +324,24 @@ class _SignUpScreenState extends State<SignUpScreen> {
       ),
     );
   }
+
+  Widget _legalLink(String label, Widget screen) => GestureDetector(
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => screen),
+        ),
+        child: Text(
+          label,
+          style: const TextStyle(
+            fontSize: 13,
+            height: 1.4,
+            fontWeight: FontWeight.w700,
+            color: AppColors.primaryContainer,
+            decoration: TextDecoration.underline,
+            decorationColor: AppColors.primaryContainer,
+          ),
+        ),
+      );
 
   Widget _label(String text) => Text(
         text,

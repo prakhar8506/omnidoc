@@ -53,10 +53,16 @@ class _OnboardingBaselineScreenState extends State<OnboardingBaselineScreen> {
     try {
       final picker = ImagePicker();
       final photo = await picker.pickImage(source: source, maxWidth: 1080);
-      if (photo != null) {
+      if (photo != null && mounted) {
         setState(() => _progressPhotoPath = photo.path);
       }
-    } catch (_) {}
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not open the camera or photo library.')),
+        );
+      }
+    }
   }
 
   void _finishOnboarding() {
@@ -148,23 +154,25 @@ class _OnboardingBaselineScreenState extends State<OnboardingBaselineScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF6366F1).withValues(alpha: 0.12),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(Icons.description_rounded, color: Color(0xFF6366F1), size: 20),
-                              ),
-                              const SizedBox(width: 10),
-                              const Text('Recent Lab or Bloodwork', style: AppTypography.titleMd),
-                            ],
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF6366F1).withValues(alpha: 0.12),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.description_rounded, color: Color(0xFF6366F1), size: 20),
                           ),
-                          if (_labUploaded || widget.appState.prescriptions.isNotEmpty)
+                          const SizedBox(width: 10),
+                          const Expanded(
+                            child: Text(
+                              'Recent Lab or Bloodwork',
+                              style: AppTypography.titleMd,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          if (_labUploaded || widget.appState.prescriptions.isNotEmpty) ...[
+                            const SizedBox(width: 8),
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                               decoration: BoxDecoration(
@@ -176,6 +184,7 @@ class _OnboardingBaselineScreenState extends State<OnboardingBaselineScreen> {
                                 style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF15803D)),
                               ),
                             ),
+                          ],
                         ],
                       ),
                       const SizedBox(height: 8),
@@ -185,9 +194,16 @@ class _OnboardingBaselineScreenState extends State<OnboardingBaselineScreen> {
                       ),
                       const SizedBox(height: 14),
                       OutlinedButton.icon(
-                        onPressed: () {
-                          UploadReportModal.show(context, widget.appState);
-                          setState(() => _labUploaded = true);
+                        onPressed: () async {
+                          final before = widget.appState.prescriptions.length;
+                          await UploadReportModal.show(context, widget.appState);
+                          if (!mounted) return;
+                          // Only mark uploaded after a document was actually added.
+                          setState(() {
+                            _labUploaded =
+                                widget.appState.prescriptions.length > before ||
+                                    widget.appState.prescriptions.isNotEmpty;
+                          });
                         },
                         icon: const Icon(Icons.cloud_upload_rounded, size: 18),
                         label: Text(

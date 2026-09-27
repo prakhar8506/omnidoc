@@ -3,6 +3,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/state/app_state.dart';
 import '../../../core/widgets/avatar_image.dart';
+import '../../appointments/screens/find_care_screen.dart';
 
 class TriageScreen extends StatefulWidget {
   final AppState appState;
@@ -19,6 +20,7 @@ class TriageScreen extends StatefulWidget {
 class _TriageScreenState extends State<TriageScreen> {
   final TextEditingController _symptomInputController = TextEditingController();
   bool _showRedFlags = false;
+  bool _isSubmitting = false;
 
   @override
   void dispose() {
@@ -26,13 +28,20 @@ class _TriageScreenState extends State<TriageScreen> {
     super.dispose();
   }
 
-  void _submitSymptom(String text) {
-    if (text.trim().isEmpty) return;
-    widget.appState.submitNewSymptomTriage(text.trim());
+  void _submitSymptom(String text) async {
+    if (text.trim().isEmpty || _isSubmitting) return;
+    final query = text.trim();
     _symptomInputController.clear();
+    setState(() => _isSubmitting = true);
+    try {
+      await widget.appState.submitNewSymptomTriageAsync(query);
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: const Text('New clinical assessment computed successfully.'),
+        content: const Text('Wellness triage updated. This is guidance only — not a clinical diagnosis.'),
         behavior: SnackBarBehavior.floating,
         backgroundColor: AppColors.surfaceCardDark,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -195,13 +204,16 @@ class _TriageScreenState extends State<TriageScreen> {
               ),
               const SizedBox(height: 6),
               const Row(
-                mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(Icons.lock_rounded, size: 12, color: AppColors.accentTeal),
                   SizedBox(width: 4),
-                  Text(
-                    'Captured via secure encrypted audio/text',
-                    style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                  Flexible(
+                    child: Text(
+                      'Saved as a wellness note',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                    ),
                   ),
                 ],
               ),
@@ -233,31 +245,41 @@ class _TriageScreenState extends State<TriageScreen> {
         children: [
           // Header & Audio toggle
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.1),
-                      shape: BoxShape.circle,
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.monitor_heart_rounded,
+                        color: AppColors.primary,
+                        size: 20,
+                      ),
                     ),
-                    child: const Icon(
-                      Icons.monitor_heart_rounded,
-                      color: AppColors.primary,
-                      size: 20,
+                    const SizedBox(width: 10),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Triage notes',
+                            style: AppTypography.titleMd,
+                          ),
+                          Text(
+                            'Guidance only, not a diagnosis',
+                            style: AppTypography.labelSm,
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Clinical Triage Assessment', style: AppTypography.titleMd),
-                      Text('Protocol v4.2 • Safe Lifestyle Scope', style: AppTypography.labelSm),
-                    ],
-                  ),
-                ],
+                  ],
+                ),
               ),
               IconButton(
                 style: IconButton.styleFrom(
@@ -306,8 +328,10 @@ class _TriageScreenState extends State<TriageScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 6,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -326,7 +350,7 @@ class _TriageScreenState extends State<TriageScreen> {
                               fontSize: 12,
                               fontWeight: FontWeight.w800,
                               color: Color(0xFFB45309),
-                              letterSpacing: 0.5,
+                              letterSpacing: 0.3,
                             ),
                           ),
                         ],
@@ -368,12 +392,20 @@ class _TriageScreenState extends State<TriageScreen> {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
               ),
               icon: const Icon(Icons.calendar_month_rounded, size: 18),
-              label: Text(
-                'Schedule Consultation (${triage.recommendedSpecialty.split('/').first.trim()})',
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+              label: const Text(
+                'Find a doctor in your city',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
               ),
               onPressed: () {
-                widget.appState.setTabIndex(3);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => FindCareScreen(
+                      appState: widget.appState,
+                      specialty: triage.recommendedSpecialty,
+                    ),
+                  ),
+                );
               },
             ),
           ),
@@ -565,9 +597,23 @@ class _TriageScreenState extends State<TriageScreen> {
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
                   ),
-                  icon: const Icon(Icons.auto_awesome_rounded, size: 16),
-                  label: const Text('Run Clinical Assessment', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
-                  onPressed: () => _submitSymptom(_symptomInputController.text),
+                  icon: _isSubmitting
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Icon(Icons.auto_awesome_rounded, size: 16),
+                  label: Text(
+                    _isSubmitting ? 'Reviewing your symptoms…' : 'Run Clinical Assessment',
+                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+                  ),
+                  onPressed: _isSubmitting
+                      ? null
+                      : () => _submitSymptom(_symptomInputController.text),
                 ),
               ),
             ],

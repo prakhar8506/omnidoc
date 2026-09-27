@@ -30,18 +30,22 @@ class PermissionItem {
     this.dataGapWarning,
   });
 
+  /// Use [clearLastSynced] / [clearDataGapWarning] to set nullable fields to null.
   PermissionItem copyWith({
     bool? isEnabled,
     DateTime? lastSynced,
     String? dataGapWarning,
+    bool clearLastSynced = false,
+    bool clearDataGapWarning = false,
   }) {
     return PermissionItem(
       category: category,
       title: title,
       description: description,
       isEnabled: isEnabled ?? this.isEnabled,
-      lastSynced: lastSynced ?? this.lastSynced,
-      dataGapWarning: dataGapWarning ?? this.dataGapWarning,
+      lastSynced: clearLastSynced ? null : (lastSynced ?? this.lastSynced),
+      dataGapWarning:
+          clearDataGapWarning ? null : (dataGapWarning ?? this.dataGapWarning),
     );
   }
 
@@ -66,65 +70,76 @@ class ConsentManager extends ChangeNotifier {
   }
 
   void _initDefaults() {
-    final now = DateTime.now();
-    _permissions[PermissionCategory.hrv] = PermissionItem(
+    // lastSynced stays null until a real wearable sync records one.
+    _permissions[PermissionCategory.hrv] = const PermissionItem(
       category: PermissionCategory.hrv,
       title: 'Heart Rate Variability (HRV)',
-      description: 'Used to assess autonomic nervous system recovery and physiological stress reserves.',
+      description:
+          'Used to assess autonomic nervous system recovery and physiological stress reserves.',
       isEnabled: true,
-      lastSynced: now.subtract(const Duration(minutes: 12)),
     );
-    _permissions[PermissionCategory.heartRate] = PermissionItem(
+    _permissions[PermissionCategory.heartRate] = const PermissionItem(
       category: PermissionCategory.heartRate,
       title: 'Resting & Active Heart Rate',
-      description: 'Provides resting pulse trends for recovery score calculations and cardiovascular strain tracking.',
+      description:
+          'Provides resting pulse trends for recovery score calculations and cardiovascular strain tracking.',
       isEnabled: true,
-      lastSynced: now.subtract(const Duration(minutes: 12)),
     );
-    _permissions[PermissionCategory.sleep] = PermissionItem(
+    _permissions[PermissionCategory.sleep] = const PermissionItem(
       category: PermissionCategory.sleep,
       title: 'Sleep Stages & Consistency',
-      description: 'Evaluates restorative deep and REM sleep to establish your daily recovery readiness.',
+      description:
+          'Evaluates restorative deep and REM sleep to establish your daily recovery readiness.',
       isEnabled: true,
-      lastSynced: now.subtract(const Duration(hours: 4)),
     );
-    _permissions[PermissionCategory.steps] = PermissionItem(
+    _permissions[PermissionCategory.steps] = const PermissionItem(
       category: PermissionCategory.steps,
       title: 'Daily Steps & Cadence',
-      description: 'Measures low-intensity baseline movement to evaluate active energy and daily strain.',
+      description:
+          'Measures low-intensity baseline movement to evaluate active energy and daily strain.',
       isEnabled: true,
-      lastSynced: now.subtract(const Duration(minutes: 15)),
     );
-    _permissions[PermissionCategory.bloodOxygen] = PermissionItem(
+    _permissions[PermissionCategory.bloodOxygen] = const PermissionItem(
       category: PermissionCategory.bloodOxygen,
       title: 'Blood Oxygen Saturation (SpO₂)',
-      description: 'Monitors nocturnal oxygenation stability to identify sleep disturbances.',
+      description:
+          'Monitors nocturnal oxygenation stability to identify sleep disturbances.',
       isEnabled: true,
-      lastSynced: now.subtract(const Duration(hours: 5)),
     );
-    _permissions[PermissionCategory.respiratoryRate] = PermissionItem(
+    _permissions[PermissionCategory.respiratoryRate] = const PermissionItem(
       category: PermissionCategory.respiratoryRate,
       title: 'Sleeping Respiratory Rate',
-      description: 'Tracks baseline breaths per minute; deviations flag physiological strain or onset of illness.',
+      description:
+          'Tracks baseline breaths per minute; deviations flag physiological strain or onset of illness.',
       isEnabled: true,
-      lastSynced: now.subtract(const Duration(hours: 5)),
-      dataGapWarning: null,
     );
     _permissions[PermissionCategory.location] = const PermissionItem(
       category: PermissionCategory.location,
       title: 'Workout GPS / Outdoor Location',
-      description: 'Used solely during active outdoor runs or cycling to compute pace and distance. Never tracked passively.',
+      description:
+          'Used solely during active outdoor runs or cycling to compute pace and distance. Never tracked passively.',
       isEnabled: false,
-      lastSynced: null,
       dataGapWarning: 'Disabled • Outdoor pace telemetry unavailable',
     );
-    _permissions[PermissionCategory.notifications] = PermissionItem(
+    _permissions[PermissionCategory.notifications] = const PermissionItem(
       category: PermissionCategory.notifications,
       title: 'Recovery & Bedtime Reminders',
-      description: 'Delivers calm, actionable morning recovery briefings and optimal bedtime alerts. No marketing spam.',
-      isEnabled: true,
-      lastSynced: now,
+      description:
+          'Push reminders are not shipped yet. This switch does nothing until notifications are added.',
+      isEnabled: false,
     );
+  }
+
+  /// Drops stored consent choices and returns to defaults. Used when an
+  /// account is deleted so no consent history survives on the device.
+  Future<void> reset() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_storageKey);
+    } catch (e) {
+      debugPrint('ConsentManager reset error: $e');
+    }
+    _initDefaults();
   }
 
   Future<void> initialize() async {
@@ -145,9 +160,17 @@ class ConsentManager extends ChangeNotifier {
             final lastSynced = data['lastSynced'] != null
                 ? DateTime.tryParse(data['lastSynced'] as String)
                 : null;
-            _permissions[cat] = _permissions[cat]!.copyWith(
+            final warning = data['dataGapWarning'] as String?;
+            _permissions[cat] = PermissionItem(
+              category: cat,
+              title: _permissions[cat]!.title,
+              description: _permissions[cat]!.description,
               isEnabled: isEnabled,
               lastSynced: lastSynced,
+              dataGapWarning: warning ??
+                  (isEnabled
+                      ? null
+                      : 'Manually disabled • Ingestion paused'),
             );
           }
         }
@@ -167,9 +190,15 @@ class ConsentManager extends ChangeNotifier {
   Future<void> toggleCategory(PermissionCategory category, bool isEnabled) async {
     if (!_permissions.containsKey(category)) return;
 
-    _permissions[category] = _permissions[category]!.copyWith(
+    final current = _permissions[category]!;
+    _permissions[category] = PermissionItem(
+      category: current.category,
+      title: current.title,
+      description: current.description,
       isEnabled: isEnabled,
-      dataGapWarning: isEnabled ? null : 'Manually disabled • Ingestion paused',
+      lastSynced: current.lastSynced,
+      dataGapWarning:
+          isEnabled ? null : 'Manually disabled • Ingestion paused',
     );
     notifyListeners();
     await _persist();
@@ -177,12 +206,27 @@ class ConsentManager extends ChangeNotifier {
 
   Future<void> recordSync(PermissionCategory category) async {
     if (!_permissions.containsKey(category)) return;
-    _permissions[category] = _permissions[category]!.copyWith(
+    final current = _permissions[category]!;
+    _permissions[category] = PermissionItem(
+      category: current.category,
+      title: current.title,
+      description: current.description,
+      isEnabled: current.isEnabled,
       lastSynced: DateTime.now(),
       dataGapWarning: null,
     );
     notifyListeners();
     await _persist();
+  }
+
+  Future<void> recordSyncForEnabledCategories() async {
+    for (final cat in PermissionCategory.values) {
+      if (isCategoryEnabled(cat) &&
+          cat != PermissionCategory.notifications &&
+          cat != PermissionCategory.location) {
+        await recordSync(cat);
+      }
+    }
   }
 
   Future<void> _persist() async {

@@ -56,10 +56,12 @@ class _FamilyMemberModalState extends State<FamilyMemberModal> {
     );
 
     widget.appState.addFamilyMember(newMember);
+    final messenger = ScaffoldMessenger.of(context);
+    final savedName = newMember.name;
     Navigator.pop(context);
-    ScaffoldMessenger.of(context).showSnackBar(
+    messenger.showSnackBar(
       SnackBar(
-        content: Text('${newMember.name} added to Family Sharing.'),
+        content: Text('$savedName saved as a local family contact (not encrypted invite delivery).'),
         behavior: SnackBarBehavior.floating,
         backgroundColor: AppColors.surfaceCardDark,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -137,6 +139,8 @@ class _FamilyMemberModalState extends State<FamilyMemberModal> {
                     Expanded(
                       child: TextField(
                         controller: _ageController,
+                        keyboardType: TextInputType.text,
+                        textCapitalization: TextCapitalization.sentences,
                         decoration: InputDecoration(
                           labelText: 'Age / Note',
                           hintText: 'e.g. 29 yrs',
@@ -152,7 +156,7 @@ class _FamilyMemberModalState extends State<FamilyMemberModal> {
                 const Text('Sharing Permissions', style: AppTypography.titleMd),
                 const SizedBox(height: 8),
                 SwitchListTile(
-                  title: const Text('Share Live Vitals & Apple Health', style: AppTypography.bodyMd),
+                  title: const Text('Share vitals preference (local)', style: AppTypography.bodyMd),
                   value: _shareVitals,
                   activeThumbColor: AppColors.primaryContainer,
                   onChanged: (v) => setState(() => _shareVitals = v),
@@ -185,7 +189,7 @@ class _FamilyMemberModalState extends State<FamilyMemberModal> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
                   ),
                   onPressed: _addMember,
-                  child: const Text('Send Encrypted Family Invite', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
+                  child: const Text('Save local family contact', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
                 ),
               ],
             ),

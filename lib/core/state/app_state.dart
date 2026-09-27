@@ -8,10 +8,14 @@ import '../models/appointment.dart';
 import '../models/biomarker_report.dart';
 import '../models/triage_models.dart';
 import '../models/family_member.dart';
+import '../models/emergency_contact.dart';
+import '../mental/mood_check.dart';
 import '../models/user_account.dart';
+import '../branding/app_brand.dart';
 import '../models/prescription_document.dart';
 import '../services/auth_service.dart';
 import '../services/user_data_service.dart';
+import '../nutrition/nutrition_targets.dart';
 import '../services/report_interpreter_service.dart';
 import '../env/app_env.dart';
 import '../data/health_event.dart';
@@ -24,6 +28,7 @@ import '../analytics/analytics_service.dart';
 import '../network/supabase_repository.dart';
 import '../data/supabase_sync_service.dart';
 import '../../features/wearables/services/wearable_service.dart';
+import '../../features/ai_assistant/services/ai_copilot_service.dart';
 
 class AppState extends ChangeNotifier {
   final HealthBackendRepository supabaseRepository = SupabaseRepository();
@@ -54,6 +59,43 @@ class AppState extends ChangeNotifier {
   String? get userId => _currentUser?.id;
   bool get hasVitalsData =>
       isWearableConnected && (restingHeartRate > 0 || dailySteps > 0 || hrvMs > 0);
+
+  /// Composite 0–100 energy estimate from mood, sleep, HRV, and steps.
+  int get energyScore {
+    double score = 0;
+    double weight = 0;
+
+    if (selectedMood.isNotEmpty || moodProgress > 0) {
+      score += moodProgress.clamp(0.0, 1.0) * 100 * 0.35;
+      weight += 0.35;
+    }
+
+    final hours = _parsedSleepHours;
+    if (hours != null && hours > 0) {
+      score += (hours / 8.0).clamp(0.0, 1.2) * 100 * 0.30;
+      weight += 0.30;
+    }
+
+    if (hrvMs > 0) {
+      score += (hrvMs / 70.0).clamp(0.0, 1.2) * 100 * 0.20;
+      weight += 0.20;
+    }
+
+    if (dailySteps > 0) {
+      score += (dailySteps / 8000.0).clamp(0.0, 1.2) * 100 * 0.15;
+      weight += 0.15;
+    }
+
+    if (weight == 0) return 0;
+    return (score / weight).round().clamp(0, 100);
+  }
+
+  double? get _parsedSleepHours {
+    if (sleepDuration == '—' || sleepDuration.isEmpty) return null;
+    final match = RegExp(r'(\d+(?:\.\d+)?)\s*h').firstMatch(sleepDuration);
+    if (match != null) return double.tryParse(match.group(1)!);
+    return double.tryParse(sleepDuration);
+  }
 
   int _currentTabIndex = 0;
   int get currentTabIndex => _currentTabIndex;
@@ -110,7 +152,13 @@ class AppState extends ChangeNotifier {
   // 2. Nutrition & Hydration
   int dailyHydrationMl = 0;
   int targetHydrationMl = 2500;
+  final List<Map<String, dynamic>> hydrationLogs = [];
   final List<Map<String, dynamic>> loggedMeals = [];
+  String dietGoal = 'maintain';
+  String dietStyle = 'eggetarian';
+  String activityLevel = 'moderate';
+  bool shareActivityForCompetition = true;
+  final List<Map<String, dynamic>> clubs = [];
 
   // 3. Journal
   final List<Map<String, dynamic>> journalEntries = [];
@@ -217,6 +265,9 @@ class AppState extends ChangeNotifier {
   final List<String> allergies = [];
   final List<String> chronicConditions = [];
   final List<String> emergencyMedications = [];
+  final List<EmergencyContact> emergencyContacts = [];
+  String homeCity = '';
+  Map<String, dynamic>? lastMoodCheck;
   bool isFallDetectionActive = false;
 
   // 9. Multi-Language & Accessibility
@@ -232,6 +283,8 @@ class AppState extends ChangeNotifier {
   int appointmentSegmentIndex = 0;
 
   DiagnosticReport? activeReport;
+  String labAnalysisStage = '';
+  double labAnalysisProgress = 0;
   late TriageAssessment activeTriage;
   bool isAudioPlaying = false;
   bool isListeningVoice = false;
@@ -250,23 +303,36 @@ class AppState extends ChangeNotifier {
       if (user != null) {
         await _bindUser(user);
         _isSignedIn = true;
-        if (userId != null) {
-          await supabaseSyncService.pullRemoteEvents(userId!);
-          historicalDaysCount = _computeHistoricalDays();
-          recalculateRecoveryEngine();
-          supabaseSyncService.syncPendingEvents(userId!);
-        }
       } else {
         _isSignedIn = false;
         _currentUser = null;
       }
-    } catch (_) {
+    } catch (e) {
+      // Local session could not be read — sign-in state is unknown, so gate.
+      debugPrint('[AppState] hydrate failed: $e');
       _isSignedIn = false;
       _currentUser = null;
-    } finally {
-      _isHydrating = false;
-      notifyListeners();
     }
+
+    if (_isSignedIn && userId != null) {
+      // A slow or unreachable network must never hold the splash screen, and a
+      // failed sync must never sign the user out of their local data.
+      try {
+        await supabaseSyncService
+            .pullRemoteEvents(userId!)
+            .timeout(const Duration(seconds: 12));
+        historicalDaysCount = _computeHistoricalDays();
+        recalculateRecoveryEngine();
+        unawaited(supabaseSyncService.syncPendingEvents(userId!));
+      } catch (e) {
+        debugPrint('[AppState] remote hydrate skipped: $e');
+      }
+      // Don't block first paint; pending uploads need a live cloud session.
+      unawaited(retryPendingLabAnalyses());
+    }
+
+    _isHydrating = false;
+    notifyListeners();
   }
 
   int _computeHistoricalDays() {
@@ -294,6 +360,8 @@ class AppState extends ChangeNotifier {
     _isSignedIn = true;
     notifyListeners();
   }
+
+  bool get welcomeNoteSent => _auth.welcomeNoteSent;
 
   Future<void> signIn(String email, String password) async {
     final user = await _auth.signIn(email: email, password: password);
@@ -351,6 +419,7 @@ class AppState extends ChangeNotifier {
       throw StateError('You must be signed in to delete your account.');
     }
 
+    final deletedUserId = userId;
     final response = await http
         .post(
           Uri.parse('$base/delete-account'),
@@ -364,14 +433,37 @@ class AppState extends ChangeNotifier {
         .timeout(const Duration(seconds: 60));
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw StateError('Delete failed (${response.statusCode}): ${response.body}');
+      debugPrint('[AppState] delete-account ${response.statusCode}: ${response.body}');
+      throw StateError(
+        'Your account could not be deleted right now. Please check your '
+        'connection and try again, or contact ${AppBrand.supportEmail}.',
+      );
     }
 
+    // The cloud account is gone, so nothing may survive on this device either:
+    // the account record, the persisted health profile, and the local event
+    // history all go with it.
     await _auth.signOut();
+    if (deletedUserId != null) {
+      try {
+        await _auth.purgeLocalAccount(deletedUserId);
+        await _userData.purge(deletedUserId);
+      } catch (e) {
+        debugPrint('[AppState] local account purge failed: $e');
+      }
+    }
+    try {
+      await eventStore.clear();
+      await consentManager.reset();
+    } catch (e) {
+      debugPrint('[AppState] local health purge failed: $e');
+    }
+
     _isSignedIn = false;
     _currentUser = null;
     _currentTabIndex = 0;
     _resetInMemoryProfile();
+    historicalDaysCount = 0;
     notifyListeners();
   }
 
@@ -405,6 +497,13 @@ class AppState extends ChangeNotifier {
     wearableSource = data['wearableSource'] as String? ?? '';
     isRealHardware = data['isRealHardware'] as bool? ?? false;
     dailyHydrationMl = data['dailyHydrationMl'] as int? ?? 0;
+    hydrationLogs
+      ..clear()
+      ..addAll(_decodeMapList(data['hydrationLogs']));
+    homeCity = data['homeCity'] as String? ?? '';
+    lastMoodCheck = data['lastMoodCheck'] is Map
+        ? Map<String, dynamic>.from(data['lastMoodCheck'] as Map)
+        : null;
     isOnboardingBaselineCompleted =
         data['isOnboardingBaselineCompleted'] as bool? ?? false;
     userHeightCm = (data['userHeightCm'] as num?)?.toDouble();
@@ -420,6 +519,13 @@ class AppState extends ChangeNotifier {
     loggedMeals
       ..clear()
       ..addAll(_decodeMapList(data['loggedMeals']));
+    dietGoal = data['dietGoal'] as String? ?? 'maintain';
+    dietStyle = data['dietStyle'] as String? ?? 'eggetarian';
+    activityLevel = data['activityLevel'] as String? ?? 'moderate';
+    shareActivityForCompetition = data['shareActivityForCompetition'] as bool? ?? true;
+    clubs
+      ..clear()
+      ..addAll(_decodeMapList(data['clubs']));
     menstrualCycleLogs
       ..clear()
       ..addAll(_decodeMapList(data['menstrualCycleLogs']));
@@ -454,6 +560,14 @@ class AppState extends ChangeNotifier {
       ..clear()
       ..addAll(
           List<String>.from(data['emergencyMedications'] as List? ?? const []));
+    emergencyContacts
+      ..clear()
+      ..addAll(
+        (data['emergencyContacts'] as List<dynamic>? ?? const [])
+            .whereType<Map>()
+            .map((row) => EmergencyContact.fromJson(Map<String, dynamic>.from(row)))
+            .where((c) => c.name.isNotEmpty && c.phone.isNotEmpty),
+      );
 
     medications
       ..clear()
@@ -541,7 +655,15 @@ class AppState extends ChangeNotifier {
     wearableSource = '';
     isRealHardware = false;
     dailyHydrationMl = 0;
+    hydrationLogs.clear();
+    homeCity = '';
+    lastMoodCheck = null;
     loggedMeals.clear();
+    dietGoal = 'maintain';
+    dietStyle = 'eggetarian';
+    activityLevel = 'moderate';
+    shareActivityForCompetition = true;
+    clubs.clear();
     journalEntries.clear();
     feelingHistory.clear();
     menstrualCycleLogs.clear();
@@ -566,6 +688,7 @@ class AppState extends ChangeNotifier {
     allergies.clear();
     chronicConditions.clear();
     emergencyMedications.clear();
+    emergencyContacts.clear();
     isFallDetectionActive = false;
     isOnboardingBaselineCompleted = false;
     userHeightCm = null;
@@ -605,6 +728,9 @@ class AppState extends ChangeNotifier {
       'wearableSource': wearableSource,
       'isRealHardware': isRealHardware,
       'dailyHydrationMl': dailyHydrationMl,
+      'hydrationLogs': _encodeMapList(hydrationLogs),
+      'homeCity': homeCity,
+      'lastMoodCheck': lastMoodCheck,
       'isOnboardingBaselineCompleted': isOnboardingBaselineCompleted,
       'userHeightCm': userHeightCm,
       'userWeightKg': userWeightKg,
@@ -613,6 +739,11 @@ class AppState extends ChangeNotifier {
       'isFallDetectionActive': isFallDetectionActive,
       'journalEntries': _encodeMapList(journalEntries),
       'loggedMeals': _encodeMapList(loggedMeals),
+      'dietGoal': dietGoal,
+      'dietStyle': dietStyle,
+      'activityLevel': activityLevel,
+      'shareActivityForCompetition': shareActivityForCompetition,
+      'clubs': _encodeMapList(clubs),
       'menstrualCycleLogs': _encodeMapList(menstrualCycleLogs),
       'pregnancyWeightLogs': _encodeMapList(pregnancyWeightLogs),
       'kickCounterLogs': _encodeMapList(kickCounterLogs),
@@ -624,6 +755,7 @@ class AppState extends ChangeNotifier {
       'allergies': allergies,
       'chronicConditions': chronicConditions,
       'emergencyMedications': emergencyMedications,
+      'emergencyContacts': emergencyContacts.map((c) => c.toJson()).toList(),
       'medications': UserDataService.medicationsToJson(medications),
       'appointments': appointments.map((a) => a.toJson()).toList(),
       'familyMembers': familyMembers.map((f) => f.toJson()).toList(),
@@ -698,7 +830,7 @@ class AppState extends ChangeNotifier {
       return [
         {
           'title': 'Build your baseline',
-          'metric': 'No correlations yet',
+          'metric': 'Need more logs',
           'insight':
               'Log how you feel and sync wearable data to unlock personalized sleep, mood, and HRV correlations.',
           'icon': Icons.insights_rounded,
@@ -861,6 +993,29 @@ class AppState extends ChangeNotifier {
       'doctorName': doctorName,
       'imagePath': imagePath,
     });
+    _persistCurrentUserData();
+    notifyListeners();
+  }
+
+  void deletePrenatalScan(String id) {
+    prenatalScans.removeWhere((s) => s['id'] == id);
+    _persistCurrentUserData();
+    notifyListeners();
+  }
+
+  void addAllergy(String allergy) {
+    final cleaned = allergy.trim();
+    if (cleaned.isEmpty) return;
+    if (!allergies.any((a) => a.toLowerCase() == cleaned.toLowerCase())) {
+      allergies.add(cleaned);
+      _persistCurrentUserData();
+      notifyListeners();
+    }
+  }
+
+  void removeAllergy(String allergy) {
+    allergies.removeWhere((a) => a.toLowerCase() == allergy.toLowerCase());
+    _persistCurrentUserData();
     notifyListeners();
   }
 
@@ -914,10 +1069,14 @@ class AppState extends ChangeNotifier {
       baselineConfidence: qualityResult.confidence,
     );
 
-    // 4. Compute Sleep Score
+    // 4. Compute Sleep Score — consistency stays 0 until we track bedtime regularity.
     sleepResult = RecoveryModel.computeSleep(
-      sleepHours: consentManager.isCategoryEnabled(PermissionCategory.sleep) ? sleepHours : null,
-      consistencyPercentage: 88.0,
+      sleepHours: consentManager.isCategoryEnabled(PermissionCategory.sleep) &&
+              sleepHours != null &&
+              sleepHours > 0
+          ? sleepHours
+          : null,
+      consistencyPercentage: 0.0,
       validNightsCount: historicalDaysCount,
     );
 
@@ -1114,10 +1273,10 @@ class AppState extends ChangeNotifier {
       final vitals = await WearableService.fetchLatestVitals();
 
       if (events.isEmpty && vitals['isRealHardware'] != true) {
-        lastSyncMessage = WearableService.isPlatformSupported
-            ? 'No new samples found. Wear your device and ensure it syncs to Health / Health Connect.'
-            : 'Health sync requires iOS (HealthKit) or Android (Health Connect).';
-        return lastSyncMessage;
+      lastSyncMessage = WearableService.isPlatformSupported
+          ? 'No new samples found. Wear your device and ensure it syncs to Health / Health Connect.'
+          : 'Health sync requires iOS (HealthKit) or Android (Health Connect).';
+      return lastSyncMessage;
       }
 
       if (events.isNotEmpty) {
@@ -1157,12 +1316,15 @@ class AppState extends ChangeNotifier {
       }
 
       recalculateRecoveryEngine();
+      await consentManager.recordSyncForEnabledCategories();
       await _persistCurrentUserData();
       lastSyncMessage =
           'Synced ${events.length} sample(s) from $source.';
       return lastSyncMessage;
     } catch (e) {
-      lastSyncMessage = 'Sync failed: $e';
+      debugPrint('[AppState] syncVitals failed: $e');
+      lastSyncMessage =
+          'Could not read your health data. Check your connection and Health permissions, then try again.';
       return lastSyncMessage;
     } finally {
       isSyncingVitals = false;
@@ -1233,6 +1395,7 @@ class AppState extends ChangeNotifier {
     required String originalName,
     required PrescriptionSource source,
     required bool isImage,
+    Uint8List? fileBytes,
   }) async {
     final id = userId;
     if (id == null) {
@@ -1243,6 +1406,7 @@ class AppState extends ChangeNotifier {
       userId: id,
       sourcePath: sourcePath,
       originalName: originalName,
+      bytes: fileBytes,
     );
 
     // Optimistic local row, then cloud OCR when available.
@@ -1264,6 +1428,10 @@ class AppState extends ChangeNotifier {
       source: source,
       isImage: isImage,
       documentId: doc.id,
+      fileBytes: fileBytes,
+      patientName: userName.isEmpty ? 'Patient' : userName,
+      userId: id,
+      onProgress: _setLabProgress,
     );
     final idx = prescriptions.indexWhere((p) => p.id == doc.id);
     if (idx >= 0) {
@@ -1273,8 +1441,60 @@ class AppState extends ChangeNotifier {
     }
     activeReport = ReportInterpreterService.labReportFromPrescription(doc);
     await _persistCurrentUserData();
+    labAnalysisStage = '';
+    labAnalysisProgress = doc.analysisStatus == 'ready' ? 1 : 0;
     notifyListeners();
     return doc;
+  }
+
+  void _setLabProgress(String stage, double progress) {
+    labAnalysisStage = stage;
+    labAnalysisProgress = progress;
+    notifyListeners();
+  }
+
+  /// Re-runs OCR for uploads that stopped because the cloud session was missing.
+  Future<void> retryPendingLabAnalyses() async {
+    final stuck = prescriptions.where((doc) {
+      if (doc.analysisStatus == 'ready' || doc.structuredTests.isNotEmpty) {
+        return false;
+      }
+      final status = doc.analysisStatus;
+      final summary = doc.plainLanguageSummary.toLowerCase();
+      return status == 'needs_sign_in' ||
+          status == 'analyzing' ||
+          status == 'error' ||
+          status == 'pending' ||
+          summary.contains('sign in') ||
+          summary.contains('unauthorized') ||
+          summary.contains('401') ||
+          summary.contains('analysis failed') ||
+          summary.contains('awaiting') ||
+          doc.detailedExplanation.toLowerCase().contains('unauthorized') ||
+          doc.keyFindings.any((f) => f.toLowerCase().contains('awaiting'));
+    }).toList();
+    if (stuck.isEmpty) return;
+
+    for (final doc in stuck) {
+      final updated = await ReportInterpreterService.interpretUploadAsync(
+        fileName: doc.fileName,
+        localPath: doc.localPath,
+        source: doc.source,
+        isImage: doc.isImage,
+        documentId: doc.id,
+        patientName: userName.isEmpty ? 'Patient' : userName,
+        userId: userId ?? 'local',
+        onProgress: _setLabProgress,
+      );
+      final idx = prescriptions.indexWhere((p) => p.id == doc.id);
+      if (idx >= 0) prescriptions[idx] = updated;
+      if (idx == 0 || activeReport?.id == 'rep-${doc.id}') {
+        activeReport = ReportInterpreterService.labReportFromPrescription(updated);
+      }
+      notifyListeners();
+    }
+    await _persistCurrentUserData();
+    notifyListeners();
   }
 
   void toggleAudioPlayback() {
@@ -1288,42 +1508,37 @@ class AppState extends ChangeNotifier {
   }
 
   void submitNewSymptomTriage(String query) {
+    // Synchronous placeholder while async Gemini triage loads.
     activeTriage = TriageAssessment(
-      id: 'tri-${DateTime.now().millisecondsSinceEpoch}',
+      id: 'tri-pending-${DateTime.now().millisecondsSinceEpoch}',
       userQuery: '“$query”',
       timestamp: DateTime.now(),
-      urgency: query.toLowerCase().contains('chest') || query.toLowerCase().contains('breath')
-          ? TriageUrgency.urgent
-          : TriageUrgency.moderate,
-      urgencyBadge: query.toLowerCase().contains('chest') || query.toLowerCase().contains('breath')
-          ? 'URGENT EVALUATION'
-          : 'MONITOR & CONSULT',
-      timeframeWindow:
-          query.toLowerCase().contains('chest') ? 'Immediate / Same Day' : 'Window: 24–48 hrs',
+      urgency: TriageUrgency.moderate,
+      urgencyBadge: 'ANALYZING…',
+      timeframeWindow: 'Live AI',
       clinicalRationale:
-          'Based on reported symptoms: "$query", automated clinical guidance recommends monitoring symptom evolution. No acute high-risk markers confirmed, but professional consultation provides highest safety assurance.',
+          'Analyzing your symptoms with Health AI. This is wellness guidance only — not a diagnosis.',
       selfCareItems: const [
         SelfCareGuidance(
-          icon: Icons.spa_rounded,
-          title: 'Rest in Low-Stimulus Room',
-          description:
-              'Rest comfortably in a dim, quiet room with optimal airflow and elevated head posture.',
-        ),
-        SelfCareGuidance(
-          icon: Icons.water_drop_rounded,
-          title: 'Fluid & Nutrient Support',
-          description: 'Sip warm herbal teas (chamomile or peppermint) and maintain balanced hydration.',
+          icon: Icons.hourglass_top_rounded,
+          title: 'Working on your triage',
+          description: 'Gemini is reviewing your symptoms against your logged meds and vitals.',
         ),
       ],
       redFlagAlerts: const [
-        'Difficulty breathing or sudden chest pressure.',
-        'Uncontrollable vomiting or severe dizziness.',
-        'Loss of consciousness or severe disorientation.',
+        'Call emergency services for chest pain, severe breathing trouble, or sudden weakness.',
       ],
       recommendedSpecialty: 'General Practice / Telehealth',
-      audioNarrationTranscript:
-          'Assessment complete for your reported symptoms. Please review guidance and contact your physician if discomfort worsens.',
+      audioNarrationTranscript: 'Analyzing symptoms.',
     );
+    notifyListeners();
+  }
+
+  Future<void> submitNewSymptomTriageAsync(String query) async {
+    submitNewSymptomTriage(query);
+    final result = await AiCopilotService.runSymptomTriageAsync(query, this);
+    activeTriage = result;
+    _persistCurrentUserData();
     notifyListeners();
   }
 
@@ -1370,15 +1585,160 @@ class AppState extends ChangeNotifier {
 
   // 2. Nutrition & Hydration Actions
   void addHydration(int ml) {
-    dailyHydrationMl = (dailyHydrationMl + ml).clamp(0, 5000);
+    if (ml <= 0) return;
+    dailyHydrationMl = (dailyHydrationMl + ml).clamp(0, 8000);
+    hydrationLogs.insert(0, {
+      'ml': ml,
+      'at': DateTime.now().toIso8601String(),
+    });
+    if (hydrationLogs.length > 30) {
+      hydrationLogs.removeRange(30, hydrationLogs.length);
+    }
+    _persistCurrentUserData();
+    notifyListeners();
+  }
+
+  void setHomeCity(String city) {
+    homeCity = city.trim();
+    _persistCurrentUserData();
+    notifyListeners();
+  }
+
+  void saveMoodCheck(MoodCheckResult result) {
+    lastMoodCheck = result.toJson();
+    _persistCurrentUserData();
+    notifyListeners();
+  }
+
+  void addEmergencyContact({
+    required String name,
+    required String phone,
+    String relation = 'Contact',
+  }) {
+    final cleanedName = name.trim();
+    final cleanedPhone = phone.trim();
+    if (cleanedName.isEmpty || cleanedPhone.isEmpty) return;
+    emergencyContacts.add(EmergencyContact(
+      id: 'sos-${DateTime.now().millisecondsSinceEpoch}',
+      name: cleanedName,
+      phone: cleanedPhone,
+      relation: relation.trim().isEmpty ? 'Contact' : relation.trim(),
+    ));
+    _persistCurrentUserData();
+    notifyListeners();
+  }
+
+  void removeEmergencyContact(String id) {
+    emergencyContacts.removeWhere((c) => c.id == id);
     _persistCurrentUserData();
     notifyListeners();
   }
 
   void addMeal(Map<String, dynamic> meal) {
-    loggedMeals.insert(0, meal);
+    final title = (meal['title'] as String?)?.trim() ?? '';
+    if (title.isEmpty) return;
+    loggedMeals.insert(0, {
+      ...meal,
+      'title': title,
+      'id': meal['id'] ?? 'meal-${DateTime.now().millisecondsSinceEpoch}',
+      'time': meal['time'] ?? 'Just now',
+    });
     _persistCurrentUserData();
     notifyListeners();
+  }
+
+  void deleteMeal(String id) {
+    loggedMeals.removeWhere((m) => m['id'] == id);
+    _persistCurrentUserData();
+    notifyListeners();
+  }
+
+  int get ageYears {
+    final dob = DateTime.tryParse(dateOfBirth ?? '');
+    if (dob == null) return 30;
+    final now = DateTime.now();
+    var age = now.year - dob.year;
+    if (now.month < dob.month || (now.month == dob.month && now.day < dob.day)) age--;
+    return age.clamp(13, 100);
+  }
+
+  MacroTargets get nutritionTargets => computeTargets(
+        NutritionInputs(
+          heightCm: userHeightCm,
+          weightKg: userWeightKg,
+          age: ageYears,
+          sex: biologicalSex,
+          goal: dietGoal,
+          activity: activityLevel,
+        ),
+      );
+
+  Map<String, double> get todayMacros {
+    var calories = 0.0, protein = 0.0, carbs = 0.0, fat = 0.0;
+    for (final meal in loggedMeals) {
+      calories += (meal['calories'] as num?)?.toDouble() ?? 0;
+      protein += (meal['protein'] as num?)?.toDouble() ?? 0;
+      carbs += (meal['carbs'] as num?)?.toDouble() ?? 0;
+      fat += (meal['fat'] as num?)?.toDouble() ?? 0;
+    }
+    return {'calories': calories, 'protein': protein, 'carbs': carbs, 'fat': fat};
+  }
+
+  List<Map<String, dynamic>> labTestsForDiet() {
+    final tests = <Map<String, dynamic>>[];
+    for (final doc in prescriptions) {
+      tests.addAll(doc.structuredTests);
+    }
+    return tests;
+  }
+
+  int get activityPoints {
+    final meals = loggedMeals.where((m) => (m['calories'] as num?) != null).length;
+    return (dailySteps / 80).round() + meals * 25 + completedWorkouts.length * 40;
+  }
+
+  void setDietGoal(String goal) {
+    dietGoal = goal;
+    _persistCurrentUserData();
+    notifyListeners();
+  }
+
+  void setDietStyle(String style) {
+    dietStyle = style;
+    _persistCurrentUserData();
+    notifyListeners();
+  }
+
+  void setShareActivityForCompetition(bool value) {
+    shareActivityForCompetition = value;
+    _persistCurrentUserData();
+    notifyListeners();
+  }
+
+  void createClub(String name) {
+    final raw = DateTime.now().millisecondsSinceEpoch.toRadixString(36).toUpperCase();
+    final code = 'CURA-${raw.substring(raw.length - 4)}';
+    clubs.insert(0, {
+      'id': 'club-${DateTime.now().millisecondsSinceEpoch}',
+      'name': name,
+      'code': code,
+    });
+    _persistCurrentUserData();
+    notifyListeners();
+  }
+
+  bool joinClub(String rawCode) {
+    final code = rawCode.trim().toUpperCase();
+    if (code.isEmpty) return false;
+    if (clubs.any((c) => (c['code']?.toString().toUpperCase() ?? '') == code)) return true;
+    clubs.insert(0, {
+      'id': 'club-${DateTime.now().millisecondsSinceEpoch}',
+      'name': 'Club $code',
+      'code': code,
+    });
+    _persistCurrentUserData();
+    notifyListeners();
+    return true;
   }
 
   // 3. Women's Health Actions

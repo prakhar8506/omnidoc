@@ -54,12 +54,13 @@ class _PeriodLogModalState extends State<PeriodLogModal> {
       notes: _notesController.text.trim(),
     );
 
+    final messenger = ScaffoldMessenger.of(context);
+    final label =
+        'Logged $_selectedFlow flow for ${_selectedDate.day}/${_selectedDate.month} • Cycle Day 1 reset';
     Navigator.pop(context);
-    ScaffoldMessenger.of(context).showSnackBar(
+    messenger.showSnackBar(
       SnackBar(
-        content: Text(
-          'Logged $_selectedFlow flow for ${_selectedDate.day}/${_selectedDate.month} • Cycle Day 1 reset',
-        ),
+        content: Text(label),
         backgroundColor: AppColors.surfaceCardDark,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

@@ -29,29 +29,19 @@ class _SplashScreenState extends State<SplashScreen>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2200),
+      duration: const Duration(milliseconds: 900),
     );
 
-    _scaleAnimation = Tween<double>(begin: 0.72, end: 1.0).animate(
+    _scaleAnimation = Tween<double>(begin: 0.96, end: 1.0).animate(
       CurvedAnimation(
         parent: _controller,
-        curve: const Interval(0.0, 0.65, curve: Curves.elasticOut),
+        curve: const Interval(0.0, 0.7, curve: Curves.easeOut),
       ),
     );
 
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: const Interval(0.0, 0.40, curve: Curves.easeIn),
-      ),
-    );
+    _fadeAnimation = const AlwaysStoppedAnimation<double>(1);
 
-    _textFadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: const Interval(0.35, 0.85, curve: Curves.easeOut),
-      ),
-    );
+    _textFadeAnimation = const AlwaysStoppedAnimation<double>(1);
 
     _controller.forward().then((_) {
       Future.delayed(const Duration(milliseconds: 350), () {
@@ -71,23 +61,21 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0F0E17),
+      backgroundColor: const Color(0xFF8DAA8C),
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // Teal / sage aurora background
           Container(
             decoration: const BoxDecoration(
               gradient: RadialGradient(
-                center: Alignment(0.15, -0.35),
-                radius: 1.35,
+                center: Alignment(0.0, -0.15),
+                radius: 1.15,
                 colors: [
-                  Color(0xFF0F766E), // deep teal
-                  Color(0xFF2D6A5A), // sage
-                  Color(0xFF1A3A36), // forest mist
-                  Color(0xFF0A1412),
+                  Color(0xFFB7D0C0),
+                  Color(0xFF8DAA8C),
+                  Color(0xFF6E9478),
                 ],
-                stops: [0.0, 0.36, 0.70, 1.0],
+                stops: [0.0, 0.45, 1.0],
               ),
             ),
           ),

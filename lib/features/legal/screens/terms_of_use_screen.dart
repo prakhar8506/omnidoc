@@ -22,6 +22,7 @@ class TermsOfUseScreen extends StatelessWidget {
                     IconButton(
                       onPressed: () => Navigator.pop(context),
                       icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+                      constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
                     ),
                     const SizedBox(width: 4),
                     Text('Terms of Use', style: AppTypography.editorialSm),
@@ -36,11 +37,15 @@ class TermsOfUseScreen extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(AppBrand.tagline, style: AppTypography.labelSm),
                     const SizedBox(height: 8),
-                    Text('Last updated: September 18, 2026', style: AppTypography.labelSm),
+                    Text('Last updated: September 28, 2026', style: AppTypography.labelSm),
                     const SizedBox(height: 20),
                     _card(
                       'Agreement',
                       'By using ${AppBrand.name}, you agree to these Terms. If you do not agree, do not use the app.',
+                    ),
+                    _card(
+                      'Age requirement',
+                      'You must be at least 18 years old to create a ${AppBrand.name} account. Do not use the app to record health information about a child.',
                     ),
                     _card(
                       'Not medical care',
@@ -49,6 +54,10 @@ class TermsOfUseScreen extends StatelessWidget {
                     _card(
                       'Accounts',
                       'You are responsible for your credentials and for the accuracy of information you enter. Do not upload documents you are not allowed to share.',
+                    ),
+                    _card(
+                      'What Cura does not do',
+                      '${AppBrand.name} does not book appointments, contact clinics on your behalf, or share your records with family members. Visit entries you add are reminders for yourself, and doctor searches open your maps app so you can contact the clinic directly.',
                     ),
                     _card(
                       'AI & lab features',

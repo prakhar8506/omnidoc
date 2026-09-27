@@ -6,6 +6,9 @@ import '../../../core/widgets/glass_container.dart';
 import '../../../core/widgets/bouncing_tap.dart';
 import '../../../core/widgets/holographic_background.dart';
 import '../../../core/state/app_state.dart';
+import '../../community/screens/activity_clubs_screen.dart';
+import 'diet_plan_screen.dart';
+import '../widgets/log_meal_sheet.dart';
 
 class NutritionHydrationScreen extends StatelessWidget {
   final AppState appState;
@@ -61,6 +64,19 @@ class NutritionHydrationScreen extends StatelessWidget {
                       delegate: SliverChildListDelegate([
                         // Hydration Hero Ring Card
                         _buildHydrationCard(context, hydrationProgress),
+                        const SizedBox(height: 14),
+                        _buildTodayMacros(),
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          width: double.infinity,
+                          child: FilledButton(
+                            onPressed: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => DietPlanScreen(appState: appState)),
+                            ),
+                            child: const Text('Diet plan'),
+                          ),
+                        ),
                         const SizedBox(height: 18),
 
                         // Informational Correlation Card (Sodium vs Blood Pressure)
@@ -68,40 +84,115 @@ class NutritionHydrationScreen extends StatelessWidget {
                         const SizedBox(height: 22),
 
                         // Meals Header & Log Button
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text('Logged Nutrition', style: AppTypography.editorialSm),
-                            BouncingTap(
-                              onTap: () => _showLogMealModal(context),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                                decoration: BoxDecoration(
-                                  color: AppColors.textPrimary,
-                                  borderRadius: BorderRadius.circular(999),
-                                ),
-                                child: const Row(
-                                  children: [
-                                    Icon(Icons.add_rounded, color: Colors.white, size: 16),
-                                    SizedBox(width: 6),
-                                    Text(
-                                      'Log Meal',
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w700,
-                                        color: Colors.white,
-                                      ),
+                            const SizedBox(height: 10),
+                            Row(
+                              children: [
+                                BouncingTap(
+                                  onTap: () => appState.addHydration(250),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.watchHydration.withValues(alpha: 0.16),
+                                      borderRadius: BorderRadius.circular(999),
                                     ),
-                                  ],
+                                    child: const Row(
+                                      children: [
+                                        Icon(Icons.water_drop_rounded, color: AppColors.watchHydration, size: 16),
+                                        SizedBox(width: 4),
+                                        Text(
+                                          'Log water',
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w700,
+                                            color: AppColors.textPrimary,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                 ),
-                              ),
+                                const SizedBox(width: 8),
+                                BouncingTap(
+                                  onTap: () => showModalBottomSheet(
+                                    context: context,
+                                    isScrollControlled: true,
+                                    backgroundColor: Colors.transparent,
+                                    builder: (_) => LogMealSheet(appState: appState),
+                                  ),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.textPrimary,
+                                      borderRadius: BorderRadius.circular(999),
+                                    ),
+                                    child: const Row(
+                                      children: [
+                                        Icon(Icons.add_rounded, color: Colors.white, size: 16),
+                                        SizedBox(width: 4),
+                                        Text(
+                                          'Log meal',
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w700,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
                         const SizedBox(height: 14),
+                        if (appState.hydrationLogs.isNotEmpty) ...[
+                          Text(
+                            'Water today · ${appState.dailyHydrationMl} ml',
+                            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                          ),
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              for (final sip in appState.hydrationLogs.take(8))
+                                Chip(
+                                  avatar: const Icon(Icons.water_drop_rounded, size: 16, color: AppColors.watchHydration),
+                                  label: Text('+${sip['ml']} ml'),
+                                  visualDensity: VisualDensity.compact,
+                                ),
+                            ],
+                          ),
+                          const SizedBox(height: 14),
+                        ],
 
-                        // Meals List
-                        ...appState.loggedMeals.map((meal) => _buildMealItem(meal)),
+                        if (appState.loggedMeals.isEmpty)
+                          const Padding(
+                            padding: EdgeInsets.only(bottom: 8),
+                            child: Text(
+                              'No meals logged yet. Tap Log meal to add breakfast, lunch, or dinner.',
+                              style: TextStyle(fontSize: 13, height: 1.4, color: AppColors.textSecondary),
+                            ),
+                          )
+                        else
+                          ...appState.loggedMeals.map((meal) => _buildMealItem(meal)),
+                        const SizedBox(height: 8),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: TextButton.icon(
+                            onPressed: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => ActivityClubsScreen(appState: appState)),
+                            ),
+                            icon: const Icon(Icons.groups_rounded, size: 18),
+                            label: const Text('Activity clubs'),
+                          ),
+                        ),
                         const SizedBox(height: 80),
                       ]),
                     ),
@@ -112,6 +203,32 @@ class NutritionHydrationScreen extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildTodayMacros() {
+    final totals = appState.todayMacros;
+    final targets = appState.nutritionTargets;
+    String line(String label, double value, int goal) => '$label ${value.round()}/$goal';
+    return GlassContainer(
+      padding: const EdgeInsets.all(16),
+      borderRadius: 22,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(targets.goalLabel, style: const TextStyle(fontWeight: FontWeight.w800)),
+          const SizedBox(height: 4),
+          Text(
+            'BMI ${targets.bmi} · ${targets.bmiLabel}',
+            style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+          ),
+          const SizedBox(height: 8),
+          Text(line('Calories', totals['calories']!, targets.calories)),
+          Text(line('Protein', totals['protein']!, targets.protein)),
+          Text(line('Carbs', totals['carbs']!, targets.carbs)),
+          Text(line('Fat', totals['fat']!, targets.fat)),
+        ],
+      ),
     );
   }
 
@@ -265,12 +382,14 @@ class NutritionHydrationScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Sodium Intake & Resting Blood Pressure',
+                  'Sodium & blood pressure notes',
                   style: AppTypography.titleMd.copyWith(fontSize: 15),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Your recorded sodium intake is moderate this week. Clinical data demonstrates balanced sodium helps preserve normal baseline blood pressure (${appState.bloodPressure} mmHg).',
+                  appState.bloodPressure == '—' || appState.bloodPressure.isEmpty
+                      ? 'Log meals and blood pressure to track patterns over time. This is wellness journaling — not medical advice.'
+                      : 'Your latest logged blood pressure is ${appState.bloodPressure}. Discuss diet patterns with your clinician; Cura does not diagnose.',
                   style: TextStyle(
                     fontSize: 12.5,
                     height: 1.4,
@@ -297,12 +416,14 @@ class NutritionHydrationScreen extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  meal['title'] as String? ?? '',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
+                Expanded(
+                  child: Text(
+                    meal['title'] as String? ?? '',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
                 ),
                 Text(
@@ -315,6 +436,12 @@ class NutritionHydrationScreen extends StatelessWidget {
                 ),
               ],
             ),
+            const SizedBox(height: 6),
+            if ((meal['calories'] as num?) != null)
+              Text(
+                '${meal['calories']} kcal · ${((meal['protein'] as num?) ?? 0).round()}g protein · ${((meal['carbs'] as num?) ?? 0).round()}g carbs · ${((meal['fat'] as num?) ?? 0).round()}g fat',
+                style: const TextStyle(fontSize: 12.5, color: AppColors.textSecondary, height: 1.3),
+              ),
             const SizedBox(height: 6),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -342,128 +469,6 @@ class NutritionHydrationScreen extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  void _showLogMealModal(BuildContext context) {
-    final titleController = TextEditingController();
-    String selectedCategory = 'Lean Protein & Vegetables';
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (modalContext) => StatefulBuilder(
-        builder: (context, setModalState) {
-          return Container(
-            padding: EdgeInsets.fromLTRB(24, 16, 24, MediaQuery.of(context).viewInsets.bottom + 24),
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
-              boxShadow: AppColors.dockShadow,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 38,
-                    height: 4.5,
-                    decoration: BoxDecoration(
-                      color: AppColors.textTertiary.withValues(alpha: 0.35),
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 18),
-                Text('Log Meal & Nutrition', style: AppTypography.editorialSm),
-                const SizedBox(height: 4),
-                Text(
-                  'Focus on food categories and whole nourishment rather than strict calories.',
-                  style: AppTypography.labelSm.copyWith(color: AppColors.textSecondary),
-                ),
-                const SizedBox(height: 18),
-                TextField(
-                  controller: titleController,
-                  decoration: InputDecoration(
-                    labelText: 'Meal description (e.g. Avocado toast with poached egg)',
-                    labelStyle: const TextStyle(fontSize: 13),
-                    filled: true,
-                    fillColor: AppColors.surface,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                const Text('Food Category Breakdown',
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    'Lean Protein & Vegetables',
-                    'Whole Grains & Fiber',
-                    'Healthy Fats & Seeds',
-                    'Fermented Probiotics',
-                  ].map((cat) {
-                    final isSel = selectedCategory == cat;
-                    return ChoiceChip(
-                      label: Text(cat),
-                      selected: isSel,
-                      onSelected: (_) => setModalState(() => selectedCategory = cat),
-                      selectedColor: AppColors.primaryFixed,
-                      labelStyle: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: isSel ? AppColors.primary : AppColors.textPrimary,
-                      ),
-                    );
-                  }).toList(),
-                ),
-                const SizedBox(height: 24),
-                BouncingTap(
-                  onTap: () {
-                    final text = titleController.text.trim();
-                    if (text.isNotEmpty) {
-                      appState.addMeal({
-                        'id': 'meal-${DateTime.now().millisecondsSinceEpoch}',
-                        'title': text,
-                        'category': selectedCategory,
-                        'time': 'Just now',
-                        'insight': 'Mindfully logged for whole-body metabolic recovery.',
-                        'sodium': 'Balanced',
-                      });
-                      Navigator.pop(modalContext);
-                    }
-                  },
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 15),
-                    decoration: BoxDecoration(
-                      color: AppColors.textPrimary,
-                      borderRadius: BorderRadius.circular(18),
-                    ),
-                    child: const Center(
-                      child: Text(
-                        'Save Meal Entry',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          );
-        },
       ),
     );
   }

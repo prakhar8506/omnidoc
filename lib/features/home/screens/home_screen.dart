@@ -16,8 +16,6 @@ import '../../chronic_care/screens/chronic_care_screen.dart';
 import '../../data_portability/screens/data_portability_screen.dart';
 import '../../consent/screens/permission_center_screen.dart';
 import '../../emergency/screens/emergency_safety_screen.dart';
-import '../../../core/domains/baseline_engine.dart';
-import '../../../core/domains/recovery_model.dart';
 import '../../../core/domains/data_quality_service.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -34,7 +32,7 @@ class HomeScreen extends StatelessWidget {
       listenable: appState,
       builder: (context, _) {
         return SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 120),
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 220),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -203,19 +201,13 @@ class HomeScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (appState.firstName.isNotEmpty) ...[
+              if (appState.firstName.isNotEmpty)
                 Text(
                   'Good morning, ${appState.firstName}',
-                  style: AppTypography.labelSm.copyWith(
-                    color: AppColors.textSecondary,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.2,
-                  ),
+                  style: AppTypography.editorialLg,
                   overflow: TextOverflow.ellipsis,
+                  maxLines: 2,
                 ),
-                const SizedBox(height: 2),
-              ],
-              Text('Recovery OS', style: AppTypography.editorialLg),
             ],
           ),
         ),
@@ -265,18 +257,60 @@ class HomeScreen extends StatelessWidget {
 
   /// Dominant Recovery Hero Card: Score + Confidence + Drivers + One Clear Action Plan
   Widget _buildDominantRecoveryCard(BuildContext context) {
-    final recovery = appState.recoveryResult ??
-        RecoveryModel.computeRecovery(
-          todayHrv: appState.hrvMs.toDouble(),
-          todayRestingHr: appState.restingHeartRate.toDouble(),
-          todaySleepHours: 7.2,
-          todayRespiratoryRate: 14.5,
-          subjectiveFeeling: appState.selectedMood,
-          hrvBaseline: appState.hrvBaseline ?? BaselineEngine.computeBaseline('heart_rate_variability', []),
-          rhrBaseline: appState.rhrBaseline ?? BaselineEngine.computeBaseline('resting_heart_rate', []),
-          totalHistoricalDays: appState.historicalDaysCount,
-          baselineConfidence: ScoreConfidence.high,
-        );
+    final recovery = appState.recoveryResult;
+    if (recovery == null) {
+      return GlassContainer(
+        padding: const EdgeInsets.all(22),
+        borderRadius: 26,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryContainer.withValues(alpha: 0.15),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.bolt_rounded, size: 16, color: AppColors.primaryContainer),
+                ),
+                const SizedBox(width: 8),
+                const Text('Recovery', style: AppTypography.titleMd),
+              ],
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              '—',
+              style: TextStyle(
+                fontSize: 52,
+                fontWeight: FontWeight.w800,
+                color: AppColors.textPrimary,
+                height: 1.0,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Insufficient data',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Connect HealthKit / Health Connect or log sleep and vitals so Cura can compute a recovery score. Empty is correct until real samples exist.',
+              style: TextStyle(
+                fontSize: 13,
+                height: 1.35,
+                color: AppColors.textSecondary.withValues(alpha: 0.95),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
 
     final isProvisional = recovery.isProvisional;
     final confLabel = recovery.confidence == ScoreConfidence.high
@@ -544,143 +578,191 @@ class HomeScreen extends StatelessWidget {
 
   /// Tri-Stat Supporting Row: Sleep, Load, and Stress Cards
   Widget _buildTriStatCards(BuildContext context) {
-    final sleep = appState.sleepResult ??
-        RecoveryModel.computeSleep(
-          sleepHours: 7.2,
-          consistencyPercentage: 88.0,
-          validNightsCount: appState.historicalDaysCount,
-        );
+    final sleep = appState.sleepResult;
+    final load = appState.loadResult;
+    final stress = appState.stressResult;
 
-    final load = appState.loadResult ??
-        RecoveryModel.computeLoadTarget(
-          recoveryScore: appState.recoveryResult?.score ?? 74,
-          currentStrain: 6.2,
-        );
-
-    final stress = appState.stressResult ??
-        RecoveryModel.computeStress(
-          hrvZScore: 0.4,
-          rhrZScore: -0.3,
-          hasSensorCoverage: true,
-        );
+    Widget emptyCard({
+      required IconData icon,
+      required Color iconColor,
+      required String title,
+    }) {
+      return Expanded(
+        child: GlassContainer(
+          padding: const EdgeInsets.all(14),
+          borderRadius: 18,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(icon, size: 16, color: iconColor),
+              const SizedBox(height: 8),
+              Text(
+                '—',
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                'Connect a wearable or log data',
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontSize: 10, color: AppColors.textTertiary),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
     return Row(
       children: [
-        // 1. Sleep Card
-        Expanded(
-          child: GlassContainer(
-            padding: const EdgeInsets.all(14),
-            borderRadius: 18,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Icon(Icons.bedtime_rounded, size: 16, color: Color(0xFF5C6BC0)),
-                    Text(
-                      sleep.confidence == ScoreConfidence.high ? 'High' : 'Provisional',
-                      style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: AppColors.textTertiary),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  '${sleep.score}',
-                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
-                ),
-                Text(
-                  sleep.durationFormatted,
-                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: AppColors.textSecondary),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  sleep.drivers.first.label,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 10, color: AppColors.textTertiary),
-                ),
-              ],
+        if (sleep == null)
+          emptyCard(
+            icon: Icons.bedtime_rounded,
+            iconColor: const Color(0xFF5C6BC0),
+            title: 'Sleep',
+          )
+        else
+          Expanded(
+            child: GlassContainer(
+              padding: const EdgeInsets.all(14),
+              borderRadius: 18,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Icon(Icons.bedtime_rounded, size: 16, color: Color(0xFF5C6BC0)),
+                      Text(
+                        sleep.confidence == ScoreConfidence.high ? 'High' : 'Provisional',
+                        style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: AppColors.textTertiary),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '${sleep.score}',
+                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+                  ),
+                  Text(
+                    sleep.durationFormatted,
+                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: AppColors.textSecondary),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    sleep.drivers.isNotEmpty ? sleep.drivers.first.label : 'Sleep score',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 10, color: AppColors.textTertiary),
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
         const SizedBox(width: 10),
-
-        // 2. Load Card
-        Expanded(
-          child: GlassContainer(
-            padding: const EdgeInsets.all(14),
-            borderRadius: 18,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Icon(Icons.local_fire_department_rounded, size: 16, color: Color(0xFFFF9800)),
-                    Text('Adaptive', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: AppColors.textTertiary)),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  load.currentStrain.toStringAsFixed(1),
-                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
-                ),
-                Text(
-                  'Target: ${load.targetMin.toInt()}–${load.targetMax.toInt()}',
-                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: AppColors.textSecondary),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  load.drivers.first.label,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 10, color: AppColors.textTertiary),
-                ),
-              ],
+        if (load == null)
+          emptyCard(
+            icon: Icons.local_fire_department_rounded,
+            iconColor: const Color(0xFFFF9800),
+            title: 'Load',
+          )
+        else
+          Expanded(
+            child: GlassContainer(
+              padding: const EdgeInsets.all(14),
+              borderRadius: 18,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Icon(Icons.local_fire_department_rounded, size: 16, color: Color(0xFFFF9800)),
+                      Text('Adaptive', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: AppColors.textTertiary)),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    load.currentStrain.toStringAsFixed(1),
+                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+                  ),
+                  Text(
+                    'Target: ${load.targetMin.toInt()}–${load.targetMax.toInt()}',
+                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: AppColors.textSecondary),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    load.drivers.isNotEmpty ? load.drivers.first.label : 'Daily load',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 10, color: AppColors.textTertiary),
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
         const SizedBox(width: 10),
-
-        // 3. Stress Card
-        Expanded(
-          child: GlassContainer(
-            padding: const EdgeInsets.all(14),
-            borderRadius: 18,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Icon(Icons.spa_rounded, size: 16, color: Color(0xFF38BDF8)),
-                    Text(
-                      stress.confidence == ScoreConfidence.high ? 'High' : 'Provisional',
-                      style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: AppColors.textTertiary),
+        if (stress == null)
+          emptyCard(
+            icon: Icons.spa_rounded,
+            iconColor: const Color(0xFF38BDF8),
+            title: 'Stress',
+          )
+        else
+          Expanded(
+            child: GlassContainer(
+              padding: const EdgeInsets.all(14),
+              borderRadius: 18,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Icon(Icons.spa_rounded, size: 16, color: Color(0xFF38BDF8)),
+                      Text(
+                        stress.confidence == ScoreConfidence.high ? 'High' : 'Provisional',
+                        style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: AppColors.textTertiary),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      stress.level,
+                      maxLines: 1,
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
                     ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  stress.level,
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
-                ),
-                Text(
-                  '${stress.score.toInt()}/100 index',
-                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: AppColors.textSecondary),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  stress.drivers.first.label,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 10, color: AppColors.textTertiary),
-                ),
-              ],
+                  ),
+                  Text(
+                    '${stress.score.toInt()}/100 index',
+                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: AppColors.textSecondary),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    stress.drivers.isNotEmpty ? stress.drivers.first.label : 'Stress index',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 10, color: AppColors.textTertiary),
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
       ],
     );
   }
@@ -711,7 +793,7 @@ class HomeScreen extends StatelessWidget {
             ),
             icon: const Icon(Icons.sync_rounded, size: 16, color: AppColors.primaryContainer),
             label: const Text('Sync Wearable', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primaryContainer)),
-            onPressed: () => appState.syncVitals(),
+            onPressed: () => WearablePermissionsSheet.show(context, appState),
           ),
         ),
       ],
@@ -915,64 +997,102 @@ class HomeScreen extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Today's stress",
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
-                      letterSpacing: -0.2,
-                    ),
-                  ),
-                  SizedBox(height: 2),
-                  Text(
-                    'Last updated at 07:54 AM',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                ],
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.accentTeal.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    CircleAvatar(radius: 3, backgroundColor: AppColors.accentTeal),
-                    SizedBox(width: 4),
-                    Text(
-                      'Optimal',
+                    const Text(
+                      "Today's energy",
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: 11,
+                        fontSize: 15,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.accentTeal,
+                        color: AppColors.textPrimary,
+                        letterSpacing: -0.2,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      appState.lastSyncedTime != null
+                          ? 'Last synced ${DateFormat('h:mm a').format(appState.lastSyncedTime!)}'
+                          : 'Sync a wearable to populate stress energy',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: AppColors.textSecondary,
                       ),
                     ),
                   ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Align(
+                  alignment: Alignment.topRight,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.accentTeal.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        CircleAvatar(
+                          radius: 3,
+                          backgroundColor: appState.energyScore >= 60
+                              ? AppColors.accentTeal
+                              : AppColors.primaryContainer,
+                        ),
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: Text(
+                            appState.energyScore >= 60
+                                ? 'Optimal'
+                                : appState.energyScore > 0
+                                    ? 'Building'
+                                    : 'No data',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: appState.energyScore >= 60
+                                  ? AppColors.accentTeal
+                                  : AppColors.textSecondary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 18),
 
-          // 3 Column stats: Highest 36, Lowest 6, Average 11
+          // 3 Column stats from live energy / stress fields
           Row(
             children: [
-              _buildStressMetric(value: '${appState.stressHighest}', label: 'Highest'),
+              _buildStressMetric(
+                value: '${appState.stressHighest > 0 ? appState.stressHighest : appState.energyScore}',
+                label: 'Highest',
+              ),
               const SizedBox(width: 24),
-              _buildStressMetric(value: '${appState.stressLowest}', label: 'Lowest'),
+              _buildStressMetric(
+                value: '${appState.stressLowest > 0 ? appState.stressLowest : (appState.energyScore * 0.35).round()}',
+                label: 'Lowest',
+              ),
               const SizedBox(width: 24),
-              _buildStressMetric(value: '${appState.stressAverage}', label: 'Average'),
+              _buildStressMetric(
+                value: '${appState.stressAverage > 0 ? appState.stressAverage : appState.energyScore}',
+                label: 'Average',
+              ),
             ],
           ),
           const SizedBox(height: 18),
@@ -1002,18 +1122,16 @@ class HomeScreen extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: List.generate(24, (index) {
-                      // Simulated physiological autonomic stress bars
-                      final heights = [6, 8, 10, 7, 5, 9, 12, 16, 14, 11, 8, 7, 6, 9, 11, 13, 10, 8, 7, 6, 5, 7, 8, 6];
-                      final h = heights[index].toDouble();
-                      final isPeak = h > 13;
-
+                      final energy = appState.energyScore;
+                      final peak = energy > 0 ? (4.0 + (energy / 100) * 18) : 4.0;
+                      final wave = (index % 5 == 0) ? peak : (index % 3 == 0) ? peak * 0.55 : 4.0;
                       return Container(
                         width: 4,
-                        height: h,
+                        height: wave.clamp(4.0, 22.0),
                         decoration: BoxDecoration(
-                          color: isPeak
-                              ? AppColors.primaryContainer
-                              : Colors.black.withValues(alpha: 0.08),
+                          color: energy > 0
+                              ? AppColors.primaryContainer.withValues(alpha: index % 5 == 0 ? 0.85 : 0.25)
+                              : Colors.black.withValues(alpha: 0.06),
                           borderRadius: BorderRadius.circular(999),
                         ),
                       );
@@ -1022,9 +1140,9 @@ class HomeScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 10),
-              const Text(
-                '0%',
-                style: TextStyle(
+              Text(
+                '${appState.energyScore}%',
+                style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
                   color: AppColors.textSecondary,
@@ -1069,64 +1187,64 @@ class HomeScreen extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
-              "Today's Vitals & Wearables",
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            GestureDetector(
-              onTap: () => WearablePermissionsSheet.show(context, appState),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                decoration: BoxDecoration(
-                  color: AppColors.watchFaceDarkBg,
-                  borderRadius: BorderRadius.circular(999),
-                  border: Border.all(
-                    color: (appState.isWearableConnected ? AppColors.accentTeal : AppColors.primaryContainer).withValues(alpha: 0.45),
-                    width: 1.1,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: (appState.isWearableConnected ? AppColors.accentTeal : AppColors.primaryContainer).withValues(alpha: 0.2),
-                      blurRadius: 10,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
+            const Expanded(
+              child: Text(
+                "Today's Vitals & Wearables",
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    CircleAvatar(
-                      radius: 3.5,
-                      backgroundColor: appState.isWearableConnected ? AppColors.accentTeal : AppColors.primaryContainer,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      appState.isWearableConnected
-                          ? appState.wearableDeviceName
-                          : (appState.isSyncingVitals ? 'Syncing...' : 'Connect Wearable'),
-                      style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    const Icon(
-                      Icons.watch_rounded,
-                      size: 13,
-                      color: Colors.white70,
-                    ),
-                  ],
-                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],
+        ),
+        const SizedBox(height: 10),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: GestureDetector(
+            onTap: () => WearablePermissionsSheet.show(context, appState),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: AppColors.watchFaceDarkBg,
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(
+                  color: (appState.isWearableConnected ? AppColors.accentTeal : AppColors.primaryContainer).withValues(alpha: 0.45),
+                  width: 1.1,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircleAvatar(
+                    radius: 3.5,
+                    backgroundColor: appState.isWearableConnected ? AppColors.accentTeal : AppColors.primaryContainer,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    appState.isWearableConnected
+                        ? appState.wearableDeviceName
+                        : (appState.isSyncingVitals ? 'Syncing...' : 'Connect Wearable'),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  const Icon(
+                    Icons.watch_rounded,
+                    size: 14,
+                    color: Colors.white70,
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
         const SizedBox(height: 14),
 
@@ -1160,16 +1278,16 @@ class HomeScreen extends StatelessWidget {
               title: 'Steps',
               value: '${(appState.dailySteps / 1000).toStringAsFixed(1)}k',
               unit: '/ 10k',
-              subtitle: '84% of daily goal',
+              subtitle: '${((appState.dailySteps / 10000) * 100).clamp(0, 999).round()}% of daily goal',
               icon: Icons.directions_walk_rounded,
               glowColor: AppColors.watchActivity,
               onTap: () => appState.syncVitals(),
             ),
             WatchFaceTile(
-              title: 'Blood Oxygen',
+              title: 'SpO2',
               value: '${appState.bloodOxygen}',
               unit: '%',
-              subtitle: 'SpO2 • Normal',
+              subtitle: 'Blood oxygen • Normal',
               icon: Icons.air_rounded,
               glowColor: AppColors.watchSpO2,
               onTap: () => appState.syncVitals(),
@@ -1191,28 +1309,22 @@ class HomeScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text('Medication Regimen', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.primaryContainer.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.verified_rounded, size: 14, color: AppColors.primaryContainer),
-                    SizedBox(width: 4),
-                    Text(
-                      'Zero Conflicts',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.primaryContainer,
-                      ),
+              if (appState.medications.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceContainerLow,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    '${appState.medications.where((m) => m.isTaken).length}/${appState.medications.length} taken',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textSecondary,
                     ),
-                  ],
+                  ),
                 ),
-              ),
             ],
           ),
           const SizedBox(height: 16),
@@ -1433,36 +1545,6 @@ class HomeScreen extends StatelessWidget {
           context,
           MaterialPageRoute(builder: (_) => ChronicCareScreen(appState: appState)),
         ),
-      },
-      {
-        'title': 'Challenges & Streaks',
-        'icon': Icons.emoji_events_rounded,
-        'color': AppColors.primaryContainer,
-        'action': () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('Coming in a later version'),
-              behavior: SnackBarBehavior.floating,
-              backgroundColor: AppColors.surfaceCardDark,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-          );
-        },
-      },
-      {
-        'title': 'Insurance & Claims',
-        'icon': Icons.shield_rounded,
-        'color': AppColors.accentTeal,
-        'action': () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('Coming in a later version'),
-              behavior: SnackBarBehavior.floating,
-              backgroundColor: AppColors.surfaceCardDark,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-          );
-        },
       },
       {
         'title': 'Emergency Medical ID',

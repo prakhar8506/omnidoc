@@ -54,3 +54,10 @@ env/*.json
 
 supabase/.env*
 build/
+.tmp_deploy_env
+tmp_lab_test/
+.tmp_api_keys.json
+.tmp_service_role
+build/
+*.dill
+*.cache*

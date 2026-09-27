@@ -9,6 +9,8 @@ import '../../../core/widgets/avatar_image.dart';
 import '../../fitness/widgets/todays_movement_panel.dart';
 import '../widgets/book_appointment_modal.dart';
 import '../widgets/family_member_modal.dart';
+import 'find_care_screen.dart';
+import '../../../core/models/clinic_doctor.dart';
 
 class AppointmentsScreen extends StatelessWidget {
   final AppState appState;
@@ -26,7 +28,7 @@ class AppointmentsScreen extends StatelessWidget {
         final currentSegment = appState.appointmentSegmentIndex;
 
         return SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 110),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 160),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -40,6 +42,8 @@ class AppointmentsScreen extends StatelessWidget {
               ] else if (currentSegment == 1) ...[
                 // SECTION 2: APPOINTMENTS VIEW
                 _buildDateStripSelector(),
+                const SizedBox(height: 18),
+                _buildOpenTodayFinder(context),
                 const SizedBox(height: 18),
                 _buildUpcomingConsultationBanner(context),
                 const SizedBox(height: 22),
@@ -251,6 +255,118 @@ class AppointmentsScreen extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildOpenTodayFinder(BuildContext context) {
+    final city = appState.homeCity.trim();
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFFE8F5F1), Color(0xFFF3EEFF)],
+        ),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.9)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.accentTeal.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.storefront_rounded, color: AppColors.accentTeal, size: 20),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Who’s open today?',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    Text(
+                      city.isEmpty
+                          ? 'Choose a specialty, then see real listings in your city'
+                          : 'Live listings for $city',
+                      style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 36,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              children: [
+                for (final d in const [
+                  CareDomain.heart,
+                  CareDomain.liver,
+                  CareDomain.skin,
+                  CareDomain.bones,
+                  CareDomain.mind,
+                  CareDomain.women,
+                  CareDomain.general,
+                ])
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: ActionChip(
+                      avatar: Icon(d.icon, size: 16),
+                      label: Text(d.label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                      backgroundColor: Colors.white.withValues(alpha: 0.85),
+                      side: BorderSide.none,
+                      onPressed: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => FindCareScreen(appState: appState, domain: d),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 4),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.textPrimary,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              ),
+              icon: const Icon(Icons.search_rounded, size: 18),
+              label: Text(
+                city.isEmpty ? 'Find doctors in your city' : 'Find doctors in $city',
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => FindCareScreen(appState: appState)),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -582,7 +698,9 @@ class AppointmentsScreen extends StatelessWidget {
               const SizedBox(height: 14),
               Row(
                 children: [
-                  if (appt.isVideoConsult) ...[
+                  if (appt.isVideoConsult &&
+                      RegExp(r'https://[^\s<>"]+')
+                          .hasMatch(appt.preparationNote)) ...[
                     Expanded(
                       child: ElevatedButton.icon(
                         style: ElevatedButton.styleFrom(
@@ -707,7 +825,7 @@ class AppointmentsScreen extends StatelessWidget {
                     Text('SOS contacts (local)', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.accentCoral)),
                     SizedBox(height: 2),
                     Text(
-                      'Family SOS flags are stored on this device. Automatic SMS/GPS broadcast is not wired yet — use Emergency Safety to dial configured contacts.',
+                      'These people are stored on this device. Use Emergency Safety to call them if you need help.',
                       style: TextStyle(fontSize: 11, color: AppColors.textPrimary),
                     ),
                   ],
@@ -718,7 +836,15 @@ class AppointmentsScreen extends StatelessWidget {
         ),
         const SizedBox(height: 16),
 
-        // Family Members List
+        if (appState.familyMembers.isEmpty)
+          const Padding(
+            padding: EdgeInsets.only(bottom: 14),
+            child: Text(
+              'No family members saved yet. Add someone from Family Connect.',
+              style: TextStyle(fontSize: 13, height: 1.4, color: AppColors.textSecondary),
+            ),
+          )
+        else
         ...appState.familyMembers.map((member) {
           return Container(
             margin: const EdgeInsets.only(bottom: 14),

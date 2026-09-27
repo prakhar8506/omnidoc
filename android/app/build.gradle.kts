@@ -52,8 +52,16 @@ android {
             val releaseSigning = signingConfigs.findByName("release")
             if (releaseSigning != null && releaseSigning.storeFile != null && releaseSigning.storeFile!!.exists()) {
                 signingConfig = releaseSigning
-            } else {
+            } else if (project.hasProperty("allowDebugSigning")) {
                 signingConfig = signingConfigs.getByName("debug")
+            } else {
+                // A debug-signed artifact is rejected at Play upload. Fail here
+                // instead of producing one that looks releasable.
+                throw GradleException(
+                    "Release signing is not configured. Provide android/key.properties with " +
+                        "keyAlias, keyPassword, storeFile and storePassword, or pass " +
+                        "-PallowDebugSigning to build an unshippable debug-signed artifact."
+                )
             }
         }
     }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:speech_to_text/speech_to_text.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/state/app_state.dart';
@@ -30,6 +31,7 @@ class AiChatSheet extends StatefulWidget {
 class _AiChatSheetState extends State<AiChatSheet> with SingleTickerProviderStateMixin {
   final TextEditingController _textController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  final SpeechToText _speech = SpeechToText();
   final List<AiMessage> _messages = [];
   bool _isTyping = false;
   bool _isVoiceMode = false;
@@ -63,10 +65,47 @@ class _AiChatSheetState extends State<AiChatSheet> with SingleTickerProviderStat
 
   @override
   void dispose() {
+    _speech.stop();
     _pulseController.dispose();
     _textController.dispose();
     _scrollController.dispose();
     super.dispose();
+  }
+
+  Future<void> _toggleVoice() async {
+    if (_isVoiceMode) {
+      await _speech.stop();
+      if (mounted) setState(() => _isVoiceMode = false);
+      return;
+    }
+    final ready = await _speech.initialize(
+      onError: (_) {
+        if (!mounted) return;
+        setState(() => _isVoiceMode = false);
+      },
+      onStatus: (status) {
+        if ((status == 'done' || status == 'notListening') && mounted) {
+          setState(() => _isVoiceMode = false);
+        }
+      },
+    );
+    if (!mounted) return;
+    if (!ready) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Allow microphone access to dictate a question.')),
+      );
+      return;
+    }
+    setState(() => _isVoiceMode = true);
+    await _speech.listen(
+      listenOptions: SpeechListenOptions(listenMode: ListenMode.dictation, partialResults: true),
+      onResult: (result) {
+        if (!mounted) return;
+        final words = result.recognizedWords;
+        _textController.text = words;
+        _textController.selection = TextSelection.collapsed(offset: words.length);
+      },
+    );
   }
 
   String _getTabName(int index) {
@@ -109,6 +148,8 @@ class _AiChatSheetState extends State<AiChatSheet> with SingleTickerProviderStat
     if (!mounted) return;
 
     final response = await AiCopilotService.processQueryAsync(query, widget.appState);
+
+    if (!mounted) return;
 
     setState(() {
       _isTyping = false;
@@ -251,6 +292,30 @@ class _AiChatSheetState extends State<AiChatSheet> with SingleTickerProviderStat
 
           const Divider(height: 1, color: AppColors.surfaceContainerHigh),
 
+          // Standing disclaimer — answers are generated and must never read as
+          // clinical advice.
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            color: AppColors.surfaceContainerLow,
+            child: const Row(
+              children: [
+                Icon(Icons.info_outline_rounded, size: 15, color: AppColors.textSecondary),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'General wellness information, not a diagnosis. Check anything important with a clinician.',
+                    style: TextStyle(
+                      fontSize: 11,
+                      height: 1.35,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
           // Message List
           Expanded(
             child: ListView.builder(
@@ -325,17 +390,7 @@ class _AiChatSheetState extends State<AiChatSheet> with SingleTickerProviderStat
                     color: _isVoiceMode ? AppColors.accentCoral : AppColors.textSecondary,
                   ),
                   tooltip: 'Voice Input',
-                  onPressed: () {
-                    setState(() {
-                      _isVoiceMode = !_isVoiceMode;
-                    });
-                    if (_isVoiceMode) {
-                      _sendMessage("Explain how to interpret my ALT biomarker level");
-                      setState(() {
-                        _isVoiceMode = false;
-                      });
-                    }
-                  },
+                  onPressed: _toggleVoice,
                 ),
                 Expanded(
                   child: TextField(

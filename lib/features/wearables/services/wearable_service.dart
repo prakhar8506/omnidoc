@@ -42,22 +42,46 @@ class WearableService {
         : 'health_connect';
   }
 
+  /// Core types first — a single unsupported type makes the whole Health
+  /// Connect sheet fail, so Cura never appears in the Health Connect app list.
+  static const List<HealthDataType> coreTypes = [
+    HealthDataType.HEART_RATE,
+    HealthDataType.RESTING_HEART_RATE,
+    HealthDataType.STEPS,
+    HealthDataType.SLEEP_ASLEEP,
+    HealthDataType.BLOOD_OXYGEN,
+  ];
+
   static Future<bool> requestAuthorization() async {
     if (!isPlatformSupported) return false;
 
     try {
-      final permissions =
-          requiredTypes.map((_) => HealthDataAccess.READ).toList();
+      await _health.configure();
+    } catch (e) {
+      debugPrint('[WearableService] configure: $e');
+    }
+
+    final granted = await _request(coreTypes);
+    if (granted) {
+      // Best-effort extra types; failure must not undo the core grant.
+      try {
+        await _request(requiredTypes);
+      } catch (e) {
+        debugPrint('[WearableService] extended auth: $e');
+      }
+    }
+    return granted;
+  }
+
+  static Future<bool> _request(List<HealthDataType> types) async {
+    final permissions = types.map((_) => HealthDataAccess.READ).toList();
+    try {
       final hasPermissions = await _health.hasPermissions(
-        requiredTypes,
+        types,
         permissions: permissions,
       );
       if (hasPermissions == true) return true;
-
-      return await _health.requestAuthorization(
-        requiredTypes,
-        permissions: permissions,
-      );
+      return await _health.requestAuthorization(types, permissions: permissions);
     } catch (e) {
       debugPrint('[WearableService] authorization error: $e');
       return false;

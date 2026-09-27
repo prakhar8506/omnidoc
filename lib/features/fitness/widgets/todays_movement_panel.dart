@@ -54,7 +54,7 @@ class _TodaysMovementPanelState extends State<TodaysMovementPanel> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text('Estimated Calories', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
-                      Text('~220 kcal', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                      Text('Rough estimate', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
                     ],
                   ),
                 ],
@@ -74,11 +74,17 @@ class _TodaysMovementPanelState extends State<TodaysMovementPanel> {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
             onPressed: () {
+              final mins = int.tryParse(
+                    (exercise['duration'] as String? ?? '30')
+                        .replaceAll(RegExp(r'[^0-9]'), ''),
+                  ) ??
+                  30;
+              final estimatedKcal = (mins * 5).clamp(50, 600);
               widget.appState.logWorkout(
                 title: title,
                 category: cat,
                 duration: exercise['duration'] as String? ?? '30 min',
-                caloriesBurned: 220,
+                caloriesBurned: estimatedKcal,
               );
               Navigator.pop(ctx);
               ScaffoldMessenger.of(context).showSnackBar(
@@ -128,7 +134,7 @@ class _TodaysMovementPanelState extends State<TodaysMovementPanel> {
             ),
             const SizedBox(width: 8),
             Text(
-              'Clinically Safe',
+              'Movement ideas',
               style: AppTypography.labelSm.copyWith(color: AppColors.primaryContainer),
             ),
           ],

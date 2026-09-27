@@ -42,6 +42,15 @@ class MockSupabaseBackendRepository implements HealthBackendRepository {
   }) async => null;
 
   @override
+  Future<PreparedAccount?> prepareAccount({
+    required String email,
+    required String password,
+    required String fullName,
+    String bloodType = 'Unknown',
+  }) async =>
+      null;
+
+  @override
   Future<void> signOut() async {
     activeUserId = null;
   }

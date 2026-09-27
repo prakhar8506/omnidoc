@@ -42,9 +42,21 @@ class AppEnv {
   static bool get isDemoEnabled => enableDemo;
 
   static String get functionsBaseUrl {
-    if (aiGatewayUrl.isNotEmpty) return aiGatewayUrl.replaceAll(RegExp(r'/$'), '');
-    if (supabaseUrl.isEmpty) return '';
-    return '${supabaseUrl.replaceAll(RegExp(r'/$'), '')}/functions/v1';
+    String base;
+    if (aiGatewayUrl.isNotEmpty) {
+      base = aiGatewayUrl.replaceAll(RegExp(r'/$'), '');
+    } else if (supabaseUrl.isEmpty) {
+      return '';
+    } else {
+      base = '${supabaseUrl.replaceAll(RegExp(r'/$'), '')}/functions/v1';
+    }
+    // Normalize common misconfigs: .../functions → .../functions/v1
+    if (base.endsWith('/functions')) {
+      base = '$base/v1';
+    } else if (!base.contains('/functions')) {
+      base = '$base/functions/v1';
+    }
+    return base;
   }
 
   /// Fails fast when mandatory production credentials are missing.

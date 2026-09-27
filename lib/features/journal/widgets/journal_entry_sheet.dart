@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:speech_to_text/speech_to_text.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/state/app_state.dart';
@@ -37,6 +38,7 @@ class _JournalEntrySheetState extends State<JournalEntrySheet> with SingleTicker
   bool _isRecording = false;
   bool _audioRecorded = false;
   late AnimationController _waveController;
+  final SpeechToText _speech = SpeechToText();
 
   final List<String> _guidedPrompts = const [
     "What's on your mind today?",
@@ -69,6 +71,7 @@ class _JournalEntrySheetState extends State<JournalEntrySheet> with SingleTicker
 
   @override
   void dispose() {
+    _speech.stop();
     _textController.dispose();
     _waveController.dispose();
     super.dispose();
@@ -86,25 +89,53 @@ class _JournalEntrySheetState extends State<JournalEntrySheet> with SingleTicker
     } catch (_) {}
   }
 
-  void _toggleVoiceDictation() {
+  Future<void> _toggleVoiceDictation() async {
     if (_isRecording) {
-      // Stop recording
-      setState(() {
-        _isRecording = false;
-        _audioRecorded = true;
-      });
-      _waveController.stop();
-      if (_textController.text.trim().isEmpty) {
-        _textController.text =
-            "Noticed a steady, calm heartbeat following morning light exposure. Feeling mentally centered and ready for gentle movement.";
+      await _speech.stop();
+      if (mounted) {
+        setState(() => _isRecording = false);
+        _waveController.stop();
       }
-    } else {
-      // Start recording
-      setState(() {
-        _isRecording = true;
-      });
-      _waveController.repeat(reverse: true);
+      return;
     }
+    final ready = await _speech.initialize(
+      onError: (_) {
+        if (!mounted) return;
+        setState(() => _isRecording = false);
+        _waveController.stop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Voice input stopped. You can keep typing.')),
+        );
+      },
+      onStatus: (status) {
+        if (status == 'done' || status == 'notListening') {
+          if (!mounted) return;
+          setState(() => _isRecording = false);
+          _waveController.stop();
+        }
+      },
+    );
+    if (!mounted) return;
+    if (!ready) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Allow microphone access to dictate a reflection.')),
+      );
+      return;
+    }
+    setState(() => _isRecording = true);
+    _waveController.repeat();
+    await _speech.listen(
+      listenOptions: SpeechListenOptions(listenMode: ListenMode.dictation, partialResults: true),
+      onResult: (result) {
+        if (!mounted) return;
+        final words = result.recognizedWords;
+        _textController.text = words;
+        _textController.selection = TextSelection.collapsed(offset: words.length);
+        if (words.trim().isNotEmpty) {
+          setState(() => _audioRecorded = true);
+        }
+      },
+    );
   }
 
   void _saveEntry() {
@@ -131,8 +162,9 @@ class _JournalEntrySheetState extends State<JournalEntrySheet> with SingleTicker
       audioRecorded: _audioRecorded,
     );
 
+    final messenger = ScaffoldMessenger.of(context);
     Navigator.pop(context);
-    ScaffoldMessenger.of(context).showSnackBar(
+    messenger.showSnackBar(
       SnackBar(
         content: Text('Reflection saved to health timeline • Balance score ${widget.appState.dailyBalanceScore}%'),
         backgroundColor: AppColors.surfaceCardDark,
@@ -349,10 +381,10 @@ class _JournalEntrySheetState extends State<JournalEntrySheet> with SingleTicker
                               children: [
                                 Text(
                                   _isRecording
-                                      ? 'Listening & transcribing dictation...'
+                                      ? 'Listening…'
                                       : (_audioRecorded
-                                          ? 'Voice note attached (0:24)'
-                                          : 'Record voice reflection'),
+                                          ? 'Voice added to your reflection'
+                                          : 'Tap the mic to dictate'),
                                   style: AppTypography.titleMd.copyWith(
                                     color: _isRecording
                                         ? const Color(0xFFB91C1C)

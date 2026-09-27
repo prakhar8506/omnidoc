@@ -27,7 +27,7 @@ class _WomensHealthScreenState extends State<WomensHealthScreen> {
   @override
   void initState() {
     super.initState();
-    _selectedViewIndex = widget.appState.isPregnancyMode ? 1 : 0;
+    _selectedViewIndex = 0;
   }
 
   @override
@@ -35,8 +35,11 @@ class _WomensHealthScreenState extends State<WomensHealthScreen> {
     return ListenableBuilder(
       listenable: widget.appState,
       builder: (context, _) {
-        if (_selectedViewIndex == 1 || widget.appState.isPregnancyMode) {
-          return PregnancyDashboardScreen(appState: widget.appState);
+        if (_selectedViewIndex == 1) {
+          return PregnancyDashboardScreen(
+            appState: widget.appState,
+            onLeave: () => setState(() => _selectedViewIndex = 0),
+          );
         }
 
         return Scaffold(
@@ -114,10 +117,7 @@ class _WomensHealthScreenState extends State<WomensHealthScreen> {
                             ),
                             Expanded(
                               child: GestureDetector(
-                                onTap: () {
-                                  widget.appState.setPregnancyMode(true);
-                                  setState(() => _selectedViewIndex = 1);
-                                },
+                                onTap: () => setState(() => _selectedViewIndex = 1),
                                 child: AnimatedContainer(
                                   duration: const Duration(milliseconds: 200),
                                   padding: const EdgeInsets.symmetric(vertical: 10),
@@ -509,7 +509,6 @@ class _WomensHealthScreenState extends State<WomensHealthScreen> {
                 activeTrackColor: const Color(0xFFDB2777),
                 onChanged: (val) {
                   widget.appState.setPregnancyMode(val);
-                  setState(() => _selectedViewIndex = val ? 1 : 0);
                   Navigator.pop(ctx);
                 },
               ),

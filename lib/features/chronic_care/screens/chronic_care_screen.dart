@@ -45,7 +45,6 @@ class _ChronicCareScreenState extends State<ChronicCareScreen> {
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
                       child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           BouncingTap(
                             onTap: () => Navigator.pop(context),
@@ -59,8 +58,15 @@ class _ChronicCareScreenState extends State<ChronicCareScreen> {
                               child: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
                             ),
                           ),
-                          Text('Chronic Condition Companion', style: AppTypography.editorialSm),
-                          const SizedBox(width: 40),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              'Chronic Condition Companion',
+                              style: AppTypography.editorialSm,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -79,8 +85,8 @@ class _ChronicCareScreenState extends State<ChronicCareScreen> {
                         ),
                         child: Row(
                           children: [
-                            _buildSegmentItem(0, 'Blood Glucose (Diabetes)'),
-                            _buildSegmentItem(1, 'Blood Pressure (Hypertension)'),
+                            _buildSegmentItem(0, 'Glucose'),
+                            _buildSegmentItem(1, 'Blood Pressure'),
                           ],
                         ),
                       ),
@@ -162,9 +168,11 @@ class _ChronicCareScreenState extends State<ChronicCareScreen> {
         context: context,
         title: 'Doctor Discussion Prep • Endocrine Care',
         questions: [
-          'Review whether fasting glucose (102 mg/dL) aligns with 3-month HbA1c goals.',
-          'Discuss glycemic curve response following whole grain lunches vs evening meals.',
-          'Determine if current exercise timing optimizes peripheral insulin sensitivity.',
+          widget.appState.bloodGlucoseMgDl > 0
+              ? 'Review whether your latest logged glucose (${widget.appState.bloodGlucoseMgDl} mg/dL) aligns with your HbA1c goals.'
+              : 'Ask whether you should start logging fasting glucose before your next visit.',
+          'Discuss how meals you have been logging line up with your energy later in the day.',
+          'Ask whether your current movement routine is the right time of day for your glucose pattern.',
         ],
       ),
       const SizedBox(height: 18),
@@ -202,7 +210,16 @@ class _ChronicCareScreenState extends State<ChronicCareScreen> {
         ],
       ),
       const SizedBox(height: 12),
-
+      if (widget.appState.glucoseHistory.isEmpty)
+        const GlassContainer(
+          padding: EdgeInsets.all(16),
+          borderRadius: 20,
+          child: Text(
+            'No glucose readings yet. Tap Log Value to add one from your meter.',
+            style: TextStyle(fontSize: 13, height: 1.4, color: AppColors.textSecondary),
+          ),
+        )
+      else
       ...widget.appState.glucoseHistory.map((item) {
         return Container(
           margin: const EdgeInsets.only(bottom: 10),
@@ -273,9 +290,13 @@ class _ChronicCareScreenState extends State<ChronicCareScreen> {
         context: context,
         title: 'Doctor Discussion Prep • Cardiovascular Care',
         questions: [
-          'Confirm whether morning resting readings reflect steady state vascular resistance.',
-          'Discuss impact of sleep duration (7h 10m) on diurnal blood pressure dipping.',
-          'Review dietary sodium correlation trends logged this month.',
+          widget.appState.systolicBp > 0
+              ? 'Confirm whether your latest logged reading (${widget.appState.systolicBp}/${widget.appState.diastolicBp} mmHg) is a typical morning value.'
+              : 'Ask how often you should log blood pressure at home before your next visit.',
+          widget.appState.sleepDuration != '—' && widget.appState.sleepDuration.isNotEmpty
+              ? 'Discuss whether your recent sleep (${widget.appState.sleepDuration}) is affecting morning readings.'
+              : 'Ask whether sleep quality could be affecting your blood pressure.',
+          'Review any meals or salt-heavy days you logged this month.',
         ],
       ),
       const SizedBox(height: 18),
@@ -312,7 +333,16 @@ class _ChronicCareScreenState extends State<ChronicCareScreen> {
         ],
       ),
       const SizedBox(height: 12),
-
+      if (widget.appState.bpHistory.isEmpty)
+        const GlassContainer(
+          padding: EdgeInsets.all(16),
+          borderRadius: 20,
+          child: Text(
+            'No blood pressure readings yet. Tap Log BP after you take a reading.',
+            style: TextStyle(fontSize: 13, height: 1.4, color: AppColors.textSecondary),
+          ),
+        )
+      else
       ...widget.appState.bpHistory.map((item) {
         return Container(
           margin: const EdgeInsets.only(bottom: 10),

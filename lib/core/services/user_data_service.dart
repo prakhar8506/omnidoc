@@ -21,6 +21,12 @@ class UserDataService {
     await prefs.setString(_key(userId), jsonEncode(data));
   }
 
+  /// Removes everything stored on this device for [userId].
+  Future<void> purge(String userId) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_key(userId));
+  }
+
   Map<String, dynamic> _emptyProfile() => {
         'restingHeartRate': 0,
         'sleepDuration': '—',

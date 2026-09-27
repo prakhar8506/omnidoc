@@ -17,6 +17,8 @@ echo "Pushing database migrations..."
 supabase db push
 
 echo "Deploying Edge Functions..."
+# welcome-email is called before a user JWT exists.
+supabase functions deploy welcome-email --no-verify-jwt
 supabase functions deploy interpret-lab
 supabase functions deploy health-ai-chat
 supabase functions deploy delete-account

@@ -5,10 +5,14 @@ import '../theme/app_typography.dart';
 import '../state/app_state.dart';
 import '../../features/lab_reports/widgets/upload_report_modal.dart';
 import '../../features/appointments/widgets/book_appointment_modal.dart';
+import '../../features/appointments/screens/find_care_screen.dart';
 import '../../features/ai_assistant/widgets/ai_chat_sheet.dart';
 import '../../features/womens_health/screens/womens_health_screen.dart';
 import '../../features/onboarding/screens/onboarding_baseline_screen.dart';
 import '../../features/consent/screens/permission_center_screen.dart';
+import '../../features/nutrition/screens/nutrition_hydration_screen.dart';
+import '../../features/community/screens/activity_clubs_screen.dart';
+import '../../features/wearables/widgets/wearable_permissions_sheet.dart';
 
 class QuickActionSheet extends StatelessWidget {
   final AppState appState;
@@ -29,7 +33,11 @@ class QuickActionSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final maxHeight = MediaQuery.of(context).size.height * 0.88;
+    final bottomInset = MediaQuery.of(context).viewPadding.bottom;
+
     return Container(
+      constraints: BoxConstraints(maxHeight: maxHeight),
       decoration: const BoxDecoration(
         color: Colors.transparent,
         borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
@@ -39,7 +47,7 @@ class QuickActionSheet extends StatelessWidget {
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
           child: Container(
-            padding: const EdgeInsets.fromLTRB(24, 12, 24, 36),
+            padding: EdgeInsets.fromLTRB(24, 12, 24, 16 + bottomInset),
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.88),
               borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
@@ -66,16 +74,18 @@ class QuickActionSheet extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Quick Actions', style: AppTypography.editorialSm),
-                        const SizedBox(height: 2),
-                        const Text(
-                          'Log vitals, record feelings, or consult AI',
-                          style: AppTypography.labelSm,
-                        ),
-                      ],
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Quick Actions', style: AppTypography.editorialSm),
+                          const SizedBox(height: 2),
+                          const Text(
+                            'Log vitals, record feelings, or consult AI',
+                            style: AppTypography.labelSm,
+                          ),
+                        ],
+                      ),
                     ),
                     IconButton(
                       icon: const Icon(Icons.close_rounded, color: AppColors.textSecondary),
@@ -83,7 +93,13 @@ class QuickActionSheet extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 12),
+                Flexible(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
                 _buildActionItem(
                   context,
                   icon: Icons.mood_rounded,
@@ -93,6 +109,52 @@ class QuickActionSheet extends StatelessWidget {
                   onTap: () {
                     Navigator.pop(context);
                     appState.setTabIndex(1); // Journal tab
+                  },
+                ),
+                const SizedBox(height: 12),
+                _buildActionItem(
+                  context,
+                  icon: Icons.healing_rounded,
+                  title: 'Track Symptoms / Clinical Triage',
+                  subtitle: 'Describe symptoms and get urgency guidance',
+                  color: AppColors.accentCoral,
+                  onTap: () {
+                    Navigator.pop(context);
+                    appState.setTabIndex(2); // Triage tab
+                  },
+                ),
+                const SizedBox(height: 12),
+                _buildActionItem(
+                  context,
+                  icon: Icons.restaurant_rounded,
+                  title: 'Log Meal Entry',
+                  subtitle: 'Save what you ate for nutrition tracking',
+                  color: AppColors.accentTeal,
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => NutritionHydrationScreen(appState: appState),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 12),
+                _buildActionItem(
+                  context,
+                  icon: Icons.groups_rounded,
+                  title: 'Activity clubs',
+                  subtitle: 'Private step and meal competitions with people you invite',
+                  color: const Color(0xFF6366F1),
+                  onTap: () {
+                    final navigator = Navigator.of(context);
+                    navigator.pop();
+                    navigator.push(
+                      MaterialPageRoute(
+                        builder: (_) => ActivityClubsScreen(appState: appState),
+                      ),
+                    );
                   },
                 ),
                 const SizedBox(height: 12),
@@ -125,12 +187,29 @@ class QuickActionSheet extends StatelessWidget {
                   context,
                   icon: Icons.calendar_month_rounded,
                   title: 'Book Doctor or Video Consultation',
-                  subtitle: 'Select from specialist cardiologists, hepatologists',
+                  subtitle: 'Save a reminder for a visit you have arranged',
                   color: AppColors.accentSky,
                   onTap: () {
                     Navigator.pop(context);
                     appState.setTabIndex(3); // Visits tab
                     BookAppointmentModal.show(context, appState);
+                  },
+                ),
+                const SizedBox(height: 12),
+                _buildActionItem(
+                  context,
+                  icon: Icons.storefront_rounded,
+                  title: 'Find a doctor near me',
+                  subtitle: 'Search real clinics in your city by specialty',
+                  color: AppColors.accentTeal,
+                  onTap: () {
+                    final navigator = Navigator.of(context);
+                    navigator.pop();
+                    navigator.push(
+                      MaterialPageRoute(
+                        builder: (_) => FindCareScreen(appState: appState),
+                      ),
+                    );
                   },
                 ),
                 const SizedBox(height: 12),
@@ -168,16 +247,29 @@ class QuickActionSheet extends StatelessWidget {
                 const SizedBox(height: 12),
                 _buildActionItem(
                   context,
+                  icon: Icons.watch_rounded,
+                  title: 'Connect Wearable / Health Sync',
+                  subtitle: 'Authorize HealthKit or Health Connect permissions',
+                  color: AppColors.accentCoral,
+                  onTap: () {
+                    Navigator.pop(context);
+                    WearablePermissionsSheet.show(context, appState);
+                  },
+                ),
+                const SizedBox(height: 12),
+                _buildActionItem(
+                  context,
                   icon: Icons.sync_rounded,
                   title: 'Sync Vitals from Apple Health / Watch',
                   subtitle: 'Heart rate, deep REM sleep, daily step count',
                   color: AppColors.accentCoral,
-                  onTap: () {
+                  onTap: () async {
                     Navigator.pop(context);
-                    appState.syncVitals();
-                    ScaffoldMessenger.of(context).showSnackBar(
+                    final messenger = ScaffoldMessenger.of(context);
+                    final message = await appState.syncVitals();
+                    messenger.showSnackBar(
                       SnackBar(
-                        content: const Text('Vitals synchronized with Apple Health data.'),
+                        content: Text(message),
                         behavior: SnackBarBehavior.floating,
                         backgroundColor: AppColors.surfaceCardDark,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -221,6 +313,11 @@ class QuickActionSheet extends StatelessWidget {
                       ),
                     );
                   },
+                ),
+                        const SizedBox(height: 8),
+                      ],
+                    ),
+                  ),
                 ),
               ],
             ),

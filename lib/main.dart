@@ -9,7 +9,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/branding/app_brand.dart';
 import 'core/env/app_env.dart';
 import 'core/theme/app_theme.dart';
-import 'core/theme/app_colors.dart';
 import 'core/state/app_state.dart';
 import 'core/localization/app_localizations.dart';
 import 'core/widgets/glass_app_bar.dart';
@@ -36,10 +35,12 @@ Future<void> main() async {
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.dark,
+      statusBarBrightness: Brightness.light,
       systemNavigationBarColor: Colors.transparent,
       systemNavigationBarIconBrightness: Brightness.dark,
     ),
@@ -79,8 +80,16 @@ class _HealthCompanionAppState extends State<HealthCompanionApp> {
   void initState() {
     super.initState();
     _appState = AppState();
-    _appState.hydrate();
-    _initDeepLinks();
+    _bootstrap();
+  }
+
+  /// Hydration initializes Supabase, so deep links are only wired up after it
+  /// finishes — otherwise an auth callback on cold start can reach
+  /// `Supabase.instance` before the client exists.
+  Future<void> _bootstrap() async {
+    await _appState.hydrate();
+    if (!mounted) return;
+    await _initDeepLinks();
   }
 
   Future<void> _initDeepLinks() async {
@@ -96,8 +105,11 @@ class _HealthCompanionAppState extends State<HealthCompanionApp> {
     }
   }
 
+  static const _authLinkHosts = {'auth-callback', 'auth'};
+
   Future<void> _handleAuthDeepLink(Uri uri) async {
     if (uri.scheme != AppBrand.deepLinkScheme) return;
+    if (!_authLinkHosts.contains(uri.host)) return;
     try {
       await Supabase.instance.client.auth.getSessionFromUrl(uri);
       await _appState.hydrate();
@@ -207,16 +219,24 @@ class HealthCompanionShell extends StatelessWidget {
           LabReportsScreen(appState: appState),
         ];
 
-        return Scaffold(
+        return AnnotatedRegion<SystemUiOverlayStyle>(
+          value: const SystemUiOverlayStyle(
+            statusBarColor: Colors.transparent,
+            statusBarIconBrightness: Brightness.dark,
+            statusBarBrightness: Brightness.light,
+            systemNavigationBarColor: Colors.transparent,
+            systemNavigationBarIconBrightness: Brightness.dark,
+          ),
+          child: HolographicBackground(
+          child: Scaffold(
           extendBody: true,
-          backgroundColor: AppColors.background,
+          backgroundColor: Colors.transparent,
           appBar: GlassAppBar(
             title: AppBrand.name,
             subtitle: _getSubTitle(context, currentTab),
             appState: appState,
           ),
-          body: HolographicBackground(
-            child: Stack(
+          body: Stack(
               children: [
                 AnimatedSwitcher(
                   duration: const Duration(milliseconds: 240),
@@ -268,10 +288,11 @@ class HealthCompanionShell extends StatelessWidget {
                     child: screens[currentTab.clamp(0, screens.length - 1)],
                   ),
                 ),
-                if (currentTab != 1)
+                // Hide FAB on Journal, Triage, and Labs where it overlaps content/CTAs.
+                if (currentTab != 1 && currentTab != 2 && currentTab != 4)
                   Positioned(
-                    right: 18,
-                    bottom: 96,
+                    right: 16,
+                    bottom: 108,
                     child: FloatingAiButton(appState: appState),
                   ),
                 Positioned(
@@ -288,6 +309,7 @@ class HealthCompanionShell extends StatelessWidget {
                 ),
               ],
             ),
+          ),
           ),
         );
       },

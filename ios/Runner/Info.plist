@@ -76,7 +76,9 @@
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Cura needs photo library access to upload prescriptions and lab reports.</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Microphone access may be used when capturing media with your camera.</string>
+	<string>Cura uses the microphone so you can dictate journal reflections, symptoms, and meals instead of typing them.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Cura uses speech recognition to turn your spoken journal reflections, symptoms, and meal notes into text on your device.</string>
 	<key>NSHealthShareUsageDescription</key>
 	<string>Cura reads heart rate, HRV, steps, sleep, and oxygen saturation from Apple Health so you can track recovery trends. Data stays under your account controls.</string>
 	<key>NSHealthUpdateUsageDescription</key>
@@ -88,9 +90,6 @@
 	<key>UISupportedInterfaceOrientations~ipad</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
-		<string>UIInterfaceOrientationPortraitUpsideDown</string>
-		<string>UIInterfaceOrientationLandscapeLeft</string>
-		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 </dict>
 </plist>

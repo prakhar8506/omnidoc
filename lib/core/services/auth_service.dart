@@ -20,6 +20,9 @@ class AuthService {
   static const _uuid = Uuid();
   final HealthBackendRepository? backendRepository;
 
+  /// True after register when Cura's greeting was accepted by the mailer.
+  bool welcomeNoteSent = false;
+
   AuthService({this.backendRepository});
 
   Future<SharedPreferences> get _prefs async => SharedPreferences.getInstance();
@@ -66,6 +69,16 @@ class AuthService {
     }
   }
 
+  /// Removes the local account record and session for [userId]. Used after a
+  /// successful account deletion so no credentials or profile survive on device.
+  Future<void> purgeLocalAccount(String userId) async {
+    final users = await getUsers();
+    users.removeWhere((u) => u.id == userId);
+    await _saveUsers(users);
+    final prefs = await _prefs;
+    await prefs.remove(_sessionUserIdKey);
+  }
+
   Future<UserAccount?> findByEmail(String email) async {
     final normalized = email.trim().toLowerCase();
     final users = await getUsers();
@@ -103,7 +116,11 @@ class AuthService {
     }
 
     _requireRemoteBackendInRelease();
+    welcomeNoteSent = false;
 
+    final useRemote = backendRepository != null &&
+        backendRepository!.isConfigured &&
+        !normalizedEmail.endsWith('.local');
     final existing = await findByEmail(normalizedEmail);
     if (existing != null && !kReleaseMode) {
       throw AuthException('An account with this email already exists. Please sign in.');
@@ -111,26 +128,44 @@ class AuthService {
 
     String id = _uuid.v4();
 
-    // Prefer remote auth when Supabase is configured
-    if (backendRepository != null && backendRepository!.isConfigured) {
+    if (useRemote) {
       try {
-        final authRes = await backendRepository!.signUp(
+        final prepared = await backendRepository!.prepareAccount(
           email: normalizedEmail,
           password: password,
           fullName: name,
           bloodType: bloodType,
         );
-        if (authRes?.user?.id != null) {
-          id = authRes!.user!.id;
+        if (prepared != null) {
+          id = prepared.userId;
+          welcomeNoteSent = prepared.greeted;
+          try {
+            await backendRepository!.signIn(email: normalizedEmail, password: password);
+          } catch (e) {
+            debugPrint('[AuthService] Session after welcome was not attached');
+          }
+          // The account exists but no session came back, which means this
+          // project still requires email confirmation. Say so instead of
+          // dropping the person into an app that cannot reach their data.
+          if (kReleaseMode && backendRepository!.currentUserId == null) {
+            throw AuthException(
+              'Your account was created, but we could not start a session. '
+              'Please sign in with the same email and password.',
+            );
+          }
         } else if (kReleaseMode) {
           throw AuthException('Unable to create account. Please try again.');
         }
       } catch (e) {
-        if (kReleaseMode) {
-          if (e is AuthException) rethrow;
-          throw AuthException('Unable to create account: $e');
+        if (e is AuthException) rethrow;
+        final message = e.toString().toLowerCase();
+        if (message.contains('already registered') || message.contains('already been registered')) {
+          throw AuthException('That email already has an account. Please sign in.');
         }
-        debugPrint('[AuthService] Supabase remote sign up error (falling back to offline): $e');
+        if (kReleaseMode) {
+          throw AuthException('Unable to create account. Please try again.');
+        }
+        debugPrint('[AuthService] Welcome account unavailable');
       }
     } else if (kReleaseMode) {
       throw AuthException(
@@ -138,7 +173,7 @@ class AuthService {
       );
     }
 
-    final hash = hashPassword(password, id);
+    final hash = kReleaseMode ? '' : hashPassword(password, id);
     final user = UserAccount(
       id: id,
       fullName: name,
@@ -176,8 +211,8 @@ class AuthService {
           email: normalizedEmail,
           password: password,
         );
-        if (authRes?.user != null) {
-          final remoteUser = authRes!.user!;
+        if (authRes?.user != null && authRes!.session != null) {
+          final remoteUser = authRes.user!;
           final localUser = await findByEmail(normalizedEmail);
           final persisted = UserAccount(
             id: remoteUser.id,
@@ -185,7 +220,7 @@ class AuthService {
                 localUser?.fullName ??
                 'User',
             email: normalizedEmail,
-            passwordHash: hashPassword(password, remoteUser.id),
+            passwordHash: kReleaseMode ? '' : hashPassword(password, remoteUser.id),
             bloodType: (remoteUser.userMetadata?['blood_type'] as String?) ??
                 localUser?.bloodType ??
                 'Unknown',
@@ -203,11 +238,13 @@ class AuthService {
           throw AuthException('Sign in failed. Please check your credentials.');
         }
       } catch (e) {
-        if (kReleaseMode) {
-          if (e is AuthException) rethrow;
-          throw AuthException('Unable to sign in: $e');
-        }
+        if (e is AuthException) rethrow;
         debugPrint('[AuthService] Remote signIn error: $e');
+        if (kReleaseMode) {
+          throw AuthException(
+            'Could not sign in. Check your email, password, and connection, then try again.',
+          );
+        }
       }
     }
 

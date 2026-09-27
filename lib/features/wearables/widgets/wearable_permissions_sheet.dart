@@ -1,4 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/bouncing_tap.dart';
@@ -23,6 +26,39 @@ class WearablePermissionsSheet extends StatelessWidget {
     );
   }
 
+  static const _healthChannel = MethodChannel('cura/health_connect');
+
+  static Future<bool> openHealthSettings() async {
+    try {
+      if (kIsWeb) return false;
+      if (defaultTargetPlatform == TargetPlatform.android) {
+        try {
+          final opened = await _healthChannel.invokeMethod<bool>('openPermissions');
+          if (opened == true) return true;
+        } catch (e) {
+          debugPrint('[WearablePermissions] health connect intent: $e');
+        }
+        final play = Uri.parse(
+          'https://play.google.com/store/apps/details?id=com.google.android.apps.healthdata',
+        );
+        if (await canLaunchUrl(play)) {
+          return launchUrl(play, mode: LaunchMode.externalApplication);
+        }
+        return false;
+      }
+      if (defaultTargetPlatform == TargetPlatform.iOS) {
+        final healthUri = Uri.parse('x-apple-health://');
+        if (await canLaunchUrl(healthUri)) {
+          return launchUrl(healthUri, mode: LaunchMode.externalApplication);
+        }
+        return launchUrl(Uri.parse('App-prefs:HEALTH'), mode: LaunchMode.externalApplication);
+      }
+      return false;
+    } catch (_) {
+      return false;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -36,7 +72,6 @@ class WearablePermissionsSheet extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Drag Handle
           Center(
             child: Container(
               width: 38,
@@ -48,8 +83,6 @@ class WearablePermissionsSheet extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 20),
-
-          // Header with HealthKit / Health Connect Icon
           Row(
             children: [
               Container(
@@ -69,8 +102,10 @@ class WearablePermissionsSheet extends StatelessWidget {
                     Text('Sync Health & Wearables', style: AppTypography.editorialSm),
                     const SizedBox(height: 2),
                     Text(
-                      'Apple HealthKit & Google Health Connect',
+                      WearableService.platformSourceLabel,
                       style: AppTypography.labelSm.copyWith(color: AppColors.textSecondary),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
@@ -78,15 +113,12 @@ class WearablePermissionsSheet extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 20),
-
           Text(
             'Cura requests read access via Apple HealthKit (iOS) or Google Health Connect (Android). '
             'Your health data stays encrypted on your device and is never sold to third parties.',
             style: AppTypography.bodyMd.copyWith(color: AppColors.textPrimary, height: 1.4),
           ),
           const SizedBox(height: 18),
-
-          // Permissions Explanation List
           _buildPermissionRow(
             icon: Icons.favorite_rounded,
             color: AppColors.watchHeartRate,
@@ -115,8 +147,6 @@ class WearablePermissionsSheet extends StatelessWidget {
             reason: 'To verify respiratory wellness baseline during rest and recovery periods.',
           ),
           const SizedBox(height: 24),
-
-          // Connect Button
           BouncingTap(
             onTap: () async {
               final messenger = ScaffoldMessenger.of(context);
@@ -125,9 +155,12 @@ class WearablePermissionsSheet extends StatelessWidget {
               if (success) {
                 final source = WearableService.platformSourceLabel;
                 appState.connectWearable(source, source);
+                final syncMsg = await appState.syncVitals();
                 messenger.showSnackBar(
                   SnackBar(
-                    content: Text('Connected to $source successfully.'),
+                    content: Text(syncMsg.isNotEmpty
+                        ? syncMsg
+                        : 'Connected to $source. Sync when you have samples.'),
                     backgroundColor: AppColors.accentTeal,
                   ),
                 );
@@ -136,10 +169,19 @@ class WearablePermissionsSheet extends StatelessWidget {
                   SnackBar(
                     content: Text(
                       WearableService.isPlatformSupported
-                          ? 'Health permissions were denied. Enable access in system settings for HealthKit / Health Connect.'
+                          ? 'Health permissions denied. Use Settings to enable Health Connect / HealthKit.'
                           : 'Health sync requires iOS (HealthKit) or Android (Health Connect).',
                     ),
                     backgroundColor: AppColors.accentCoral,
+                    action: WearableService.isPlatformSupported
+                        ? SnackBarAction(
+                            label: 'Settings',
+                            textColor: Colors.white,
+                            onPressed: () {
+                              openHealthSettings();
+                            },
+                          )
+                        : null,
                   ),
                 );
               }
@@ -170,6 +212,35 @@ class WearablePermissionsSheet extends StatelessWidget {
               ),
             ),
           ),
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () async {
+                final messenger = ScaffoldMessenger.of(context);
+                final ok = await openHealthSettings();
+                if (!ok) {
+                  messenger.showSnackBar(
+                    const SnackBar(
+                      content: Text('Open Health Connect (Android) or Health (iOS) to grant access.'),
+                      backgroundColor: AppColors.accentCoral,
+                    ),
+                  );
+                }
+              },
+              icon: const Icon(Icons.settings_rounded, size: 18),
+              label: const Text(
+                'Open Health Settings',
+                style: TextStyle(fontWeight: FontWeight.w700),
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.primaryContainer,
+                side: const BorderSide(color: AppColors.outlineVariant),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+              ),
+            ),
+          ),
           const SizedBox(height: 12),
           Center(
             child: Text(
@@ -197,7 +268,7 @@ class WearablePermissionsSheet extends StatelessWidget {
             color: color.withValues(alpha: 0.15),
             shape: BoxShape.circle,
           ),
-          child: Icon(icon, color: color, size: 16),
+          child: Icon(icon, size: 16, color: color),
         ),
         const SizedBox(width: 12),
         Expanded(

@@ -1,10 +1,12 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../branding/app_brand.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_typography.dart';
 import '../state/app_state.dart';
 import 'avatar_image.dart';
+import '../../features/community/screens/activity_clubs_screen.dart';
 import '../../features/family/screens/family_connect_screen.dart';
 import '../../features/ai_assistant/widgets/ai_chat_sheet.dart';
 import '../../features/legal/screens/privacy_policy_screen.dart';
@@ -66,19 +68,26 @@ class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
               children: [
                 GestureDetector(
                   onTap: () => _showProfileDialog(context),
-                  child: Container(
-                    padding: const EdgeInsets.all(2),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: AppColors.primaryContainer.withValues(alpha: 0.4),
-                        width: 1.5,
+                  behavior: HitTestBehavior.opaque,
+                  child: SizedBox(
+                    width: 48,
+                    height: 48,
+                    child: Center(
+                      child: Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: AppColors.primaryContainer.withValues(alpha: 0.4),
+                            width: 1.5,
+                          ),
+                        ),
+                        child: AvatarImage(
+                          imageUrl: appState.userAvatar,
+                          initials: initialsFromName(appState.userName),
+                          radius: 17,
+                        ),
                       ),
-                    ),
-                    child: AvatarImage(
-                      imageUrl: appState.userAvatar,
-                      initials: initialsFromName(appState.userName),
-                      radius: 17,
                     ),
                   ),
                 ),
@@ -234,6 +243,40 @@ class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
                       );
                     },
                   ),
+                  StatefulBuilder(
+                    builder: (context, setLocal) => SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      secondary: const Icon(Icons.emoji_events_outlined, color: AppColors.primaryContainer),
+                      title: const Text('Compete with clubs', style: TextStyle(fontWeight: FontWeight.w600)),
+                      subtitle: const Text(
+                        'Off hides other people\'s activity and blocks competitions.',
+                        style: TextStyle(fontSize: 12),
+                      ),
+                      value: appState.shareActivityForCompetition,
+                      onChanged: (value) {
+                        appState.setShareActivityForCompetition(value);
+                        setLocal(() {});
+                      },
+                    ),
+                  ),
+                  ListTile(
+                    dense: true,
+                    leading: const Icon(Icons.groups_outlined, color: AppColors.primaryContainer),
+                    title: const Text('Activity clubs', style: TextStyle(fontWeight: FontWeight.w600)),
+                    subtitle: Text(
+                      appState.shareActivityForCompetition
+                          ? '${appState.clubs.length} clubs'
+                          : 'Turn competing on to join',
+                      style: AppTypography.labelSm,
+                    ),
+                    trailing: const Icon(Icons.chevron_right_rounded, size: 20, color: AppColors.textSecondary),
+                    onTap: () {
+                      Navigator.pop(dialogContext);
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => ActivityClubsScreen(appState: appState)),
+                      );
+                    },
+                  ),
                   ListTile(
                     dense: true,
                     leading: const Icon(Icons.privacy_tip_outlined, color: AppColors.primaryContainer),
@@ -329,33 +372,68 @@ class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
 
     if (confirmed != true || !context.mounted) return;
 
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context);
+    // Deletion is a network round trip with a 60s timeout; block the UI so the
+    // person cannot tap again or navigate mid-delete.
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const _BlockingProgressDialog(
+        message: 'Deleting your account…',
+      ),
+    );
+
+    String? failure;
     try {
       if (onDeleteAccount != null) {
         await onDeleteAccount!();
       } else {
         await appState.deleteAccount();
       }
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Your account has been deleted.'),
-            behavior: SnackBarBehavior.floating,
-            backgroundColor: AppColors.surfaceCardDark,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          ),
-        );
-      }
     } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Could not delete account: $e'),
-            behavior: SnackBarBehavior.floating,
-            backgroundColor: AppColors.surfaceCardDark,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          ),
-        );
-      }
+      debugPrint('[GlassAppBar] delete account failed: $e');
+      failure = e is StateError
+          ? e.message
+          : 'Your account could not be deleted right now. Please try again, '
+              'or contact ${AppBrand.supportEmail}.';
     }
+
+    if (navigator.canPop()) navigator.pop();
+
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(failure ?? 'Your account and its data have been deleted.'),
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: AppColors.surfaceCardDark,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
+  }
+}
+
+/// Modal, non-dismissible progress indicator for destructive network actions.
+class _BlockingProgressDialog extends StatelessWidget {
+  final String message;
+
+  const _BlockingProgressDialog({required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      backgroundColor: AppColors.surface,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      content: Row(
+        children: [
+          const SizedBox(
+            width: 22,
+            height: 22,
+            child: CircularProgressIndicator(strokeWidth: 2.4),
+          ),
+          const SizedBox(width: 16),
+          Expanded(child: Text(message, style: AppTypography.bodyMd)),
+        ],
+      ),
+    );
   }
 }

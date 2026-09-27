@@ -72,7 +72,9 @@ class PermissionCenterScreen extends StatelessWidget {
         child: ListenableBuilder(
           listenable: appState.consentManager,
           builder: (context, _) {
-            final permissions = appState.consentManager.allPermissions;
+            final permissions = appState.consentManager.allPermissions
+                .where((p) => p.category != PermissionCategory.notifications)
+                .toList();
             final qualityScore = appState.dataQualityService.computeDataQuality(appState.consentManager);
 
             return SingleChildScrollView(
@@ -88,52 +90,56 @@ class PermissionCenterScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(10),
-                                  decoration: BoxDecoration(
-                                    color: (qualityScore.coveragePercentage >= 75
-                                            ? AppColors.success
-                                            : AppColors.warning)
-                                        .withValues(alpha: 0.15),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: Icon(
-                                    qualityScore.coveragePercentage >= 75
-                                        ? Icons.verified_user_rounded
-                                        : Icons.shield_outlined,
-                                    color: qualityScore.coveragePercentage >= 75
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: (qualityScore.coveragePercentage >= 75
                                         ? AppColors.success
-                                        : AppColors.warning,
-                                    size: 22,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text('Data Quality & Coverage', style: AppTypography.titleMd),
-                                    Text(
-                                      qualityScore.statusLabel,
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w600,
-                                        color: qualityScore.coveragePercentage >= 75
-                                            ? AppColors.success
-                                            : AppColors.warning,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
+                                        : AppColors.warning)
+                                    .withValues(alpha: 0.15),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                qualityScore.coveragePercentage >= 75
+                                    ? Icons.verified_user_rounded
+                                    : Icons.shield_outlined,
+                                color: qualityScore.coveragePercentage >= 75
+                                    ? AppColors.success
+                                    : AppColors.warning,
+                                size: 22,
+                              ),
                             ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Data Quality & Coverage',
+                                    style: AppTypography.titleMd,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  Text(
+                                    qualityScore.statusLabel,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: qualityScore.coveragePercentage >= 75
+                                          ? AppColors.success
+                                          : AppColors.warning,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 8),
                             Text(
                               '${qualityScore.coveragePercentage}%',
                               style: const TextStyle(
-                                fontSize: 24,
+                                fontSize: 22,
                                 fontWeight: FontWeight.w800,
                                 color: AppColors.textPrimary,
                               ),
@@ -250,7 +256,7 @@ class PermissionCenterScreen extends StatelessWidget {
                                             item.isEnabled
                                                 ? (item.lastSynced != null
                                                     ? 'Synced ${DateFormat('MMM d, h:mm a').format(item.lastSynced!)}'
-                                                    : 'Active')
+                                                    : 'Not synced yet')
                                                 : 'Ingestion Paused',
                                             style: TextStyle(
                                               fontSize: 11,

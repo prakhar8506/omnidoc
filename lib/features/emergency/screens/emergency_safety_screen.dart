@@ -44,7 +44,15 @@ class EmergencySafetyScreen extends StatelessWidget {
                               child: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
                             ),
                           ),
-                          Text('Emergency Safety & Medical ID', style: AppTypography.editorialSm),
+                          Expanded(
+                            child: Text(
+                              'Emergency ID',
+                              textAlign: TextAlign.center,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTypography.editorialSm,
+                            ),
+                          ),
                           const SizedBox(width: 40),
                         ],
                       ),
@@ -135,8 +143,13 @@ class EmergencySafetyScreen extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const _MedicalIdField(label: 'Date of Birth', value: '14 May 1996'),
-              const _MedicalIdField(label: 'Organ Donor', value: 'Registered (Yes)'),
+              _MedicalIdField(
+                label: 'Date of Birth',
+                value: appState.dateOfBirth?.trim().isNotEmpty == true
+                    ? appState.dateOfBirth!
+                    : 'Not set',
+              ),
+              const _MedicalIdField(label: 'Organ Donor', value: 'Not set'),
               _MedicalIdField(label: 'Language', value: appState.currentLocale.languageCode.toUpperCase()),
             ],
           ),
@@ -219,15 +232,20 @@ class EmergencySafetyScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: AppColors.accentCoral.withValues(alpha: 0.3)),
               ),
-              child: const Center(
+              child: const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 12),
                 child: Row(
-                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(Icons.sensors_rounded, color: AppColors.accentCoral, size: 16),
                     SizedBox(width: 8),
-                    Text(
-                      'Practice dialer path (not a real fall sensor)',
-                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.accentCoral),
+                    Expanded(
+                      child: Text(
+                        'Practice dialer path (not a real fall sensor)',
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.accentCoral),
+                      ),
                     ),
                   ],
                 ),
@@ -246,54 +264,109 @@ class EmergencySafetyScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Allergies & Medical Warnings',
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: appState.allergies.map((a) {
-              return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: AppColors.accentCoral.withValues(alpha: 0.10),
-                  borderRadius: BorderRadius.circular(999),
-                  border: Border.all(color: AppColors.accentCoral.withValues(alpha: 0.25)),
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'Allergies & Medical Warnings',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.warning_amber_rounded, size: 14, color: AppColors.accentCoral),
-                    const SizedBox(width: 6),
-                    Text(a, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppColors.accentCoral)),
-                  ],
-                ),
-              );
-            }).toList(),
+              ),
+              TextButton.icon(
+                onPressed: () => _showAddAllergyDialog(context),
+                icon: const Icon(Icons.add_rounded, size: 16),
+                label: const Text('Add', style: TextStyle(fontWeight: FontWeight.w700)),
+              ),
+            ],
           ),
+          const SizedBox(height: 8),
+          if (appState.allergies.isEmpty)
+            const Text(
+              'No allergies listed. Add medications or food allergies for emergency responders.',
+              style: TextStyle(fontSize: 12.5, color: AppColors.textSecondary, height: 1.35),
+            )
+          else
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: appState.allergies.map((a) {
+                return InputChip(
+                  avatar: const Icon(Icons.warning_amber_rounded, size: 14, color: AppColors.accentCoral),
+                  label: Text(
+                    a,
+                    style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppColors.accentCoral),
+                  ),
+                  backgroundColor: AppColors.accentCoral.withValues(alpha: 0.10),
+                  side: BorderSide(color: AppColors.accentCoral.withValues(alpha: 0.25)),
+                  onDeleted: () => appState.removeAllergy(a),
+                  deleteIconColor: AppColors.accentCoral,
+                );
+              }).toList(),
+            ),
         ],
       ),
     );
   }
 
+  Future<void> _showAddAllergyDialog(BuildContext context) async {
+    final controller = TextEditingController();
+    final result = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Add allergy / warning'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: const InputDecoration(
+            hintText: 'e.g. Penicillin, Peanuts, Latex',
+          ),
+          onSubmitted: (v) => Navigator.pop(ctx, v.trim()),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, controller.text.trim()),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+    if (result != null && result.isNotEmpty) {
+      appState.addAllergy(result);
+    }
+  }
+
   Widget _buildEmergencyContactsCard(BuildContext context) {
-    final sosContacts = appState.familyMembers.where((f) => f.emergencySosEnabled).toList();
+    final contacts = appState.emergencyContacts;
     return GlassContainer(
       padding: const EdgeInsets.all(20),
       borderRadius: 24,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Designated Emergency Contacts',
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
-          const SizedBox(height: 12),
-          if (sosContacts.isEmpty)
+          Row(
+            children: [
+              const Expanded(
+                child: Text(
+                  'Emergency contacts',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                ),
+              ),
+              TextButton.icon(
+                onPressed: () => _showAddContactDialog(context),
+                icon: const Icon(Icons.add_rounded, size: 18),
+                label: const Text('Add'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          if (contacts.isEmpty)
             const Text(
-              'No SOS-enabled family contacts yet. Add them under Family Sharing.',
-              style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+              'Add a name and phone number. It stays on this phone and can be dialed from SOS.',
+              style: TextStyle(fontSize: 13, height: 1.35, color: AppColors.textSecondary),
             )
           else
-            ...sosContacts.map((f) {
+            ...contacts.map((contact) {
               return Container(
                 margin: const EdgeInsets.only(bottom: 8),
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -302,16 +375,38 @@ class EmergencySafetyScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      children: [
-                        const Icon(Icons.phone_in_talk_rounded, color: AppColors.accentTeal, size: 18),
-                        const SizedBox(width: 10),
-                        Text('${f.name} (${f.relation})', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
-                      ],
+                    const Icon(Icons.phone_in_talk_rounded, color: AppColors.accentTeal, size: 18),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            contact.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+                          ),
+                          Text(
+                            '${contact.relation} · ${contact.phone}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                          ),
+                        ],
+                      ),
                     ),
-                    const Text('SOS Proxy', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.accentTeal)),
+                    IconButton(
+                      tooltip: 'Call',
+                      onPressed: () => _dialNumber(context, contact.phone),
+                      icon: const Icon(Icons.call_rounded, color: AppColors.accentTeal),
+                    ),
+                    IconButton(
+                      tooltip: 'Remove',
+                      onPressed: () => appState.removeEmergencyContact(contact.id),
+                      icon: const Icon(Icons.close_rounded, color: AppColors.textSecondary),
+                    ),
                   ],
                 ),
               );
@@ -321,9 +416,22 @@ class EmergencySafetyScreen extends StatelessWidget {
     );
   }
 
+  Future<void> _showAddContactDialog(BuildContext context) async {
+    final contact = await showDialog<_DraftContact>(
+      context: context,
+      builder: (ctx) => const _AddEmergencyContactDialog(),
+    );
+    if (contact == null) return;
+    appState.addEmergencyContact(
+      name: contact.name,
+      phone: contact.phone,
+      relation: contact.relation,
+    );
+  }
+
   Future<void> _startEmergencyCallFlow(BuildContext context) async {
-    final sosContacts = appState.familyMembers.where((f) => f.emergencySosEnabled).toList();
-    final names = sosContacts.map((f) => f.name).join(', ');
+    final contacts = appState.emergencyContacts;
+    final names = contacts.map((c) => '${c.name} (${c.phone})').join('\n');
 
     final confirmed = await showDialog<bool>(
       context: context,
@@ -332,9 +440,9 @@ class EmergencySafetyScreen extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         title: const Text('Confirm Emergency Call', style: AppTypography.titleMd),
         content: Text(
-          sosContacts.isEmpty
-              ? 'No SOS family contacts are configured. Enter a phone number to dial emergency services or a trusted contact.'
-              : 'SOS contacts: $names.\n\nEnter the phone number to dial. This opens your phone dialer.',
+          contacts.isEmpty
+              ? 'No saved contacts yet. You can still dial emergency services or type a number.'
+              : 'Saved contacts:\n$names\n\nNext you can call one of them or type another number.',
           style: AppTypography.bodyMd,
         ),
         actions: [
@@ -353,6 +461,46 @@ class EmergencySafetyScreen extends StatelessWidget {
 
     if (confirmed != true || !context.mounted) return;
 
+    if (contacts.isNotEmpty && context.mounted) {
+      final picked = await showModalBottomSheet<String>(
+        context: context,
+        builder: (ctx) => SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Padding(
+                padding: EdgeInsets.all(16),
+                child: Text('Call a saved contact', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+              ),
+              for (final contact in contacts)
+                ListTile(
+                  leading: const Icon(Icons.call_rounded),
+                  title: Text(contact.name),
+                  subtitle: Text(contact.phone),
+                  onTap: () => Navigator.pop(ctx, contact.phone),
+                ),
+              ListTile(
+                leading: const Icon(Icons.emergency_rounded),
+                title: const Text('Emergency services (112)'),
+                onTap: () => Navigator.pop(ctx, '112'),
+              ),
+              ListTile(
+                leading: const Icon(Icons.dialpad_rounded),
+                title: const Text('Type another number'),
+                onTap: () => Navigator.pop(ctx, ''),
+              ),
+            ],
+          ),
+        ),
+      );
+      if (!context.mounted || picked == null) return;
+      if (picked.isNotEmpty) {
+        await _dialNumber(context, picked);
+        return;
+      }
+    }
+
+    if (!context.mounted) return;
     final phoneController = TextEditingController();
     final number = await showDialog<String>(
       context: context,
@@ -445,12 +593,12 @@ class EmergencySafetyScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 18),
                 const Text(
-                  'HARD IMPACT DETECTED',
+                  'PRACTICE ALERT',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Colors.white, letterSpacing: 0.6),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Opening emergency dial in $countdown seconds...',
+                  'This is a practice dialer path — not a real fall sensor. Opening emergency dial in $countdown seconds...',
                   style: TextStyle(fontSize: 13, color: Colors.white.withValues(alpha: 0.8)),
                   textAlign: TextAlign.center,
                 ),
@@ -495,6 +643,87 @@ class _MedicalIdField extends StatelessWidget {
         Text(label, style: const TextStyle(fontSize: 11, color: AppColors.textTertiary, fontWeight: FontWeight.w600)),
         const SizedBox(height: 2),
         Text(value, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+      ],
+    );
+  }
+}
+
+class _DraftContact {
+  final String name;
+  final String phone;
+  final String relation;
+
+  const _DraftContact({required this.name, required this.phone, required this.relation});
+}
+
+class _AddEmergencyContactDialog extends StatefulWidget {
+  const _AddEmergencyContactDialog();
+
+  @override
+  State<_AddEmergencyContactDialog> createState() => _AddEmergencyContactDialogState();
+}
+
+class _AddEmergencyContactDialogState extends State<_AddEmergencyContactDialog> {
+  final _name = TextEditingController();
+  final _phone = TextEditingController();
+  final _relation = TextEditingController(text: 'Family');
+  String? _error;
+
+  @override
+  void dispose() {
+    _name.dispose();
+    _phone.dispose();
+    _relation.dispose();
+    super.dispose();
+  }
+
+  void _save() {
+    final name = _name.text.trim();
+    final phone = _phone.text.trim();
+    if (name.isEmpty || phone.isEmpty) {
+      setState(() => _error = 'Enter a name and phone number.');
+      return;
+    }
+    Navigator.pop(
+      context,
+      _DraftContact(
+        name: name,
+        phone: phone,
+        relation: _relation.text.trim().isEmpty ? 'Contact' : _relation.text.trim(),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Add emergency contact'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TextField(
+            controller: _name,
+            textCapitalization: TextCapitalization.words,
+            decoration: const InputDecoration(labelText: 'Name'),
+          ),
+          TextField(
+            controller: _phone,
+            keyboardType: TextInputType.phone,
+            decoration: const InputDecoration(labelText: 'Phone'),
+          ),
+          TextField(
+            controller: _relation,
+            decoration: const InputDecoration(labelText: 'Relation'),
+          ),
+          if (_error != null) ...[
+            const SizedBox(height: 10),
+            Text(_error!, style: const TextStyle(color: AppColors.accentCoral, fontWeight: FontWeight.w600)),
+          ],
+        ],
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+        TextButton(onPressed: _save, child: const Text('Save')),
       ],
     );
   }

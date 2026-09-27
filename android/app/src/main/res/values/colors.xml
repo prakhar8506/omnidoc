@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Matches the full-bleed Cura icon field so the system splash and launcher mask have no pale rim. -->
+    <color name="splash_green">#FF8DAA8C</color>
+    <color name="icon_background">#FFECEDF4</color>
+    <color name="app_background">#FFF7F5FA</color>
+</resources>

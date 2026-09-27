@@ -69,8 +69,10 @@ void main() {
       expect(appState.familyMembers.length, initialCount + 1);
     });
 
-    test('submitNewSymptomTriage generates updated assessment', () {
-      appState.submitNewSymptomTriage('Sudden chest tightness and breathlessness');
+    test('submitNewSymptomTriage generates updated assessment', () async {
+      await appState.submitNewSymptomTriageAsync(
+        'Sudden chest tightness and breathlessness',
+      );
       expect(appState.activeTriage.userQuery, contains('chest tightness'));
       expect(appState.activeTriage.urgencyBadge, contains('URGENT'));
     });

@@ -132,8 +132,9 @@ class DoctorQuestionsModal extends StatelessWidget {
                     final questions = report.recommendedDoctorQuestions.join('\n');
                     await Clipboard.setData(ClipboardData(text: questions));
                     if (!context.mounted) return;
+                    final messenger = ScaffoldMessenger.of(context);
                     Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
+                    messenger.showSnackBar(
                       SnackBar(
                         content: const Text('Discussion questions copied to clipboard!'),
                         behavior: SnackBarBehavior.floating,
