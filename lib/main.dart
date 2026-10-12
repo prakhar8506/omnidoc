@@ -22,6 +22,7 @@ import 'features/triage/screens/triage_screen.dart';
 import 'features/appointments/screens/appointments_screen.dart';
 import 'features/lab_reports/screens/lab_reports_screen.dart';
 import 'features/ai_assistant/widgets/floating_ai_button.dart';
+import 'features/family/widgets/family_invite_sheet.dart';
 import 'features/auth/screens/sign_in_screen.dart';
 import 'features/onboarding/screens/health_intake_screen.dart';
 import 'features/onboarding/screens/onboarding_baseline_screen.dart';
@@ -110,6 +111,11 @@ class _HealthCompanionAppState extends State<HealthCompanionApp> {
 
   Future<void> _handleAuthDeepLink(Uri uri) async {
     if (uri.scheme != AppBrand.deepLinkScheme) return;
+    if (uri.host == 'family-invite') {
+      final code = uri.queryParameters['code'] ?? '';
+      await _appState.openFamilyInvite(code);
+      return;
+    }
     if (!_authLinkHosts.contains(uri.host)) return;
     try {
       await Supabase.instance.client.auth.getSessionFromUrl(uri);
@@ -217,6 +223,7 @@ class HealthCompanionShell extends StatelessWidget {
     return ListenableBuilder(
       listenable: appState,
       builder: (context, _) {
+        FamilyInviteSheet.presentIncoming(context, appState);
         final currentTab = appState.currentTabIndex;
 
         final screens = [

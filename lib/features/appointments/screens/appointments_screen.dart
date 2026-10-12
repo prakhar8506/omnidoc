@@ -11,7 +11,7 @@ import '../../fitness/widgets/training_coach_panel.dart';
 import '../../fitness/widgets/watch_signals_panel.dart';
 import '../../fitness/widgets/todays_movement_panel.dart';
 import '../widgets/book_appointment_modal.dart';
-import '../widgets/family_member_modal.dart';
+import '../../family/widgets/family_invite_sheet.dart';
 import 'find_care_screen.dart';
 import '../../../core/models/clinic_doctor.dart';
 
@@ -686,6 +686,7 @@ class AppointmentsScreen extends StatelessWidget {
   }
 
   Widget _buildFamilySharingSection(BuildContext context) {
+    appState.refreshFamilyCircle();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -698,7 +699,7 @@ class AppointmentsScreen extends StatelessWidget {
                   Text('Family Health Sharing', style: AppTypography.titleLg),
                   SizedBox(height: 2),
                   Text(
-                    'Local demo sharing — real encrypted invites coming soon',
+                    'Invite by link or WhatsApp. Accepted people show on both phones.',
                     style: AppTypography.labelSm,
                   ),
                 ],
@@ -715,7 +716,7 @@ class AppointmentsScreen extends StatelessWidget {
               ),
               icon: const Icon(Icons.person_add_rounded, size: 16),
               label: Text('Invite', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
-              onPressed: () => FamilyMemberModal.show(context, appState),
+              onPressed: () => FamilyInviteSheet.show(context, appState),
             ),
           ],
         ),
@@ -758,7 +759,15 @@ class AppointmentsScreen extends StatelessWidget {
         ),
         const SizedBox(height: 16),
 
-        if (appState.familyMembers.isEmpty)
+        if (appState.pendingFamilyInvites.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 14),
+            child: Text(
+              '${appState.pendingFamilyInvites.length} invite${appState.pendingFamilyInvites.length == 1 ? '' : 's'} sent. They appear here after they accept.',
+              style: TextStyle(fontSize: 13, height: 1.4, color: Theme.of(context).colorScheme.onSurface),
+            ),
+          ),
+        if (appState.familyMembers.isEmpty && appState.pendingFamilyInvites.isEmpty)
           const Padding(
             padding: EdgeInsets.only(bottom: 14),
             child: Text(

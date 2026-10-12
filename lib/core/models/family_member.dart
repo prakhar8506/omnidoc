@@ -9,6 +9,8 @@ class FamilyMember {
   bool shareLabReports;
   bool sharePrescriptions;
   bool emergencySosEnabled;
+  final String? linkedUserId;
+  final String? email;
 
   FamilyMember({
     required this.id,
@@ -21,7 +23,11 @@ class FamilyMember {
     this.shareLabReports = true,
     this.sharePrescriptions = true,
     this.emergencySosEnabled = true,
+    this.linkedUserId,
+    this.email,
   });
+
+  bool get isConnected => linkedUserId != null && linkedUserId!.isNotEmpty;
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -34,6 +40,8 @@ class FamilyMember {
         'shareLabReports': shareLabReports,
         'sharePrescriptions': sharePrescriptions,
         'emergencySosEnabled': emergencySosEnabled,
+        'linkedUserId': linkedUserId,
+        'email': email,
       };
 
   factory FamilyMember.fromJson(Map<String, dynamic> json) {
@@ -48,6 +56,8 @@ class FamilyMember {
       shareLabReports: json['shareLabReports'] as bool? ?? true,
       sharePrescriptions: json['sharePrescriptions'] as bool? ?? true,
       emergencySosEnabled: json['emergencySosEnabled'] as bool? ?? true,
+      linkedUserId: json['linkedUserId'] as String?,
+      email: json['email'] as String?,
     );
   }
 }

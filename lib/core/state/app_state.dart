@@ -30,6 +30,7 @@ import '../analytics/analytics_service.dart';
 import '../network/supabase_repository.dart';
 import '../data/supabase_sync_service.dart';
 import '../../features/wearables/services/wearable_service.dart';
+import '../../features/family/services/family_invite_service.dart';
 import '../../features/ai_assistant/services/ai_copilot_service.dart';
 
 class AppState extends ChangeNotifier {
@@ -288,6 +289,10 @@ class AppState extends ChangeNotifier {
   final List<MedicationItem> medications = [];
   final List<Appointment> appointments = [];
   final List<FamilyMember> familyMembers = [];
+  List<PendingFamilyInvite> pendingFamilyInvites = [];
+  FamilyInvitePreview? incomingInvite;
+  String? familyInviteError;
+  DateTime? _familyRefreshAt;
   final List<PrescriptionDocument> prescriptions = [];
 
   int selectedDateIndex = DateTime.now().weekday - 1;
@@ -538,6 +543,7 @@ class AppState extends ChangeNotifier {
       heavyMedications.clear();
       await _persistCurrentUserData();
       recalculateRecoveryEngine();
+      unawaited(_resumePendingFamilyInvite());
       return;
     }
 
@@ -670,6 +676,8 @@ class AppState extends ChangeNotifier {
 
     historicalDaysCount = _computeHistoricalDays();
     recalculateRecoveryEngine();
+    unawaited(refreshFamilyCircle(force: true));
+    unawaited(_resumePendingFamilyInvite());
   }
 
   List<Map<String, dynamic>> _decodeMapList(dynamic raw) {
@@ -774,6 +782,8 @@ class AppState extends ChangeNotifier {
     medications.clear();
     appointments.clear();
     familyMembers.clear();
+    pendingFamilyInvites = [];
+    incomingInvite = null;
     prescriptions.clear();
     activeReport = null;
     appointmentSegmentIndex = 0;
@@ -1494,6 +1504,92 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<String> createFamilyInvite(String relation) async {
+    final id = userId;
+    if (id == null) throw StateError('Sign in before inviting someone.');
+    final code = await FamilyInviteService.create(
+      userId: id,
+      name: userName.isEmpty ? 'Cura member' : userName,
+      email: userEmail,
+      relation: relation,
+    );
+    pendingFamilyInvites = [
+      PendingFamilyInvite(code: code, relation: relation),
+      ...pendingFamilyInvites.where((invite) => invite.code != code),
+    ];
+    notifyListeners();
+    return code;
+  }
+
+  Future<void> refreshFamilyCircle({bool force = false}) async {
+    final id = userId;
+    if (!_isSignedIn || id == null) return;
+    final now = DateTime.now();
+    if (!force &&
+        _familyRefreshAt != null &&
+        now.difference(_familyRefreshAt!) < const Duration(seconds: 15)) {
+      return;
+    }
+    _familyRefreshAt = now;
+    try {
+      final snapshot = await FamilyInviteService.list(id);
+      familyMembers.removeWhere((member) => member.isConnected);
+      familyMembers.addAll(snapshot.members);
+      pendingFamilyInvites = snapshot.pending;
+      await _persistCurrentUserData();
+      notifyListeners();
+    } catch (e) {
+      debugPrint('[AppState] family refresh skipped: $e');
+    }
+  }
+
+  Future<void> openFamilyInvite(String code) async {
+    final trimmed = code.trim().toLowerCase();
+    if (!RegExp(r'^[a-f0-9]{32}$').hasMatch(trimmed)) return;
+    if (!_isSignedIn || userId == null) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('hc_pending_family_code', trimmed);
+      return;
+    }
+    try {
+      incomingInvite = await FamilyInviteService.preview(trimmed);
+      familyInviteError = null;
+    } catch (e) {
+      familyInviteError = e is StateError ? e.message : FamilyInviteService.unavailable;
+    }
+    notifyListeners();
+  }
+
+  FamilyInvitePreview? takeIncomingInvite() {
+    final invite = incomingInvite;
+    incomingInvite = null;
+    return invite;
+  }
+
+  void clearFamilyInviteError() {
+    familyInviteError = null;
+  }
+
+  Future<void> acceptFamilyInvite(String code) async {
+    final id = userId;
+    if (id == null) throw StateError('Sign in before accepting an invite.');
+    await FamilyInviteService.accept(
+      code: code,
+      userId: id,
+      name: userName.isEmpty ? 'Cura member' : userName,
+      email: userEmail,
+    );
+    await refreshFamilyCircle(force: true);
+  }
+
+  Future<void> _resumePendingFamilyInvite() async {
+    final prefs = await SharedPreferences.getInstance();
+    final code = prefs.getString('hc_pending_family_code') ?? '';
+    if (code.isEmpty || !_isSignedIn) return;
+    await prefs.remove('hc_pending_family_code');
+    await openFamilyInvite(code);
+  }
+
   void addFamilyMember(FamilyMember member) {
     familyMembers.add(member);
     _persistCurrentUserData();
@@ -1501,7 +1597,16 @@ class AppState extends ChangeNotifier {
   }
 
   void removeFamilyMember(String id) {
+    FamilyMember? removed;
+    for (final member in familyMembers) {
+      if (member.id == id) removed = member;
+    }
     familyMembers.removeWhere((m) => m.id == id);
+    final linkedId = removed?.linkedUserId;
+    final ownerId = userId;
+    if (linkedId != null && linkedId.isNotEmpty && ownerId != null) {
+      unawaited(FamilyInviteService.remove(userId: ownerId, memberId: linkedId));
+    }
     _persistCurrentUserData();
     notifyListeners();
   }

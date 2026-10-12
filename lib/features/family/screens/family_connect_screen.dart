@@ -4,6 +4,7 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/state/app_state.dart';
 import '../../../core/models/family_member.dart';
 import '../../../core/widgets/avatar_image.dart';
+import '../widgets/family_invite_sheet.dart';
 
 class FamilyConnectScreen extends StatefulWidget {
   final AppState appState;
@@ -19,11 +20,18 @@ class FamilyConnectScreen extends StatefulWidget {
 
 class _FamilyConnectScreenState extends State<FamilyConnectScreen> {
   @override
+  void initState() {
+    super.initState();
+    widget.appState.refreshFamilyCircle(force: true);
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final sheet = Theme.of(context).colorScheme.surface;
     return Scaffold(
-      backgroundColor: AppColors.surface,
+      backgroundColor: sheet,
       appBar: AppBar(
-        backgroundColor: AppColors.surface,
+        backgroundColor: sheet,
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
@@ -163,7 +171,7 @@ class _FamilyConnectScreenState extends State<FamilyConnectScreen> {
                     ),
                     SizedBox(height: 2),
                     Text(
-                      'Kept on this device',
+                      'Connected accounts',
                       style: TextStyle(
                         fontSize: 12,
                         color: AppColors.textSecondary,
@@ -176,9 +184,8 @@ class _FamilyConnectScreenState extends State<FamilyConnectScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            'Note down the people you care for and what you would be willing to '
-            'share with each of them. Nothing is sent anywhere — these records and '
-            'preferences stay on your phone until account-to-account sharing ships.',
+            'Invite someone with a link or WhatsApp. When they accept in Cura, '
+            'you both see each other here. A name saved only on this phone stays on this phone.',
             style: TextStyle(
               fontSize: 13,
               height: 1.45,
@@ -190,8 +197,8 @@ class _FamilyConnectScreenState extends State<FamilyConnectScreen> {
             spacing: 8,
             runSpacing: 8,
             children: [
-              _buildBadgePill('Stays on device', Icons.phone_iphone_rounded),
-              _buildBadgePill('Nothing shared yet', Icons.lock_outline_rounded),
+              _buildBadgePill('Invite link', Icons.link_rounded),
+              _buildBadgePill('WhatsApp', Icons.chat_rounded),
             ],
           ),
         ],
@@ -422,12 +429,19 @@ class _FamilyConnectScreenState extends State<FamilyConnectScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Add a family member', style: AppTypography.titleMd),
+          Text('Invite a family member', style: AppTypography.titleMd.copyWith(color: Theme.of(context).colorScheme.onSurface)),
           const SizedBox(height: 8),
           Text(
-            'Saves their name and your sharing preferences on this phone so they are ready when account-to-account sharing ships.',
+            'They get a link. After they accept, both of your Family lists show the connection.',
             style: TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.35),
           ),
+          if (widget.appState.pendingFamilyInvites.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Text(
+              '${widget.appState.pendingFamilyInvites.length} invite${widget.appState.pendingFamilyInvites.length == 1 ? '' : 's'} waiting to be accepted.',
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Theme.of(context).colorScheme.onSurface),
+            ),
+          ],
           const SizedBox(height: 16),
           SizedBox(
             width: double.infinity,
@@ -441,10 +455,18 @@ class _FamilyConnectScreenState extends State<FamilyConnectScreen> {
               ),
               icon: const Icon(Icons.person_add_rounded, size: 18),
               label: Text(
-                'Add family member',
+                'Invite by link or WhatsApp',
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
               ),
+              onPressed: () => FamilyInviteSheet.show(context, widget.appState),
+            ),
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            child: TextButton(
               onPressed: () => _showInviteDialog(),
+              child: const Text('Save a name only on this phone'),
             ),
           ),
         ],
@@ -465,7 +487,7 @@ class _FamilyConnectScreenState extends State<FamilyConnectScreen> {
           SizedBox(width: 10),
           Expanded(
             child: Text(
-              'These preferences are stored on this phone only. No family member can see your records until account-to-account sharing is released.',
+              'Accepted invites show on both phones. Names you save without an invite stay on this phone only.',
               style: TextStyle(fontSize: 11, color: AppColors.textSecondary, height: 1.3),
             ),
           ),
@@ -478,9 +500,9 @@ class _FamilyConnectScreenState extends State<FamilyConnectScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: AppColors.surfaceCard,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: Text('Remove Family Member?', style: AppTypography.titleMd),
+        title: Text('Remove Family Member?', style: AppTypography.titleMd.copyWith(color: Theme.of(context).colorScheme.onSurface)),
         content: Text(
           'This removes ${member.name} and their sharing preferences from this phone.',
           style: TextStyle(fontSize: 14, color: AppColors.textSecondary, height: 1.4),
@@ -517,9 +539,9 @@ class _FamilyConnectScreenState extends State<FamilyConnectScreen> {
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) {
           return AlertDialog(
-            backgroundColor: AppColors.surfaceCard,
+            backgroundColor: Theme.of(context).colorScheme.surface,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-            title: Text('Add Family Member', style: AppTypography.titleMd),
+            title: Text('Add Family Member', style: AppTypography.titleMd.copyWith(color: Theme.of(context).colorScheme.onSurface)),
             content: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -535,7 +557,9 @@ class _FamilyConnectScreenState extends State<FamilyConnectScreen> {
                       hintText: 'e.g. Alex Rivera',
                       hintStyle: TextStyle(color: AppColors.textSecondary),
                       filled: true,
-                      fillColor: AppColors.surfaceContainerLow,
+                      fillColor: Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFF2A2C3A)
+                          : AppColors.surfaceContainerLow,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide.none,

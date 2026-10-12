@@ -44,12 +44,15 @@ class _MoodCheckScreenState extends State<MoodCheckScreen> {
   @override
   Widget build(BuildContext context) {
     final result = _result;
+    final ink = Theme.of(context).colorScheme.onSurface;
+    final sheet = Theme.of(context).colorScheme.surface;
     return Scaffold(
-      backgroundColor: AppColors.surface,
+      backgroundColor: sheet,
       appBar: AppBar(
-        backgroundColor: AppColors.surface,
+        backgroundColor: sheet,
+        foregroundColor: ink,
         elevation: 0,
-        title: const Text('Mood check', style: TextStyle(fontWeight: FontWeight.w700)),
+        title: Text('Mood check', style: TextStyle(fontWeight: FontWeight.w700, color: ink)),
       ),
       body: SafeArea(
         child: result == null ? _question() : _done(result),
@@ -59,20 +62,24 @@ class _MoodCheckScreenState extends State<MoodCheckScreen> {
 
   Widget _question() {
     final question = moodQuestions[_index];
+    final ink = Theme.of(context).colorScheme.onSurface;
+    final muted = Theme.of(context).brightness == Brightness.dark
+        ? const Color(0xFFC8C4D8)
+        : AppColors.textSecondary;
     return ListView(
       padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
       children: [
         Text(
           'Question ${_index + 1} of ${moodQuestions.length}',
-          style: const TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.w600),
+          style: TextStyle(color: muted, fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 8),
-        const Text(
+        Text(
           'This is a wellness screening, not a diagnosis of depression. Answer for the last two weeks. The time you take is part of the score.',
-          style: TextStyle(fontSize: 13, height: 1.4, color: AppColors.textSecondary),
+          style: TextStyle(fontSize: 13, height: 1.4, color: muted),
         ),
         const SizedBox(height: 22),
-        Text(question.prompt, style: AppTypography.titleLg),
+        Text(question.prompt, style: AppTypography.titleLg.copyWith(color: ink)),
         const SizedBox(height: 18),
         for (var i = 0; i < moodChoices.length; i++)
           Padding(
@@ -86,7 +93,7 @@ class _MoodCheckScreenState extends State<MoodCheckScreen> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 ),
                 onPressed: () => _choose(i),
-                child: Text(moodChoices[i], style: const TextStyle(fontWeight: FontWeight.w700)),
+                child: Text(moodChoices[i], style: TextStyle(fontWeight: FontWeight.w700, color: ink)),
               ),
             ),
           ),
@@ -95,21 +102,25 @@ class _MoodCheckScreenState extends State<MoodCheckScreen> {
   }
 
   Widget _done(MoodCheckResult result) {
+    final ink = Theme.of(context).colorScheme.onSurface;
+    final muted = Theme.of(context).brightness == Brightness.dark
+        ? const Color(0xFFC8C4D8)
+        : AppColors.textSecondary;
     return ListView(
       padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
       children: [
-        Text(result.quality, style: AppTypography.editorialMd),
+        Text(result.quality, style: AppTypography.editorialMd.copyWith(color: ink)),
         const SizedBox(height: 8),
         Text(
           'Check score ${result.checkScore} · answers ${result.answerScore}/24 · pace ${result.pace}',
-          style: const TextStyle(fontWeight: FontWeight.w700),
+          style: TextStyle(fontWeight: FontWeight.w700, color: ink),
         ),
         const SizedBox(height: 12),
-        Text(result.summary, style: const TextStyle(height: 1.45, fontSize: 15)),
+        Text(result.summary, style: TextStyle(height: 1.45, fontSize: 15, color: ink)),
         const SizedBox(height: 16),
-        const Text(
+        Text(
           'If you might hurt yourself, contact local emergency services now — 112 in India, or 911 / 988 in the US. AASRA +91 9820466726 and iCall 9152987821 are crisis lines. This screen cannot diagnose depression.',
-          style: TextStyle(height: 1.4, color: AppColors.textSecondary),
+          style: TextStyle(height: 1.4, color: muted),
         ),
         if (result.seeDoctor) ...[
           const SizedBox(height: 18),

@@ -50,6 +50,12 @@
                 <data android:scheme="cura" android:host="auth-callback"/>
                 <data android:scheme="cura" android:host="auth"/>
             </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="cura" android:host="family-invite"/>
+            </intent-filter>
         </activity>
         <activity-alias
             android:name="ViewPermissionUsageActivity"

@@ -175,7 +175,7 @@ class _JournalFeelingScreenState extends State<JournalFeelingScreen> with Single
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 140),
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 188),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -534,7 +534,9 @@ class _JournalFeelingScreenState extends State<JournalFeelingScreen> with Single
                     ),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                    backgroundColor: Colors.white.withValues(alpha: 0.7),
+                    backgroundColor: Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFF2A2C3A)
+                        : Colors.white.withValues(alpha: 0.7),
                   ),
                   icon: const Icon(Icons.auto_awesome_rounded, size: 18),
                   label: Text(
@@ -551,7 +553,7 @@ class _JournalFeelingScreenState extends State<JournalFeelingScreen> with Single
             width: double.infinity,
             child: OutlinedButton.icon(
               style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.textPrimary,
+                foregroundColor: Theme.of(context).colorScheme.onSurface,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               ),
@@ -596,9 +598,15 @@ class _JournalFeelingScreenState extends State<JournalFeelingScreen> with Single
               margin: const EdgeInsets.only(bottom: 12),
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.75),
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFF1C1E2A)
+                    : Colors.white.withValues(alpha: 0.75),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.9)),
+                border: Border.all(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Colors.white.withValues(alpha: 0.08)
+                      : Colors.white.withValues(alpha: 0.9),
+                ),
                 boxShadow: const [
                   BoxShadow(
                     color: Color(0x08000000),
@@ -731,9 +739,15 @@ class _JournalFeelingScreenState extends State<JournalFeelingScreen> with Single
                 margin: const EdgeInsets.only(bottom: 14),
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.82),
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? const Color(0xFF1C1E2A)
+                      : Colors.white.withValues(alpha: 0.82),
                   borderRadius: BorderRadius.circular(22),
-                  border: Border.all(color: Colors.white),
+                  border: Border.all(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.white.withValues(alpha: 0.08)
+                        : Colors.white,
+                  ),
                   boxShadow: const [
                     BoxShadow(
                       color: Color(0x09000000),
