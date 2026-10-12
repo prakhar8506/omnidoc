@@ -174,6 +174,9 @@ class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
             child: Container(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.sizeOf(dialogContext).height * 0.9,
+              ),
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
                 color: Theme.of(dialogContext).brightness == Brightness.dark
@@ -185,7 +188,8 @@ class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
                   width: 1.5,
                 ),
               ),
-              child: Column(
+              child: SingleChildScrollView(
+                child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Center(
@@ -382,8 +386,9 @@ class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
                       },
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16 + MediaQuery.paddingOf(dialogContext).bottom),
                 ],
+              ),
               ),
             ),
           ),

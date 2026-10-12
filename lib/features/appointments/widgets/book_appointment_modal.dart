@@ -116,7 +116,9 @@ class _BookAppointmentModalState extends State<BookAppointmentModal> {
         hintText: hint,
         hintStyle: AppTypography.labelSm,
         filled: true,
-        fillColor: AppColors.surfaceContainerLow,
+        fillColor: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF2A2C3A)
+            : AppColors.surfaceContainerLow,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide.none,
@@ -127,11 +129,13 @@ class _BookAppointmentModalState extends State<BookAppointmentModal> {
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
+    final ink = Theme.of(context).colorScheme.onSurface;
+    final dark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       height: MediaQuery.of(context).size.height * 0.82,
-      decoration: const BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
       ),
       child: Column(
         children: [
@@ -150,8 +154,8 @@ class _BookAppointmentModalState extends State<BookAppointmentModal> {
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
             child: Row(
               children: [
-                const Expanded(
-                  child: Text('Add visit reminder', style: AppTypography.titleLg),
+                Expanded(
+                  child: Text('Add visit reminder', style: AppTypography.titleLg.copyWith(color: ink)),
                 ),
                 IconButton(
                   icon: const Icon(Icons.close_rounded, color: AppColors.textSecondary),
@@ -168,7 +172,7 @@ class _BookAppointmentModalState extends State<BookAppointmentModal> {
                 Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: AppColors.surfaceContainerLow,
+                    color: dark ? const Color(0xFF2A2C3A) : AppColors.surfaceContainerLow,
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Row(
@@ -186,7 +190,7 @@ class _BookAppointmentModalState extends State<BookAppointmentModal> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                const Text('Doctor or clinic', style: AppTypography.labelMd),
+                Text('Doctor or clinic', style: AppTypography.labelMd.copyWith(color: ink)),
                 const SizedBox(height: 8),
                 TextField(
                   controller: _doctorController,
@@ -194,7 +198,7 @@ class _BookAppointmentModalState extends State<BookAppointmentModal> {
                   decoration: _field('e.g. Dr. Rao'),
                 ),
                 const SizedBox(height: 12),
-                const Text('Hospital or clinic name (optional)', style: AppTypography.labelMd),
+                Text('Hospital or clinic name (optional)', style: AppTypography.labelMd.copyWith(color: ink)),
                 const SizedBox(height: 8),
                 TextField(
                   controller: _clinicController,
@@ -202,7 +206,7 @@ class _BookAppointmentModalState extends State<BookAppointmentModal> {
                   decoration: _field('e.g. City Care Clinic'),
                 ),
                 const SizedBox(height: 12),
-                const Text('Specialty (optional)', style: AppTypography.labelMd),
+                Text('Specialty (optional)', style: AppTypography.labelMd.copyWith(color: ink)),
                 const SizedBox(height: 8),
                 TextField(
                   controller: _specialtyController,
@@ -210,7 +214,7 @@ class _BookAppointmentModalState extends State<BookAppointmentModal> {
                   decoration: _field('e.g. Cardiology'),
                 ),
                 const SizedBox(height: 16),
-                const Text('When', style: AppTypography.labelMd),
+                Text('When', style: AppTypography.labelMd.copyWith(color: ink)),
                 const SizedBox(height: 8),
                 Row(
                   children: [
@@ -240,7 +244,7 @@ class _BookAppointmentModalState extends State<BookAppointmentModal> {
                   ],
                 ),
                 const SizedBox(height: 16),
-                const Text('Visit format', style: AppTypography.labelMd),
+                Text('Visit format', style: AppTypography.labelMd.copyWith(color: ink)),
                 const SizedBox(height: 8),
                 Row(
                   children: [
@@ -284,7 +288,7 @@ class _BookAppointmentModalState extends State<BookAppointmentModal> {
                   ],
                 ),
                 const SizedBox(height: 16),
-                const Text('Reason for visit / symptoms', style: AppTypography.labelMd),
+                Text('Reason for visit / symptoms', style: AppTypography.labelMd.copyWith(color: ink)),
                 const SizedBox(height: 8),
                 TextField(
                   controller: _reasonController,

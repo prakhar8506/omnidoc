@@ -35,7 +35,7 @@ class HomeScreen extends StatelessWidget {
       listenable: appState,
       builder: (context, _) {
         return SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 156),
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 200),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -252,15 +252,6 @@ class HomeScreen extends StatelessWidget {
             ),
           ],
         ),
-        if (!appState.hasPremium)
-          Align(
-            alignment: Alignment.centerLeft,
-            child: TextButton.icon(
-              onPressed: () => PremiumScreen.show(context, appState),
-              icon: const Icon(Icons.workspace_premium_rounded, size: 16),
-              label: const Text('Go Premium'),
-            ),
-          ),
         if (name.isNotEmpty) ...[
           const SizedBox(height: 2),
           Text(
@@ -970,17 +961,18 @@ class HomeScreen extends StatelessWidget {
 
   /// Ambient Wellness Card with Glowing Gradient Mesh, Tip pill, Active pill, Weather pill
   Widget _buildAmbientWellnessCard(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final pill = dark ? const Color(0xFF2A2C3A) : Colors.white.withValues(alpha: 0.85);
+    final pillInk = dark ? Theme.of(context).colorScheme.onSurface : AppColors.textPrimary;
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(28),
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            Color(0xFFE8E5FE),
-            Color(0xFFFDE8EF),
-            Color(0xFFEDE0FA),
-          ],
+          colors: dark
+              ? const [Color(0xFF1C1E2A), Color(0xFF241C28), Color(0xFF1A1C2C)]
+              : const [Color(0xFFE8E5FE), Color(0xFFFDE8EF), Color(0xFFEDE0FA)],
         ),
         boxShadow: AppColors.glassShadow,
       ),
@@ -1004,10 +996,10 @@ class HomeScreen extends StatelessWidget {
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surface,
+                    color: pill,
                     borderRadius: BorderRadius.circular(999),
                     border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.9),
+                      color: dark ? Colors.white.withValues(alpha: 0.08) : Colors.white.withValues(alpha: 0.9),
                       width: 1,
                     ),
                   ),
@@ -1025,7 +1017,7 @@ class HomeScreen extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.9),
+                            color: pillInk,
                             letterSpacing: -0.1,
                           ),
                           overflow: TextOverflow.ellipsis,
@@ -1066,10 +1058,10 @@ class HomeScreen extends StatelessWidget {
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
                           decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.65),
+                            color: pill,
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.85),
+                              color: dark ? Colors.white.withValues(alpha: 0.08) : Colors.white.withValues(alpha: 0.85),
                               width: 1,
                             ),
                           ),
@@ -1097,7 +1089,7 @@ class HomeScreen extends StatelessWidget {
                                   style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w700,
-                                    color: Theme.of(context).colorScheme.onSurface,
+                                    color: pillInk,
                                   ),
                                 ),
                               ),
@@ -1118,10 +1110,10 @@ class HomeScreen extends StatelessWidget {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.65),
+                          color: pill,
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.85),
+                            color: dark ? Colors.white.withValues(alpha: 0.08) : Colors.white.withValues(alpha: 0.85),
                             width: 1,
                           ),
                         ),
@@ -1522,7 +1514,9 @@ class HomeScreen extends StatelessWidget {
                 child: BouncingTap(
                   onTap: () => appState.toggleMedication(med.id),
                   child: Material(
-                    color: Colors.white.withValues(alpha: 0.65),
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFF2A2C3A)
+                        : Colors.white.withValues(alpha: 0.65),
                     borderRadius: BorderRadius.circular(18),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),

@@ -69,9 +69,29 @@ class WearableService {
       } catch (e) {
         debugPrint('[WearableService] extended auth: $e');
       }
+      try {
+        await _request(extraTypes);
+      } catch (e) {
+        debugPrint('[WearableService] extra auth: $e');
+      }
     }
     return granted;
   }
+
+  /// Types a watch may or may not share. A failed request here must not
+  /// block heart rate, steps, or sleep.
+  static const List<HealthDataType> extraTypes = [
+    HealthDataType.RESPIRATORY_RATE,
+    HealthDataType.SKIN_TEMPERATURE,
+    HealthDataType.BODY_TEMPERATURE,
+    HealthDataType.ELECTROCARDIOGRAM,
+    HealthDataType.ATRIAL_FIBRILLATION_BURDEN,
+    HealthDataType.BLOOD_GLUCOSE,
+    HealthDataType.WORKOUT,
+    HealthDataType.SLEEP_AWAKE,
+    HealthDataType.HEART_RATE_VARIABILITY_RMSSD,
+    HealthDataType.WALKING_HEART_RATE,
+  ];
 
   static Future<bool> _request(List<HealthDataType> types) async {
     final permissions = types.map((_) => HealthDataAccess.READ).toList();
@@ -274,4 +294,185 @@ class WearableService {
       return [];
     }
   }
+
+  /// One row per signal. Missing rows stay unavailable — nothing is estimated.
+  static Future<List<WatchSignal>> fetchWatchSignals() async {
+    if (!isPlatformSupported) {
+      return const [
+        WatchSignal(
+          name: 'Wearable',
+          detail: 'Health sync needs Android Health Connect or Apple Health.',
+          available: false,
+        ),
+      ];
+    }
+
+    final now = DateTime.now();
+    final start = now.subtract(const Duration(hours: 36));
+
+    Future<List<HealthDataPoint>> read(HealthDataType type) async {
+      try {
+        return await _health.getHealthDataFromTypes(
+          types: [type],
+          startTime: start,
+          endTime: now,
+        );
+      } catch (e) {
+        debugPrint('[WearableService] signal ${type.name}: $e');
+        return const [];
+      }
+    }
+
+    String missing(String what) =>
+        'Your wearable did not provide $what, or Cura could not fetch it from your watch or tracker.';
+
+    final out = <WatchSignal>[];
+
+    void addDuration(String name, List<HealthDataPoint> points) {
+      var minutes = 0;
+      for (final point in points) {
+        final span = point.dateTo.difference(point.dateFrom).inMinutes;
+        if (span > 0) minutes += span;
+      }
+      if (minutes <= 0) {
+        out.add(WatchSignal(name: name, detail: missing(name.toLowerCase()), available: false));
+        return;
+      }
+      final hours = minutes ~/ 60;
+      final remain = minutes % 60;
+      final label = hours > 0 ? '${hours}h ${remain}m' : '$remain min';
+      out.add(WatchSignal(
+        name: name,
+        detail: '$label recorded by your watch in the last 36 hours.',
+        available: true,
+      ));
+    }
+
+    void addNumber(String name, List<HealthDataPoint> points, String unit, {bool percent = false}) {
+      double? last;
+      for (final point in points) {
+        final value = point.value;
+        if (value is NumericHealthValue) {
+          final n = value.numericValue.toDouble();
+          if (n != 0) last = n;
+        }
+      }
+      if (last == null) {
+        out.add(WatchSignal(name: name, detail: missing(name.toLowerCase()), available: false));
+        return;
+      }
+      final shown = percent && last <= 1 ? last * 100 : last;
+      final text = shown >= 10 ? shown.toStringAsFixed(0) : shown.toStringAsFixed(1);
+      out.add(WatchSignal(
+        name: name,
+        detail: '$text $unit from your watch.',
+        available: true,
+      ));
+    }
+
+    addDuration('Sleep', await read(HealthDataType.SLEEP_ASLEEP));
+    addDuration('Deep sleep', await read(HealthDataType.SLEEP_DEEP));
+    addDuration('REM sleep', await read(HealthDataType.SLEEP_REM));
+    addDuration('Light sleep', await read(HealthDataType.SLEEP_LIGHT));
+    addDuration('Awake time', await read(HealthDataType.SLEEP_AWAKE));
+    addNumber('Heart rate', await read(HealthDataType.HEART_RATE), 'bpm');
+    addNumber('Resting heart rate', await read(HealthDataType.RESTING_HEART_RATE), 'bpm');
+    addNumber('Walking heart rate', await read(HealthDataType.WALKING_HEART_RATE), 'bpm');
+    addNumber('Heart-rate variability', await read(HealthDataType.HEART_RATE_VARIABILITY_SDNN), 'ms');
+    addNumber('Steps', await read(HealthDataType.STEPS), 'steps');
+    addNumber('Blood oxygen', await read(HealthDataType.BLOOD_OXYGEN), '%', percent: true);
+    addNumber('Respiratory rate', await read(HealthDataType.RESPIRATORY_RATE), 'breaths/min');
+    addNumber('Skin temperature', await read(HealthDataType.SKIN_TEMPERATURE), '°C');
+    addNumber('Body temperature', await read(HealthDataType.BODY_TEMPERATURE), '°C');
+    addNumber('Blood glucose', await read(HealthDataType.BLOOD_GLUCOSE), 'mg/dL');
+
+    final systolic = _lastNumber(await read(HealthDataType.BLOOD_PRESSURE_SYSTOLIC));
+    final diastolic = _lastNumber(await read(HealthDataType.BLOOD_PRESSURE_DIASTOLIC));
+    if (systolic == null || diastolic == null) {
+      out.add(WatchSignal(name: 'Blood pressure', detail: missing('blood pressure'), available: false));
+    } else {
+      out.add(WatchSignal(
+        name: 'Blood pressure',
+        detail: '${systolic.round()}/${diastolic.round()} mmHg stored by your watch. Cura did not estimate it.',
+        available: true,
+      ));
+    }
+
+    final ecg = await read(HealthDataType.ELECTROCARDIOGRAM);
+    out.add(ecg.isEmpty
+        ? WatchSignal(name: 'ECG', detail: missing('an ECG tracing'), available: false)
+        : const WatchSignal(
+            name: 'ECG',
+            detail: 'Your watch stored an ECG tracing. Cura shows that it exists and does not turn it into a diagnosis.',
+            available: true,
+          ));
+
+    addNumber('Atrial fibrillation burden', await read(HealthDataType.ATRIAL_FIBRILLATION_BURDEN), '%', percent: true);
+
+    final workouts = await read(HealthDataType.WORKOUT);
+    out.add(workouts.isEmpty
+        ? WatchSignal(name: 'Workouts', detail: missing('workouts'), available: false)
+        : WatchSignal(
+            name: 'Workouts',
+            detail: '${workouts.length} workout${workouts.length == 1 ? '' : 's'} recorded by your watch in the last 36 hours.',
+            available: true,
+          ));
+
+    final hrvOnFile = out.any((s) => s.name == 'Heart-rate variability' && s.available);
+    final rhrOnFile = out.any((s) => s.name == 'Resting heart rate' && s.available);
+    out.add(WatchSignal(
+      name: 'Stress',
+      detail: hrvOnFile && rhrOnFile
+          ? 'Heart-rate variability and resting heart rate are on file. Cura does not turn them into a stress score.'
+          : 'A stress view needs heart-rate variability from your watch. ${missing('that signal')}',
+      available: hrvOnFile && rhrOnFile,
+    ));
+
+    final stepsOnFile = out.any((s) => s.name == 'Steps' && s.available);
+    final workoutsOnFile = out.any((s) => s.name == 'Workouts' && s.available);
+    out.add(WatchSignal(
+      name: 'Day strain',
+      detail: stepsOnFile || workoutsOnFile
+          ? 'Steps or workouts are on file. Cura does not convert them into a 0–21 strain score.'
+          : missing('steps or workouts for a strain view'),
+      available: stepsOnFile || workoutsOnFile,
+    ));
+
+    out.add(const WatchSignal(
+      name: 'VO2 max',
+      detail: 'Health Connect does not share a VO2 max reading with Cura, so this watch cannot supply it here. Cura will not invent one.',
+      available: false,
+    ));
+    out.add(const WatchSignal(
+      name: 'Biological age',
+      detail: 'Cura does not calculate a biological age. A connected watch does not provide that number, and Cura will not invent one.',
+      available: false,
+    ));
+
+    return out;
+  }
+
+  static double? _lastNumber(List<HealthDataPoint> points) {
+    double? last;
+    for (final point in points) {
+      final value = point.value;
+      if (value is NumericHealthValue) {
+        final n = value.numericValue.toDouble();
+        if (n != 0) last = n;
+      }
+    }
+    return last;
+  }
+}
+
+class WatchSignal {
+  const WatchSignal({
+    required this.name,
+    required this.detail,
+    required this.available,
+  });
+
+  final String name;
+  final String detail;
+  final bool available;
 }

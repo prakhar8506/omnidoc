@@ -57,7 +57,7 @@ class _TriageScreenState extends State<TriageScreen> {
         final triage = widget.appState.activeTriage;
 
         return SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 110),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 188),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -322,7 +322,9 @@ class _TriageScreenState extends State<TriageScreen> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: AppColors.surfaceContainerLow,
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFF2A2C3A)
+                  : AppColors.surfaceContainerLow,
               borderRadius: BorderRadius.circular(18),
             ),
             child: Column(
@@ -438,7 +440,9 @@ class _TriageScreenState extends State<TriageScreen> {
               margin: const EdgeInsets.only(bottom: 10),
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.surfaceContainerLow,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFF2A2C3A)
+                    : AppColors.surfaceContainerLow,
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Row(
@@ -464,7 +468,13 @@ class _TriageScreenState extends State<TriageScreen> {
                         const SizedBox(height: 2),
                         Text(
                           item.description,
-                          style: TextStyle(fontSize: 12, color: AppColors.onSurfaceVariant, height: 1.35),
+                          style: TextStyle(
+                            fontSize: 12,
+                            height: 1.35,
+                            color: Theme.of(context).brightness == Brightness.dark
+                                ? const Color(0xFFC8C4D8)
+                                : AppColors.onSurfaceVariant,
+                          ),
                         ),
                       ],
                     ),

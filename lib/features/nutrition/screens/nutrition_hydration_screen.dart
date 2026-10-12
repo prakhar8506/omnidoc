@@ -126,7 +126,7 @@ class NutritionHydrationScreen extends StatelessWidget {
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                                     decoration: BoxDecoration(
-                                      color: Theme.of(context).colorScheme.onSurface,
+                                      color: AppColors.primaryContainer,
                                       borderRadius: BorderRadius.circular(999),
                                     ),
                                     child: const Row(
@@ -302,9 +302,16 @@ class NutritionHydrationScreen extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.85),
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFF2A2C3A)
+                          : Colors.white.withValues(alpha: 0.85),
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.white, width: 1),
+                      border: Border.all(
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Colors.white.withValues(alpha: 0.08)
+                            : Colors.white,
+                        width: 1,
+                      ),
                     ),
                     child: Center(
                       child: Text(
@@ -312,7 +319,9 @@ class NutritionHydrationScreen extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
-                          color: Theme.of(context).colorScheme.onSurface,
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? Theme.of(context).colorScheme.onSurface
+                              : AppColors.textPrimary,
                         ),
                       ),
                     ),
@@ -326,9 +335,16 @@ class NutritionHydrationScreen extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.85),
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFF2A2C3A)
+                          : Colors.white.withValues(alpha: 0.85),
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.white, width: 1),
+                      border: Border.all(
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Colors.white.withValues(alpha: 0.08)
+                            : Colors.white,
+                        width: 1,
+                      ),
                     ),
                     child: Center(
                       child: Text(
@@ -336,7 +352,9 @@ class NutritionHydrationScreen extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
-                          color: Theme.of(context).colorScheme.onSurface,
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? Theme.of(context).colorScheme.onSurface
+                              : AppColors.textPrimary,
                         ),
                       ),
                     ),
@@ -354,7 +372,6 @@ class NutritionHydrationScreen extends StatelessWidget {
     return GlassContainer(
       padding: const EdgeInsets.all(18),
       borderRadius: 24,
-      color: Colors.white.withValues(alpha: 0.85),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -383,7 +400,10 @@ class NutritionHydrationScreen extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   'Sodium & blood pressure notes',
-                  style: AppTypography.titleMd.copyWith(fontSize: 15),
+                  style: AppTypography.titleMd.copyWith(
+                    fontSize: 15,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(

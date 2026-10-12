@@ -246,6 +246,7 @@ class AppState extends ChangeNotifier {
   final List<String> heavyMedications = [];
   String mealPlanChoice = '';
   bool useDarkMode = false;
+  List<WatchSignal> watchSignals = const [];
   String? premiumUntilIso;
   String? trialEndsIso;
   int biologySegmentIndex = 0;
@@ -714,6 +715,7 @@ class AppState extends ChangeNotifier {
     recoveryStatus = 'Insufficient data';
     dailyStrainScore = 0;
     sleepPerformanceScore = 0;
+    watchSignals = const [];
     selectedMood = '';
     moodProgress = 0;
     feelingStep = 1;
@@ -1163,7 +1165,7 @@ class AppState extends ChangeNotifier {
     );
 
     // 5. Compute Adaptive Load Target
-    dailyStrainScore = (dailySteps / 900).clamp(3.0, 18.5);
+    dailyStrainScore = dailySteps > 0 ? (dailySteps / 900).clamp(0.0, 18.5) : 0;
     loadResult = RecoveryModel.computeLoadTarget(
       recoveryScore: recoveryResult!.score,
       currentStrain: dailyStrainScore,
@@ -1353,6 +1355,7 @@ class AppState extends ChangeNotifier {
 
       final events = await WearableService.ingestEvents(consentManager: consentManager);
       final vitals = await WearableService.fetchLatestVitals();
+      watchSignals = await WearableService.fetchWatchSignals();
 
       if (events.isEmpty && vitals['isRealHardware'] != true) {
       lastSyncMessage = WearableService.isPlatformSupported

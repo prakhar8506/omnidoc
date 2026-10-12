@@ -8,6 +8,7 @@ import '../../../core/models/appointment.dart';
 import '../../../core/widgets/avatar_image.dart';
 import '../../fitness/widgets/metabolism_panel.dart';
 import '../../fitness/widgets/training_coach_panel.dart';
+import '../../fitness/widgets/watch_signals_panel.dart';
 import '../../fitness/widgets/todays_movement_panel.dart';
 import '../widgets/book_appointment_modal.dart';
 import '../widgets/family_member_modal.dart';
@@ -42,6 +43,8 @@ class AppointmentsScreen extends StatelessWidget {
                 MetabolismPanel(appState: appState),
                 const SizedBox(height: 16),
                 TrainingCoachPanel(appState: appState),
+                const SizedBox(height: 16),
+                WatchSignalsPanel(appState: appState),
                 const SizedBox(height: 16),
                 TodaysMovementPanel(appState: appState),
               ] else if (currentSegment == 1) ...[

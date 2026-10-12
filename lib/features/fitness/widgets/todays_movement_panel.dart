@@ -74,22 +74,16 @@ class _TodaysMovementPanelState extends State<TodaysMovementPanel> {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
             onPressed: () {
-              final mins = int.tryParse(
-                    (exercise['duration'] as String? ?? '30')
-                        .replaceAll(RegExp(r'[^0-9]'), ''),
-                  ) ??
-                  30;
-              final estimatedKcal = (mins * 5).clamp(50, 600);
               widget.appState.logWorkout(
                 title: title,
                 category: cat,
                 duration: exercise['duration'] as String? ?? '30 min',
-                caloriesBurned: estimatedKcal,
+                caloriesBurned: 0,
               );
               Navigator.pop(ctx);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('Logged "$title" • Daily strain updated to ${widget.appState.dailyStrainScore.toStringAsFixed(1)}'),
+                  content: Text('Logged "$title".'),
                   backgroundColor: AppColors.surfaceCardDark,
                   behavior: SnackBarBehavior.floating,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -187,13 +181,14 @@ class _TodaysMovementPanelState extends State<TodaysMovementPanel> {
           final targetHr = ex['targetHr'] as String;
           final benefit = ex['benefit'] as String;
 
+          final dark = Theme.of(context).brightness == Brightness.dark;
           return Container(
             margin: const EdgeInsets.only(bottom: 12),
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.85),
+              color: dark ? const Color(0xFF1C1E2A) : Colors.white.withValues(alpha: 0.85),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.white),
+              border: Border.all(color: dark ? Colors.white.withValues(alpha: 0.08) : Colors.white),
               boxShadow: const [
                 BoxShadow(
                   color: Color(0x06000000),
@@ -210,7 +205,11 @@ class _TodaysMovementPanelState extends State<TodaysMovementPanel> {
                     Expanded(
                       child: Text(
                         title,
-                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
@@ -387,7 +386,7 @@ class _TodaysMovementPanelState extends State<TodaysMovementPanel> {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      '$rec%',
+                      rec > 0 ? '$rec%' : '—',
                       style: TextStyle(
                         fontSize: 34,
                         fontWeight: FontWeight.w800,
@@ -439,9 +438,20 @@ class _TodaysMovementPanelState extends State<TodaysMovementPanel> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      _metricPill('Daily Strain', '${state.dailyStrainScore.toStringAsFixed(1)} / 21'),
-                      _metricPill('Sleep Score', '${state.sleepPerformanceScore}%'),
-                      _metricPill('Resting HR', '${state.restingHeartRate} bpm'),
+                      _metricPill(
+                        'Steps',
+                        state.dailySteps > 0 ? '${state.dailySteps.round()}' : 'Not from this watch',
+                      ),
+                      _metricPill(
+                        'Sleep',
+                        state.sleepDuration != '—' && state.sleepDuration.isNotEmpty
+                            ? state.sleepDuration
+                            : 'Not from this watch',
+                      ),
+                      _metricPill(
+                        'Resting HR',
+                        state.restingHeartRate > 0 ? '${state.restingHeartRate} bpm' : 'Not from this watch',
+                      ),
                     ],
                   ),
                 ),
@@ -481,7 +491,6 @@ class _TodaysMovementPanelState extends State<TodaysMovementPanel> {
     return GlassContainer(
       padding: const EdgeInsets.all(20),
       borderRadius: 24,
-      color: Colors.white.withValues(alpha: 0.9),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -499,10 +508,10 @@ class _TodaysMovementPanelState extends State<TodaysMovementPanel> {
                       child: const Icon(Icons.fitness_center_rounded, color: AppColors.primaryContainer, size: 18),
                     ),
                     const SizedBox(width: 10),
-                    const Flexible(
+                    Flexible(
                       child: Text(
                         "Today's Movement",
-                        style: AppTypography.titleMd,
+                        style: AppTypography.titleMd.copyWith(color: Theme.of(context).colorScheme.onSurface),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),

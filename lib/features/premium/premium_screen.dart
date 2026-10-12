@@ -221,7 +221,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
           ),
           const SizedBox(height: 14),
           Text(
-            'Cura does not estimate ECG, blood pressure, or a biological age from a phone. Those need medical hardware. Premium unlocks the coaching tools above using the data you actually log.',
+            'ECG, blood pressure, sleep, and the other watch readings appear only when the tracker you connect actually sends them. Cura does not invent a missing reading or a biological age. Premium unlocks coaching tools that use the data already on file.',
             style: TextStyle(fontSize: 12, height: 1.4, color: ink.withValues(alpha: 0.65)),
           ),
         ],

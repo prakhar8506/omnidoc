@@ -194,7 +194,7 @@ class _ChronicCareScreenState extends State<ChronicCareScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.onSurface,
+                color: AppColors.primaryContainer,
                 borderRadius: BorderRadius.circular(999),
               ),
               child: const Row(
@@ -317,7 +317,7 @@ class _ChronicCareScreenState extends State<ChronicCareScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.onSurface,
+                color: AppColors.primaryContainer,
                 borderRadius: BorderRadius.circular(999),
               ),
               child: const Row(
@@ -388,7 +388,6 @@ class _ChronicCareScreenState extends State<ChronicCareScreen> {
     return GlassContainer(
       padding: const EdgeInsets.all(20),
       borderRadius: 24,
-      color: Colors.white.withValues(alpha: 0.9),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -430,22 +429,24 @@ class _ChronicCareScreenState extends State<ChronicCareScreen> {
   }
 
   Widget _buildClinicalSafetyNotice(String notice) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final ink = dark ? const Color(0xFFD4D0E4) : AppColors.textSecondary;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.surfaceDim.withValues(alpha: 0.6),
+        color: dark ? const Color(0xFF2A2C3A) : AppColors.surfaceDim.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.white, width: 1),
+        border: Border.all(color: dark ? Colors.white.withValues(alpha: 0.08) : Colors.white, width: 1),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.shield_outlined, size: 18, color: AppColors.textSecondary),
+          Icon(Icons.shield_outlined, size: 18, color: ink),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               notice,
-              style: TextStyle(fontSize: 11.5, height: 1.4, color: AppColors.textSecondary),
+              style: TextStyle(fontSize: 11.5, height: 1.4, color: ink),
             ),
           ),
         ],
@@ -454,15 +455,18 @@ class _ChronicCareScreenState extends State<ChronicCareScreen> {
   }
 
   void _showLogGlucoseDialog(BuildContext context) {
-    final controller = TextEditingController(text: '105');
+    final controller = TextEditingController();
     String status = 'Fasting (Morning)';
 
     showDialog(
       context: context,
       builder: (dialogCtx) => AlertDialog(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(dialogCtx).colorScheme.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: Text('Log Blood Glucose', style: AppTypography.editorialSm),
+        title: Text(
+          'Log Blood Glucose',
+          style: AppTypography.editorialSm.copyWith(color: Theme.of(dialogCtx).colorScheme.onSurface),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -472,7 +476,9 @@ class _ChronicCareScreenState extends State<ChronicCareScreen> {
               decoration: InputDecoration(
                 labelText: 'Glucose Level (mg/dL)',
                 filled: true,
-                fillColor: AppColors.surface,
+                fillColor: Theme.of(dialogCtx).brightness == Brightness.dark
+                    ? const Color(0xFF2A2C3A)
+                    : AppColors.surface,
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
               ),
             ),
@@ -488,7 +494,9 @@ class _ChronicCareScreenState extends State<ChronicCareScreen> {
               decoration: InputDecoration(
                 labelText: 'Measurement Context',
                 filled: true,
-                fillColor: AppColors.surface,
+                fillColor: Theme.of(dialogCtx).brightness == Brightness.dark
+                    ? const Color(0xFF2A2C3A)
+                    : AppColors.surface,
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
               ),
             ),
@@ -502,7 +510,8 @@ class _ChronicCareScreenState extends State<ChronicCareScreen> {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
             ),
             onPressed: () {
-              final val = int.tryParse(controller.text) ?? 100;
+              final val = int.tryParse(controller.text.trim());
+              if (val == null || val <= 0 || val > 600) return;
               widget.appState.logGlucose(val, status);
               Navigator.pop(dialogCtx);
             },
@@ -514,15 +523,18 @@ class _ChronicCareScreenState extends State<ChronicCareScreen> {
   }
 
   void _showLogBpDialog(BuildContext context) {
-    final sysController = TextEditingController(text: '120');
-    final diaController = TextEditingController(text: '80');
+    final sysController = TextEditingController();
+    final diaController = TextEditingController();
 
     showDialog(
       context: context,
       builder: (dialogCtx) => AlertDialog(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(dialogCtx).colorScheme.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: Text('Log Blood Pressure', style: AppTypography.editorialSm),
+        title: Text(
+          'Log Blood Pressure',
+          style: AppTypography.editorialSm.copyWith(color: Theme.of(dialogCtx).colorScheme.onSurface),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -532,7 +544,9 @@ class _ChronicCareScreenState extends State<ChronicCareScreen> {
               decoration: InputDecoration(
                 labelText: 'Systolic (mmHg)',
                 filled: true,
-                fillColor: AppColors.surface,
+                fillColor: Theme.of(dialogCtx).brightness == Brightness.dark
+                    ? const Color(0xFF2A2C3A)
+                    : AppColors.surface,
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
               ),
             ),
@@ -543,7 +557,9 @@ class _ChronicCareScreenState extends State<ChronicCareScreen> {
               decoration: InputDecoration(
                 labelText: 'Diastolic (mmHg)',
                 filled: true,
-                fillColor: AppColors.surface,
+                fillColor: Theme.of(dialogCtx).brightness == Brightness.dark
+                    ? const Color(0xFF2A2C3A)
+                    : AppColors.surface,
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
               ),
             ),
@@ -557,8 +573,9 @@ class _ChronicCareScreenState extends State<ChronicCareScreen> {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
             ),
             onPressed: () {
-              final sys = int.tryParse(sysController.text) ?? 120;
-              final dia = int.tryParse(diaController.text) ?? 80;
+              final sys = int.tryParse(sysController.text.trim());
+              final dia = int.tryParse(diaController.text.trim());
+              if (sys == null || dia == null || sys <= 0 || dia <= 0) return;
               widget.appState.logBloodPressure(sys, dia);
               Navigator.pop(dialogCtx);
             },
