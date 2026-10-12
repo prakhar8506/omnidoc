@@ -39,35 +39,35 @@ class TermsOfUseScreen extends StatelessWidget {
                     const SizedBox(height: 8),
                     Text('Last updated: September 28, 2026', style: AppTypography.labelSm),
                     const SizedBox(height: 20),
-                    _card(
+                    _card(context, 
                       'Agreement',
                       'By using ${AppBrand.name}, you agree to these Terms. If you do not agree, do not use the app.',
                     ),
-                    _card(
+                    _card(context, 
                       'Age requirement',
                       'You must be at least 18 years old to create a ${AppBrand.name} account. Do not use the app to record health information about a child.',
                     ),
-                    _card(
+                    _card(context, 
                       'Not medical care',
                       '${AppBrand.name} provides organizational tools and informational AI assistance only. It is not a medical device, does not create a doctor–patient relationship, and must not be used for emergency decision-making. In an emergency, call local emergency services.',
                     ),
-                    _card(
+                    _card(context, 
                       'Accounts',
                       'You are responsible for your credentials and for the accuracy of information you enter. Do not upload documents you are not allowed to share.',
                     ),
-                    _card(
+                    _card(context, 
                       'What Cura does not do',
                       '${AppBrand.name} does not book appointments, contact clinics on your behalf, or share your records with family members. Visit entries you add are reminders for yourself, and doctor searches open your maps app so you can contact the clinic directly.',
                     ),
-                    _card(
+                    _card(context, 
                       'AI & lab features',
                       'Automated reading of labs and AI chat may err or miss content. Always verify with a qualified clinician before acting on outputs.',
                     ),
-                    _card(
+                    _card(context, 
                       'Limitation of liability',
                       'To the fullest extent permitted by law, ${AppBrand.legalEntity} is not liable for indirect, incidental, or consequential damages arising from use of the app or reliance on AI/lab summaries.',
                     ),
-                    _card('Contact', AppBrand.supportEmail),
+                    _card(context, 'Contact', AppBrand.supportEmail),
                   ],
                 ),
               ),
@@ -78,13 +78,13 @@ class TermsOfUseScreen extends StatelessWidget {
     );
   }
 
-  Widget _card(String title, String body) {
+  Widget _card(BuildContext context, String title, String body) {
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(bottom: 14),
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: AppColors.surfaceCard,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
         boxShadow: AppColors.cardShadow,
       ),
@@ -93,7 +93,7 @@ class TermsOfUseScreen extends StatelessWidget {
         children: [
           Text(title, style: AppTypography.titleMd),
           const SizedBox(height: 8),
-          Text(body, style: const TextStyle(fontSize: 14, height: 1.5, color: AppColors.textSecondary)),
+          Text(body, style: TextStyle(fontSize: 14, height: 1.5, color: AppColors.textSecondary)),
         ],
       ),
     );

@@ -52,4 +52,35 @@ class AppTheme {
       ),
     );
   }
+
+  static ThemeData get darkTheme {
+    final textTheme = GoogleFonts.plusJakartaSansTextTheme(ThemeData.dark().textTheme);
+    const ink = Color(0xFFF4F2FA);
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      scaffoldBackgroundColor: const Color(0xFF101218),
+      colorScheme: const ColorScheme.dark(
+        primary: AppColors.primaryContainer,
+        onPrimary: Colors.white,
+        primaryContainer: AppColors.primaryContainer,
+        surface: Color(0xFF1C1E2A),
+        onSurface: ink,
+        surfaceContainerHighest: Color(0xFF2A2C3A),
+        error: AppColors.accentCoral,
+      ),
+      fontFamily: GoogleFonts.plusJakartaSans().fontFamily,
+      appBarTheme: const AppBarTheme(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        systemOverlayStyle: SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.light,
+          statusBarBrightness: Brightness.dark,
+        ),
+      ),
+      textTheme: textTheme.apply(bodyColor: ink, displayColor: ink),
+    );
+  }
 }

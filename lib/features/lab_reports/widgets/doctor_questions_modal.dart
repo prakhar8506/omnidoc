@@ -22,7 +22,7 @@ class DoctorQuestionsModal extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       height: MediaQuery.of(context).size.height * 0.72,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
@@ -69,14 +69,14 @@ class DoctorQuestionsModal extends StatelessWidget {
                     color: AppColors.surfaceContainerLow,
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  child: const Row(
+                  child: Row(
                     children: [
                       Icon(Icons.lightbulb_outline_rounded, color: AppColors.accentGold, size: 20),
                       SizedBox(width: 10),
                       Expanded(
                         child: Text(
                           'AI-curated discussion prompts based on your uploaded report.',
-                          style: TextStyle(fontSize: 12, color: AppColors.textPrimary),
+                          style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface),
                         ),
                       ),
                     ],
@@ -91,7 +91,7 @@ class DoctorQuestionsModal extends StatelessWidget {
                     margin: const EdgeInsets.only(bottom: 12),
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: AppColors.surfaceCard,
+                      color: Theme.of(context).colorScheme.surface,
                       borderRadius: BorderRadius.circular(18),
                       boxShadow: AppColors.cardShadow,
                     ),
@@ -103,14 +103,14 @@ class DoctorQuestionsModal extends StatelessWidget {
                           backgroundColor: AppColors.primaryContainer.withValues(alpha: 0.12),
                           child: Text(
                             '$idx',
-                            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.primaryContainer),
+                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.primaryContainer),
                           ),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
                             question,
-                            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.textPrimary, height: 1.4),
+                            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Theme.of(context).colorScheme.onSurface, height: 1.4),
                           ),
                         ),
                       ],
@@ -127,7 +127,7 @@ class DoctorQuestionsModal extends StatelessWidget {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
                   ),
                   icon: const Icon(Icons.copy_rounded, size: 16),
-                  label: const Text('Copy All Questions to Clipboard', style: TextStyle(fontWeight: FontWeight.w700)),
+                  label: Text('Copy All Questions to Clipboard', style: TextStyle(fontWeight: FontWeight.w700)),
                   onPressed: () async {
                     final questions = report.recommendedDoctorQuestions.join('\n');
                     await Clipboard.setData(ClipboardData(text: questions));
@@ -136,7 +136,7 @@ class DoctorQuestionsModal extends StatelessWidget {
                     Navigator.pop(context);
                     messenger.showSnackBar(
                       SnackBar(
-                        content: const Text('Discussion questions copied to clipboard!'),
+                        content: Text('Discussion questions copied to clipboard!'),
                         behavior: SnackBarBehavior.floating,
                         backgroundColor: AppColors.surfaceCardDark,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

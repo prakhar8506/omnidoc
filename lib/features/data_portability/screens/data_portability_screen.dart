@@ -78,7 +78,7 @@ class _DataPortabilityScreenState extends State<DataPortabilityScreen> {
                                 child: const Icon(Icons.file_download_rounded, color: AppColors.primaryContainer, size: 22),
                               ),
                               const SizedBox(width: 12),
-                              const Column(
+                              Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
@@ -88,7 +88,7 @@ class _DataPortabilityScreenState extends State<DataPortabilityScreen> {
                                   SizedBox(height: 2),
                                   Text(
                                     'Complete Medical History',
-                                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+                                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.onSurface),
                                   ),
                                 ],
                               ),
@@ -123,11 +123,11 @@ class _DataPortabilityScreenState extends State<DataPortabilityScreen> {
                               width: double.infinity,
                               padding: const EdgeInsets.symmetric(vertical: 14),
                               decoration: BoxDecoration(
-                                color: AppColors.textPrimary,
+                                color: Theme.of(context).colorScheme.onSurface,
                                 borderRadius: BorderRadius.circular(18),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: AppColors.textPrimary.withValues(alpha: 0.25),
+                                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.25),
                                     blurRadius: 14,
                                     offset: const Offset(0, 4),
                                   ),
@@ -160,9 +160,9 @@ class _DataPortabilityScreenState extends State<DataPortabilityScreen> {
                     const SizedBox(height: 22),
 
                     // Exported Health Package Overview
-                    const Text(
+                    Text(
                       'Included in Your Clinical Export',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Theme.of(context).colorScheme.onSurface),
                     ),
                     const SizedBox(height: 12),
 
@@ -229,11 +229,11 @@ class _DataPortabilityScreenState extends State<DataPortabilityScreen> {
                         width: double.infinity,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         decoration: BoxDecoration(
-                          color: AppColors.textPrimary,
+                          color: Theme.of(context).colorScheme.onSurface,
                           borderRadius: BorderRadius.circular(20),
                           boxShadow: [
                             BoxShadow(
-                              color: AppColors.textPrimary.withValues(alpha: 0.28),
+                              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.28),
                               blurRadius: 18,
                               offset: const Offset(0, 6),
                             ),
@@ -296,7 +296,7 @@ class _DataPortabilityScreenState extends State<DataPortabilityScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                Text(title, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Theme.of(context).colorScheme.onSurface)),
                 const SizedBox(height: 2),
                 Text(
                   subtitle,

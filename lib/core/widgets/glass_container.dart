@@ -35,6 +35,9 @@ class GlassContainer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final fill = color ?? (dark ? const Color(0xFF1C1E2A) : AppColors.glassWhite);
+    final hairline = dark ? Colors.white.withValues(alpha: 0.08) : Colors.white.withValues(alpha: 0.85);
     Widget content = Container(
       width: width,
       height: height,
@@ -50,12 +53,12 @@ class GlassContainer extends StatelessWidget {
           child: Container(
             padding: padding ?? const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              color: color ?? AppColors.glassWhite,
+              color: fill,
               gradient: gradient,
               borderRadius: BorderRadius.circular(borderRadius),
               border: border ??
                   Border.all(
-                    color: Colors.white.withValues(alpha: 0.85),
+                    color: hairline,
                     width: 1.1,
                   ),
             ),

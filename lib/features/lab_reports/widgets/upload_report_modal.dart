@@ -10,6 +10,7 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/state/app_state.dart';
 import '../../../core/models/prescription_document.dart';
 import '../../../core/services/report_interpreter_service.dart';
+import '../../premium/premium_screen.dart';
 
 class UploadReportModal extends StatefulWidget {
   final AppState appState;
@@ -17,6 +18,10 @@ class UploadReportModal extends StatefulWidget {
   const UploadReportModal({super.key, required this.appState});
 
   static Future<void> show(BuildContext context, AppState appState) {
+    if (!appState.hasPremium) {
+      PremiumScreen.show(context, appState);
+      return Future.value();
+    }
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -220,7 +225,7 @@ class _UploadReportModalState extends State<UploadReportModal> {
   Widget build(BuildContext context) {
     return Container(
       height: MediaQuery.of(context).size.height * 0.72,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
@@ -375,13 +380,13 @@ class _UploadReportModalState extends State<UploadReportModal> {
               color: AppColors.primaryContainer, size: 34),
         ),
         const SizedBox(height: 16),
-        const Text(
+        Text(
           'Upload a prescription or lab report',
           textAlign: TextAlign.center,
           style: AppTypography.titleMd,
         ),
         const SizedBox(height: 6),
-        const Text(
+        Text(
           'We will save it to your account and explain it in plain language so you can discuss it with your doctor.',
           textAlign: TextAlign.center,
           style: AppTypography.labelSm,
@@ -410,7 +415,7 @@ class _UploadReportModalState extends State<UploadReportModal> {
           Text(
             _errorText!,
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
               color: AppColors.accentCoral,
               fontSize: 13,
               fontWeight: FontWeight.w600,
@@ -430,7 +435,7 @@ class _UploadReportModalState extends State<UploadReportModal> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Material(
-        color: AppColors.surfaceCard,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(18),
         child: InkWell(
           borderRadius: BorderRadius.circular(18),
@@ -454,13 +459,13 @@ class _UploadReportModalState extends State<UploadReportModal> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(title,
-                          style: const TextStyle(
+                          style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w700,
-                              color: AppColors.textPrimary)),
+                              color: Theme.of(context).colorScheme.onSurface)),
                       const SizedBox(height: 2),
                       Text(subtitle,
-                          style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                          style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
                     ],
                   ),
                 ),

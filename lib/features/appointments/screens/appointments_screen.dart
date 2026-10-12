@@ -6,6 +6,8 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/state/app_state.dart';
 import '../../../core/models/appointment.dart';
 import '../../../core/widgets/avatar_image.dart';
+import '../../fitness/widgets/metabolism_panel.dart';
+import '../../fitness/widgets/training_coach_panel.dart';
 import '../../fitness/widgets/todays_movement_panel.dart';
 import '../widgets/book_appointment_modal.dart';
 import '../widgets/family_member_modal.dart';
@@ -15,9 +17,13 @@ import '../../../core/models/clinic_doctor.dart';
 class AppointmentsScreen extends StatelessWidget {
   final AppState appState;
 
+  /// 1 shows upcoming visits, 2 shows family. Null is the Fitness movement view.
+  final int? careSection;
+
   const AppointmentsScreen({
     super.key,
     required this.appState,
+    this.careSection,
   });
 
   @override
@@ -25,19 +31,18 @@ class AppointmentsScreen extends StatelessWidget {
     return ListenableBuilder(
       listenable: appState,
       builder: (context, _) {
-        final currentSegment = appState.appointmentSegmentIndex;
+        final currentSegment = careSection ?? 0;
 
         return SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 160),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 156),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Segment Pill Switcher (3 Tabs: Movement, Visits, Family)
-              _buildSegmentPillSwitcher(),
-              const SizedBox(height: 18),
-
               if (currentSegment == 0) ...[
-                // SECTION 1: TODAY'S MOVEMENT & UNIVERSAL RECOVERY
+                MetabolismPanel(appState: appState),
+                const SizedBox(height: 16),
+                TrainingCoachPanel(appState: appState),
+                const SizedBox(height: 16),
                 TodaysMovementPanel(appState: appState),
               ] else if (currentSegment == 1) ...[
                 // SECTION 2: APPOINTMENTS VIEW
@@ -58,92 +63,6 @@ class AppointmentsScreen extends StatelessWidget {
           ),
         );
       },
-    );
-  }
-
-  Widget _buildSegmentPillSwitcher() {
-    final currentIndex = appState.appointmentSegmentIndex;
-
-    return Container(
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceContainerHigh,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          children: [
-            _buildSegmentPill(
-              index: 0,
-              currentIndex: currentIndex,
-              icon: Icons.directions_run_rounded,
-              label: 'Movement',
-            ),
-            _buildSegmentPill(
-              index: 1,
-              currentIndex: currentIndex,
-              icon: Icons.calendar_today_rounded,
-              label: 'Upcoming',
-            ),
-            _buildSegmentPill(
-              index: 2,
-              currentIndex: currentIndex,
-              icon: Icons.verified_user_rounded,
-              label: 'Family',
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSegmentPill({
-    required int index,
-    required int currentIndex,
-    required IconData icon,
-    required String label,
-  }) {
-    final selected = currentIndex == index;
-    return GestureDetector(
-      onTap: () => appState.setAppointmentSegment(index),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        margin: const EdgeInsets.symmetric(horizontal: 2),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(
-          color: selected ? AppColors.primaryContainer : Colors.transparent,
-          borderRadius: BorderRadius.circular(999),
-          boxShadow: selected
-              ? [
-                  BoxShadow(
-                    color: AppColors.primaryContainer.withValues(alpha: 0.3),
-                    blurRadius: 10,
-                    offset: const Offset(0, 2),
-                  ),
-                ]
-              : null,
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 15,
-              color: selected ? Colors.white : AppColors.textSecondary,
-            ),
-            const SizedBox(width: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: selected ? Colors.white : AppColors.textSecondary,
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 
@@ -240,7 +159,7 @@ class AppointmentsScreen extends StatelessWidget {
                           Container(
                             width: 4,
                             height: 4,
-                            decoration: const BoxDecoration(
+                            decoration: BoxDecoration(
                               color: Colors.white,
                               shape: BoxShape.circle,
                             ),
@@ -291,19 +210,19 @@ class AppointmentsScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Who’s open today?',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w800,
-                        color: AppColors.textPrimary,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                     Text(
                       city.isEmpty
                           ? 'Choose a specialty, then see real listings in your city'
                           : 'Live listings for $city',
-                      style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                      style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
                     ),
                   ],
                 ),
@@ -329,7 +248,7 @@ class AppointmentsScreen extends StatelessWidget {
                     padding: const EdgeInsets.only(right: 8),
                     child: ActionChip(
                       avatar: Icon(d.icon, size: 16),
-                      label: Text(d.label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                      label: Text(d.label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
                       backgroundColor: Colors.white.withValues(alpha: 0.85),
                       side: BorderSide.none,
                       onPressed: () => Navigator.push(
@@ -357,7 +276,7 @@ class AppointmentsScreen extends StatelessWidget {
               icon: const Icon(Icons.search_rounded, size: 18),
               label: Text(
                 city.isEmpty ? 'Find doctors in your city' : 'Find doctors in $city',
-                style: const TextStyle(fontWeight: FontWeight.w700),
+                style: TextStyle(fontWeight: FontWeight.w700),
               ),
               onPressed: () => Navigator.push(
                 context,
@@ -390,11 +309,11 @@ class AppointmentsScreen extends StatelessWidget {
               child: const Icon(Icons.event_available_rounded, color: AppColors.primary, size: 20),
             ),
             const SizedBox(width: 12),
-            const Expanded(
+            Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('No upcoming visits', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                  Text('No upcoming visits', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Theme.of(context).colorScheme.onSurface)),
                   SizedBox(height: 2),
                   Text('Book a visit to get started', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
                 ],
@@ -432,12 +351,12 @@ class AppointmentsScreen extends StatelessWidget {
               children: [
                 Text(
                   next.dateTime.day == DateTime.now().day ? 'Consultation Today' : 'Upcoming Consultation',
-                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Theme.of(context).colorScheme.onSurface),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   '${next.doctorName.split(',').first} • ${DateFormat('h:mm a').format(next.dateTime)}',
-                  style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                  style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
                 ),
               ],
             ),
@@ -450,7 +369,7 @@ class AppointmentsScreen extends StatelessWidget {
             ),
             child: Text(
               relative,
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.primary),
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.primary),
             ),
           ),
         ],
@@ -479,8 +398,8 @@ class AppointmentsScreen extends StatelessWidget {
         builder: (ctx) => AlertDialog(
           backgroundColor: AppColors.surface,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          title: const Text('Video link unavailable', style: AppTypography.titleMd),
-          content: const Text(
+          title: Text('Video link unavailable', style: AppTypography.titleMd),
+          content: Text(
             'A secure video meeting link has not been provided for this visit yet. '
             'Please contact your clinic for the telehealth URL, or check back closer to your appointment time.',
             style: AppTypography.bodyMd,
@@ -488,7 +407,7 @@ class AppointmentsScreen extends StatelessWidget {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('OK'),
+              child: Text('OK'),
             ),
           ],
         ),
@@ -552,7 +471,7 @@ class AppointmentsScreen extends StatelessWidget {
             foregroundColor: AppColors.primaryContainer,
           ),
           icon: const Icon(Icons.add_circle_outline_rounded, size: 16),
-          label: const Text('Book Visit', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+          label: Text('Book Visit', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
           onPressed: () => BookAppointmentModal.show(context, appState),
         ),
       ],
@@ -565,7 +484,7 @@ class AppointmentsScreen extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: AppColors.surfaceCard,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(22),
           boxShadow: AppColors.cardShadow,
         ),
@@ -573,9 +492,9 @@ class AppointmentsScreen extends StatelessWidget {
           children: [
             const Icon(Icons.event_busy_rounded, size: 40, color: AppColors.textSecondary),
             const SizedBox(height: 12),
-            const Text('No visits scheduled', style: AppTypography.titleMd),
+            Text('No visits scheduled', style: AppTypography.titleMd),
             const SizedBox(height: 6),
-            const Text(
+            Text(
               'Book a visit to see it here.',
               style: AppTypography.labelSm,
               textAlign: TextAlign.center,
@@ -589,7 +508,7 @@ class AppointmentsScreen extends StatelessWidget {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
               ),
               onPressed: () => BookAppointmentModal.show(context, appState),
-              child: const Text('Book Visit', style: TextStyle(fontWeight: FontWeight.w700)),
+              child: Text('Book Visit', style: TextStyle(fontWeight: FontWeight.w700)),
             ),
           ],
         ),
@@ -602,7 +521,7 @@ class AppointmentsScreen extends StatelessWidget {
           margin: const EdgeInsets.only(bottom: 16),
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
-            color: AppColors.surfaceCard,
+            color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(22),
             boxShadow: AppColors.cardShadow,
           ),
@@ -628,7 +547,7 @@ class AppointmentsScreen extends StatelessWidget {
                         const SizedBox(height: 4),
                         Text(
                           DateFormat('EEE, MMM d • h:mm a').format(appt.dateTime),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                             color: AppColors.primaryContainer,
@@ -674,7 +593,7 @@ class AppointmentsScreen extends StatelessWidget {
                         Expanded(
                           child: Text(
                             appt.clinicName,
-                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface),
                           ),
                         ),
                       ],
@@ -687,7 +606,7 @@ class AppointmentsScreen extends StatelessWidget {
                         Expanded(
                           child: Text(
                             appt.preparationNote,
-                            style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                            style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
                           ),
                         ),
                       ],
@@ -729,7 +648,7 @@ class AppointmentsScreen extends StatelessWidget {
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
                         ),
                         icon: const Icon(Icons.directions_rounded, size: 18),
-                        label: const Text('Get Directions', style: TextStyle(fontWeight: FontWeight.w700)),
+                        label: Text('Get Directions', style: TextStyle(fontWeight: FontWeight.w700)),
                         onPressed: () => _openDirections(context, appt),
                       ),
                     ),
@@ -752,7 +671,7 @@ class AppointmentsScreen extends StatelessWidget {
                         ),
                       );
                     },
-                    child: const Text('Cancel', style: TextStyle(color: AppColors.accentCoral, fontWeight: FontWeight.w600)),
+                    child: Text('Cancel', style: TextStyle(color: AppColors.accentCoral, fontWeight: FontWeight.w600)),
                   ),
                 ],
               ),
@@ -792,7 +711,7 @@ class AppointmentsScreen extends StatelessWidget {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
               ),
               icon: const Icon(Icons.person_add_rounded, size: 16),
-              label: const Text('Invite', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+              label: Text('Invite', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
               onPressed: () => FamilyMemberModal.show(context, appState),
             ),
           ],
@@ -811,14 +730,14 @@ class AppointmentsScreen extends StatelessWidget {
             children: [
               Container(
                 padding: const EdgeInsets.all(8),
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   color: Colors.white,
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.sos_rounded, color: AppColors.accentCoral, size: 20),
               ),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -826,7 +745,7 @@ class AppointmentsScreen extends StatelessWidget {
                     SizedBox(height: 2),
                     Text(
                       'These people are stored on this device. Use Emergency Safety to call them if you need help.',
-                      style: TextStyle(fontSize: 11, color: AppColors.textPrimary),
+                      style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurface),
                     ),
                   ],
                 ),
@@ -850,7 +769,7 @@ class AppointmentsScreen extends StatelessWidget {
             margin: const EdgeInsets.only(bottom: 14),
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: AppColors.surfaceCard,
+              color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(22),
               boxShadow: AppColors.cardShadow,
             ),
@@ -885,7 +804,7 @@ class AppointmentsScreen extends StatelessWidget {
                                   color: AppColors.surfaceContainerLow,
                                   borderRadius: BorderRadius.circular(999),
                                 ),
-                                child: Text(member.relation, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.primaryContainer)),
+                                child: Text(member.relation, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.primaryContainer)),
                               ),
                             ],
                           ),

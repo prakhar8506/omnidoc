@@ -41,7 +41,7 @@ class _TriageScreenState extends State<TriageScreen> {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: const Text('Wellness triage updated. This is guidance only — not a clinical diagnosis.'),
+        content: Text('Wellness triage updated. This is guidance only — not a clinical diagnosis.'),
         behavior: SnackBarBehavior.floating,
         backgroundColor: AppColors.surfaceCardDark,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -112,7 +112,7 @@ class _TriageScreenState extends State<TriageScreen> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                const Text(
+                Text(
                   'CLINICAL AI ASSISTANT',
                   style: TextStyle(
                     fontSize: 12,
@@ -147,12 +147,12 @@ class _TriageScreenState extends State<TriageScreen> {
           ],
         ),
         const SizedBox(height: 8),
-        const Text(
+        Text(
           'Symptom Triage Assistant',
           style: AppTypography.headlineLgMobile,
         ),
         const SizedBox(height: 4),
-        const Text(
+        Text(
           'Describe what you are feeling in plain words',
           style: AppTypography.bodyMd,
         ),
@@ -169,14 +169,14 @@ class _TriageScreenState extends State<TriageScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              const Text(
+              Text(
                 'You • 10:42 AM',
                 style: AppTypography.labelSm,
               ),
               const SizedBox(height: 6),
               Container(
                 padding: const EdgeInsets.all(16),
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   color: AppColors.primaryContainer,
                   borderRadius: BorderRadius.only(
                     topLeft: Radius.circular(22),
@@ -194,7 +194,7 @@ class _TriageScreenState extends State<TriageScreen> {
                 ),
                 child: Text(
                   query,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w400,
                     color: Colors.white,
@@ -236,7 +236,7 @@ class _TriageScreenState extends State<TriageScreen> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.surfaceCard,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(24),
         boxShadow: AppColors.cardShadow,
       ),
@@ -346,7 +346,7 @@ class _TriageScreenState extends State<TriageScreen> {
                           const SizedBox(width: 6),
                           Text(
                             triage.urgencyBadge,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w800,
                               color: Color(0xFFB45309),
@@ -358,7 +358,7 @@ class _TriageScreenState extends State<TriageScreen> {
                     ),
                     Text(
                       triage.timeframeWindow,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                         color: AppColors.textSecondary,
@@ -369,9 +369,9 @@ class _TriageScreenState extends State<TriageScreen> {
                 const SizedBox(height: 12),
                 Text(
                   triage.clinicalRationale,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
-                    color: AppColors.textPrimary,
+                    color: Theme.of(context).colorScheme.onSurface,
                     height: 1.45,
                   ),
                 ),
@@ -392,7 +392,7 @@ class _TriageScreenState extends State<TriageScreen> {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
               ),
               icon: const Icon(Icons.calendar_month_rounded, size: 18),
-              label: const Text(
+              label: Text(
                 'Find a doctor in your city',
                 style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
               ),
@@ -418,7 +418,7 @@ class _TriageScreenState extends State<TriageScreen> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.surfaceCard,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(24),
         boxShadow: AppColors.cardShadow,
       ),
@@ -446,7 +446,7 @@ class _TriageScreenState extends State<TriageScreen> {
                 children: [
                   Container(
                     padding: const EdgeInsets.all(8),
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       color: Colors.white,
                       shape: BoxShape.circle,
                     ),
@@ -459,12 +459,12 @@ class _TriageScreenState extends State<TriageScreen> {
                       children: [
                         Text(
                           item.title,
-                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Theme.of(context).colorScheme.onSurface),
                         ),
                         const SizedBox(height: 2),
                         Text(
                           item.description,
-                          style: const TextStyle(fontSize: 12, color: AppColors.onSurfaceVariant, height: 1.35),
+                          style: TextStyle(fontSize: 12, color: AppColors.onSurfaceVariant, height: 1.35),
                         ),
                       ],
                     ),
@@ -528,11 +528,11 @@ class _TriageScreenState extends State<TriageScreen> {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('⚠️ ', style: TextStyle(fontSize: 12)),
+                    Text('⚠️ ', style: TextStyle(fontSize: 12)),
                     Expanded(
                       child: Text(
                         alert,
-                        style: const TextStyle(fontSize: 12, color: AppColors.textPrimary, height: 1.35),
+                        style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface, height: 1.35),
                       ),
                     ),
                   ],
@@ -546,7 +546,7 @@ class _TriageScreenState extends State<TriageScreen> {
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Text(
+              child: Text(
                 'If any red flags occur, call 911 or visit your nearest Emergency Department immediately.',
                 style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.accentCoral),
               ),
@@ -561,14 +561,14 @@ class _TriageScreenState extends State<TriageScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surfaceCard,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(24),
         boxShadow: AppColors.cardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Evaluate New Symptoms', style: AppTypography.titleMd),
+          Text('Evaluate New Symptoms', style: AppTypography.titleMd),
           const SizedBox(height: 10),
           TextField(
             controller: _symptomInputController,
@@ -609,7 +609,7 @@ class _TriageScreenState extends State<TriageScreen> {
                       : const Icon(Icons.auto_awesome_rounded, size: 16),
                   label: Text(
                     _isSubmitting ? 'Reviewing your symptoms…' : 'Run Clinical Assessment',
-                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
                   ),
                   onPressed: _isSubmitting
                       ? null

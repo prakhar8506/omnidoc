@@ -38,7 +38,7 @@ class QuickActionSheet extends StatelessWidget {
 
     return Container(
       constraints: BoxConstraints(maxHeight: maxHeight),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: Colors.transparent,
         borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
       ),
@@ -49,7 +49,7 @@ class QuickActionSheet extends StatelessWidget {
           child: Container(
             padding: EdgeInsets.fromLTRB(24, 12, 24, 16 + bottomInset),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.88),
+              color: Theme.of(context).colorScheme.surface,
               borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
               border: Border.all(
                 color: Colors.white.withValues(alpha: 0.8),
@@ -80,7 +80,7 @@ class QuickActionSheet extends StatelessWidget {
                         children: [
                           Text('Quick Actions', style: AppTypography.editorialSm),
                           const SizedBox(height: 2),
-                          const Text(
+                          Text(
                             'Log vitals, record feelings, or consult AI',
                             style: AppTypography.labelSm,
                           ),
@@ -336,7 +336,9 @@ class QuickActionSheet extends StatelessWidget {
     required VoidCallback onTap,
   }) {
     return Material(
-      color: Colors.white.withValues(alpha: 0.65),
+      color: Theme.of(context).brightness == Brightness.dark
+          ? const Color(0xFF2A2C3A)
+          : Colors.white.withValues(alpha: 0.65),
       borderRadius: BorderRadius.circular(20),
       child: InkWell(
         borderRadius: BorderRadius.circular(20),
@@ -368,17 +370,17 @@ class QuickActionSheet extends StatelessWidget {
                   children: [
                     Text(
                       title,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
+                        color: Theme.of(context).colorScheme.onSurface,
                         letterSpacing: -0.2,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       subtitle,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
                         color: AppColors.textSecondary,
                       ),

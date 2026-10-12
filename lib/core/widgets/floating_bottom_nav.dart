@@ -16,6 +16,9 @@ class FloatingBottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final ink = dark ? const Color(0xFFF4F2FA) : AppColors.textPrimary;
+    final muted = dark ? const Color(0xFFB7B4C8) : AppColors.textSecondary;
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       height: 68,
@@ -30,10 +33,10 @@ class FloatingBottomNav extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.82),
+              color: dark ? const Color(0xE6161824) : Colors.white.withValues(alpha: 0.82),
               borderRadius: BorderRadius.circular(999),
               border: Border.all(
-                color: Colors.white.withValues(alpha: 0.95),
+                color: dark ? const Color(0x33FFFFFF) : Colors.white.withValues(alpha: 0.95),
                 width: 1.5,
               ),
             ),
@@ -44,11 +47,15 @@ class FloatingBottomNav extends StatelessWidget {
                   index: 0,
                   icon: Icons.home_rounded,
                   label: 'Home',
+                  ink: ink,
+                  muted: muted,
                 ),
                 _buildNavItem(
                   index: 1,
                   icon: Icons.auto_stories_rounded,
                   label: 'Journal',
+                  ink: ink,
+                  muted: muted,
                 ),
                 // Center Apple-style elevated "+" Action button
                 _buildCenterActionButton(),
@@ -56,11 +63,15 @@ class FloatingBottomNav extends StatelessWidget {
                   index: 3,
                   icon: Icons.calendar_month_rounded,
                   label: 'Fitness',
+                  ink: ink,
+                  muted: muted,
                 ),
                 _buildNavItem(
                   index: 4,
                   icon: Icons.favorite_rounded,
                   label: 'Biology',
+                  ink: ink,
+                  muted: muted,
                 ),
               ],
             ),
@@ -78,11 +89,11 @@ class FloatingBottomNav extends StatelessWidget {
         width: 50,
         height: 50,
         decoration: BoxDecoration(
-          color: AppColors.textPrimary,
+          color: Colors.black,
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
-              color: AppColors.textPrimary.withValues(alpha: 0.35),
+              color: Colors.black.withValues(alpha: 0.35),
               blurRadius: 16,
               offset: const Offset(0, 6),
             ),
@@ -103,6 +114,8 @@ class FloatingBottomNav extends StatelessWidget {
     required int index,
     required IconData icon,
     required String label,
+    required Color ink,
+    required Color muted,
   }) {
     final isSelected = currentIndex == index;
 
@@ -115,9 +128,7 @@ class FloatingBottomNav extends StatelessWidget {
           curve: Curves.easeInOut,
           padding: const EdgeInsets.symmetric(vertical: 4),
           decoration: BoxDecoration(
-            color: isSelected
-                ? AppColors.textPrimary.withValues(alpha: 0.08)
-                : Colors.transparent,
+            color: isSelected ? ink.withValues(alpha: 0.08) : Colors.transparent,
             borderRadius: BorderRadius.circular(999),
           ),
           child: Column(
@@ -127,17 +138,13 @@ class FloatingBottomNav extends StatelessWidget {
               Icon(
                 icon,
                 size: 20,
-                color: isSelected
-                    ? AppColors.textPrimary
-                    : AppColors.textSecondary.withValues(alpha: 0.7),
+                color: isSelected ? ink : muted,
               ),
               const SizedBox(height: 3),
               Text(
                 label,
                 style: TextStyle(
-                  color: isSelected
-                      ? AppColors.textPrimary
-                      : AppColors.textSecondary.withValues(alpha: 0.7),
+                  color: isSelected ? ink : muted,
                   fontSize: 10,
                   fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                   letterSpacing: -0.1,

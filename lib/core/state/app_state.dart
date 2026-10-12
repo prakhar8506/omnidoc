@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart' hide AuthException;
@@ -240,6 +241,14 @@ class AppState extends ChangeNotifier {
   double? userWeightKg;
   String? baselineProgressPhotoPath;
   bool isOnboardingBaselineCompleted = false;
+  bool healthIntakeCompleted = false;
+  String glp1Status = '';
+  final List<String> heavyMedications = [];
+  String mealPlanChoice = '';
+  bool useDarkMode = false;
+  String? premiumUntilIso;
+  String? trialEndsIso;
+  int biologySegmentIndex = 0;
   String? biologicalSex;
   String? dateOfBirth;
   final List<String> healthGoals = [];
@@ -296,6 +305,8 @@ class AppState extends ChangeNotifier {
 
   Future<void> hydrate() async {
     try {
+      final prefs = await SharedPreferences.getInstance();
+      useDarkMode = prefs.getBool('hc_use_dark_mode') ?? false;
       await supabaseRepository.initialize();
       await eventStore.initialize();
       await consentManager.initialize();
@@ -520,6 +531,10 @@ class AppState extends ChangeNotifier {
 
     if (isNew) {
       isOnboardingBaselineCompleted = false;
+      healthIntakeCompleted = false;
+      glp1Status = '';
+      mealPlanChoice = '';
+      heavyMedications.clear();
       await _persistCurrentUserData();
       recalculateRecoveryEngine();
       return;
@@ -552,6 +567,14 @@ class AppState extends ChangeNotifier {
         : null;
     isOnboardingBaselineCompleted =
         data['isOnboardingBaselineCompleted'] as bool? ?? false;
+    healthIntakeCompleted = data['healthIntakeCompleted'] as bool? ?? false;
+    premiumUntilIso = data['premiumUntilIso'] as String?;
+    trialEndsIso = data['trialEndsIso'] as String?;
+    glp1Status = data['glp1Status'] as String? ?? '';
+    mealPlanChoice = data['mealPlanChoice'] as String? ?? '';
+    heavyMedications
+      ..clear()
+      ..addAll((data['heavyMedications'] as List?)?.map((e) => e.toString()) ?? const []);
     userHeightCm = (data['userHeightCm'] as num?)?.toDouble();
     userWeightKg = (data['userWeightKg'] as num?)?.toDouble();
     isMenstrualTrackingEnabled =
@@ -737,6 +760,13 @@ class AppState extends ChangeNotifier {
     emergencyContacts.clear();
     isFallDetectionActive = false;
     isOnboardingBaselineCompleted = false;
+    healthIntakeCompleted = false;
+    glp1Status = '';
+    mealPlanChoice = '';
+    heavyMedications.clear();
+    biologySegmentIndex = 0;
+    premiumUntilIso = null;
+    trialEndsIso = null;
     userHeightCm = null;
     userWeightKg = null;
     medications.clear();
@@ -778,6 +808,12 @@ class AppState extends ChangeNotifier {
       'homeCity': homeCity,
       'lastMoodCheck': lastMoodCheck,
       'isOnboardingBaselineCompleted': isOnboardingBaselineCompleted,
+      'healthIntakeCompleted': healthIntakeCompleted,
+      'premiumUntilIso': premiumUntilIso,
+      'trialEndsIso': trialEndsIso,
+      'glp1Status': glp1Status,
+      'mealPlanChoice': mealPlanChoice,
+      'heavyMedications': heavyMedications,
       'userHeightCm': userHeightCm,
       'userWeightKg': userWeightKg,
       'isMenstrualTrackingEnabled': isMenstrualTrackingEnabled,
@@ -1385,6 +1421,53 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setBiologySegment(int index) {
+    biologySegmentIndex = index;
+    notifyListeners();
+  }
+
+  bool get hasPremium {
+    final now = DateTime.now();
+    final paid = DateTime.tryParse(premiumUntilIso ?? '');
+    if (paid != null && paid.isAfter(now)) return true;
+    final trial = DateTime.tryParse(trialEndsIso ?? '');
+    return trial != null && trial.isAfter(now);
+  }
+
+  void startPremiumTrial() {
+    trialEndsIso = DateTime.now().add(const Duration(days: 7)).toIso8601String();
+    _persistCurrentUserData();
+    notifyListeners();
+  }
+
+  void grantPremiumUntil(DateTime until) {
+    premiumUntilIso = until.toIso8601String();
+    _persistCurrentUserData();
+    notifyListeners();
+  }
+
+  Future<void> setDarkMode(bool value) async {
+    useDarkMode = value;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('hc_use_dark_mode', value);
+    notifyListeners();
+  }
+
+  void saveHealthIntake({
+    required String glp1,
+    required List<String> medicines,
+    required String mealPlans,
+  }) {
+    glp1Status = glp1;
+    heavyMedications
+      ..clear()
+      ..addAll(medicines);
+    mealPlanChoice = mealPlans;
+    healthIntakeCompleted = true;
+    _persistCurrentUserData();
+    notifyListeners();
+  }
+
   void setAppointmentSegment(int index) {
     appointmentSegmentIndex = index;
     notifyListeners();
@@ -1688,6 +1771,7 @@ class AppState extends ChangeNotifier {
       'title': title,
       'id': meal['id'] ?? 'meal-${DateTime.now().millisecondsSinceEpoch}',
       'time': meal['time'] ?? 'Just now',
+      'loggedAt': meal['loggedAt'] ?? DateTime.now().toIso8601String(),
     });
     _persistCurrentUserData();
     notifyListeners();

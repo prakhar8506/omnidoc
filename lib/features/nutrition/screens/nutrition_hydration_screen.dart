@@ -74,7 +74,7 @@ class NutritionHydrationScreen extends StatelessWidget {
                               context,
                               MaterialPageRoute(builder: (_) => DietPlanScreen(appState: appState)),
                             ),
-                            child: const Text('Diet plan'),
+                            child: Text('Diet plan'),
                           ),
                         ),
                         const SizedBox(height: 18),
@@ -99,7 +99,7 @@ class NutritionHydrationScreen extends StatelessWidget {
                                       color: AppColors.watchHydration.withValues(alpha: 0.16),
                                       borderRadius: BorderRadius.circular(999),
                                     ),
-                                    child: const Row(
+                                    child: Row(
                                       children: [
                                         Icon(Icons.water_drop_rounded, color: AppColors.watchHydration, size: 16),
                                         SizedBox(width: 4),
@@ -108,7 +108,7 @@ class NutritionHydrationScreen extends StatelessWidget {
                                           style: TextStyle(
                                             fontSize: 13,
                                             fontWeight: FontWeight.w700,
-                                            color: AppColors.textPrimary,
+                                            color: Theme.of(context).colorScheme.onSurface,
                                           ),
                                         ),
                                       ],
@@ -126,7 +126,7 @@ class NutritionHydrationScreen extends StatelessWidget {
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                                     decoration: BoxDecoration(
-                                      color: AppColors.textPrimary,
+                                      color: Theme.of(context).colorScheme.onSurface,
                                       borderRadius: BorderRadius.circular(999),
                                     ),
                                     child: const Row(
@@ -153,7 +153,7 @@ class NutritionHydrationScreen extends StatelessWidget {
                         if (appState.hydrationLogs.isNotEmpty) ...[
                           Text(
                             'Water today · ${appState.dailyHydrationMl} ml',
-                            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
                           ),
                           const SizedBox(height: 8),
                           Wrap(
@@ -180,7 +180,7 @@ class NutritionHydrationScreen extends StatelessWidget {
                             ),
                           )
                         else
-                          ...appState.loggedMeals.map((meal) => _buildMealItem(meal)),
+                          ...appState.loggedMeals.map((meal) => _buildMealItem(context, meal)),
                         const SizedBox(height: 8),
                         Align(
                           alignment: Alignment.centerLeft,
@@ -190,7 +190,7 @@ class NutritionHydrationScreen extends StatelessWidget {
                               MaterialPageRoute(builder: (_) => ActivityClubsScreen(appState: appState)),
                             ),
                             icon: const Icon(Icons.groups_rounded, size: 18),
-                            label: const Text('Activity clubs'),
+                            label: Text('Activity clubs'),
                           ),
                         ),
                         const SizedBox(height: 80),
@@ -216,11 +216,11 @@ class NutritionHydrationScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(targets.goalLabel, style: const TextStyle(fontWeight: FontWeight.w800)),
+          Text(targets.goalLabel, style: TextStyle(fontWeight: FontWeight.w800)),
           const SizedBox(height: 4),
           Text(
             'BMI ${targets.bmi} · ${targets.bmiLabel}',
-            style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+            style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
           ),
           const SizedBox(height: 8),
           Text(line('Calories', totals['calories']!, targets.calories)),
@@ -262,10 +262,10 @@ class NutritionHydrationScreen extends StatelessWidget {
                   const SizedBox(height: 6),
                   Text(
                     '${appState.dailyHydrationMl} / ${appState.targetHydrationMl} ml',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 26,
                       fontWeight: FontWeight.w800,
-                      color: AppColors.textPrimary,
+                      color: Theme.of(context).colorScheme.onSurface,
                       letterSpacing: -0.5,
                     ),
                   ),
@@ -280,10 +280,10 @@ class NutritionHydrationScreen extends StatelessWidget {
                   child: Center(
                     child: Text(
                       '${(progress * 100).toInt()}%',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w800,
-                        color: AppColors.textPrimary,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                   ),
@@ -306,13 +306,13 @@ class NutritionHydrationScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(color: Colors.white, width: 1),
                     ),
-                    child: const Center(
+                    child: Center(
                       child: Text(
                         '+250 ml (Glass)',
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.textPrimary,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                     ),
@@ -330,13 +330,13 @@ class NutritionHydrationScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(color: Colors.white, width: 1),
                     ),
-                    child: const Center(
+                    child: Center(
                       child: Text(
                         '+500 ml (Bottle)',
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.textPrimary,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                     ),
@@ -371,7 +371,7 @@ class NutritionHydrationScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'INFORMATIONAL CORRELATION',
                   style: TextStyle(
                     fontSize: 11,
@@ -404,7 +404,7 @@ class NutritionHydrationScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildMealItem(Map<String, dynamic> meal) {
+  Widget _buildMealItem(BuildContext context, Map<String, dynamic> meal) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       child: GlassContainer(
@@ -419,16 +419,16 @@ class NutritionHydrationScreen extends StatelessWidget {
                 Expanded(
                   child: Text(
                     meal['title'] as String? ?? '',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                 ),
                 Text(
                   meal['time'] as String? ?? '',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                     color: AppColors.textTertiary,
@@ -440,7 +440,7 @@ class NutritionHydrationScreen extends StatelessWidget {
             if ((meal['calories'] as num?) != null)
               Text(
                 '${meal['calories']} kcal · ${((meal['protein'] as num?) ?? 0).round()}g protein · ${((meal['carbs'] as num?) ?? 0).round()}g carbs · ${((meal['fat'] as num?) ?? 0).round()}g fat',
-                style: const TextStyle(fontSize: 12.5, color: AppColors.textSecondary, height: 1.3),
+                style: TextStyle(fontSize: 12.5, color: AppColors.textSecondary, height: 1.3),
               ),
             const SizedBox(height: 6),
             Container(
@@ -451,7 +451,7 @@ class NutritionHydrationScreen extends StatelessWidget {
               ),
               child: Text(
                 meal['category'] as String? ?? '',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
                   color: AppColors.primary,

@@ -4,6 +4,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/state/app_state.dart';
 import '../../../core/widgets/avatar_image.dart';
+import '../../premium/premium_screen.dart';
 import '../models/ai_message.dart';
 import '../services/ai_copilot_service.dart';
 
@@ -16,12 +17,14 @@ class AiChatSheet extends StatefulWidget {
   });
 
   static void show(BuildContext context, AppState appState) {
+    PremiumAccess.require(context, appState, () {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => AiChatSheet(appState: appState),
     );
+    });
   }
 
   @override
@@ -178,8 +181,8 @@ class _AiChatSheetState extends State<AiChatSheet> with SingleTickerProviderStat
 
     return Container(
       height: MediaQuery.of(context).size.height * 0.88,
-      decoration: const BoxDecoration(
-        color: AppColors.surface,
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
         boxShadow: [
           BoxShadow(
@@ -242,7 +245,7 @@ class _AiChatSheetState extends State<AiChatSheet> with SingleTickerProviderStat
                     children: [
                       Row(
                         children: [
-                          const Text(
+                          Text(
                             'Omni Health AI',
                             style: AppTypography.titleMd,
                           ),
@@ -253,7 +256,7 @@ class _AiChatSheetState extends State<AiChatSheet> with SingleTickerProviderStat
                               color: AppColors.primaryContainer.withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(999),
                             ),
-                            child: const Row(
+                            child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 CircleAvatar(
@@ -266,7 +269,7 @@ class _AiChatSheetState extends State<AiChatSheet> with SingleTickerProviderStat
                                   style: TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.w600,
-                                    color: AppColors.textPrimary,
+                                    color: Theme.of(context).colorScheme.onSurface,
                                   ),
                                 ),
                               ],
@@ -355,10 +358,10 @@ class _AiChatSheetState extends State<AiChatSheet> with SingleTickerProviderStat
                   ),
                   label: Text(
                     prompt,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
-                      color: AppColors.textPrimary,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                   onPressed: () => _sendMessage(prompt),
@@ -370,8 +373,8 @@ class _AiChatSheetState extends State<AiChatSheet> with SingleTickerProviderStat
           // Input Bar
           Container(
             padding: EdgeInsets.fromLTRB(16, 8, 16, bottomInset > 0 ? bottomInset + 12 : 24),
-            decoration: const BoxDecoration(
-              color: AppColors.surfaceCard,
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
               boxShadow: [
                 BoxShadow(
@@ -412,7 +415,7 @@ class _AiChatSheetState extends State<AiChatSheet> with SingleTickerProviderStat
                 ),
                 const SizedBox(width: 8),
                 Container(
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     color: AppColors.primaryContainer,
                     shape: BoxShape.circle,
                   ),
@@ -448,7 +451,7 @@ class _AiChatSheetState extends State<AiChatSheet> with SingleTickerProviderStat
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
-              color: AppColors.surfaceCard,
+              color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(16),
             ),
             child: const Row(
@@ -482,7 +485,7 @@ class _AiChatSheetState extends State<AiChatSheet> with SingleTickerProviderStat
             Flexible(
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   color: AppColors.primaryContainer,
                   borderRadius: BorderRadius.only(
                     topLeft: Radius.circular(20),
@@ -500,7 +503,7 @@ class _AiChatSheetState extends State<AiChatSheet> with SingleTickerProviderStat
                 ),
                 child: Text(
                   message.text,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     color: Colors.white,
                     height: 1.4,
@@ -538,8 +541,8 @@ class _AiChatSheetState extends State<AiChatSheet> with SingleTickerProviderStat
           Expanded(
             child: Container(
               padding: const EdgeInsets.all(16),
-              decoration: const BoxDecoration(
-                color: AppColors.surfaceCard,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(4),
                   topRight: Radius.circular(20),
@@ -561,7 +564,7 @@ class _AiChatSheetState extends State<AiChatSheet> with SingleTickerProviderStat
                       ),
                       child: Text(
                         message.contextualBadge!,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
                           color: AppColors.primaryContainer,
@@ -571,9 +574,9 @@ class _AiChatSheetState extends State<AiChatSheet> with SingleTickerProviderStat
                   ],
                   Text(
                     message.text,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
-                      color: AppColors.textPrimary,
+                      color: Theme.of(context).colorScheme.onSurface,
                       height: 1.45,
                     ),
                   ),
@@ -585,11 +588,11 @@ class _AiChatSheetState extends State<AiChatSheet> with SingleTickerProviderStat
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text("• ", style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryContainer)),
+                            Text("• ", style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.primaryContainer)),
                             Expanded(
                               child: Text(
                                 bp,
-                                style: const TextStyle(fontSize: 13, color: AppColors.onSurfaceVariant),
+                                style: TextStyle(fontSize: 13, color: AppColors.onSurfaceVariant),
                               ),
                             ),
                           ],
@@ -612,7 +615,7 @@ class _AiChatSheetState extends State<AiChatSheet> with SingleTickerProviderStat
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
                           ),
                           icon: const Icon(Icons.arrow_forward_rounded, size: 14),
-                          label: Text(link.label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                          label: Text(link.label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
                           onPressed: () {
                             Navigator.of(context).pop();
                             widget.appState.setTabIndex(link.targetTabIndex);

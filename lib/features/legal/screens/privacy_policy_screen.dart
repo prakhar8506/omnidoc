@@ -39,15 +39,15 @@ class PrivacyPolicyScreen extends StatelessWidget {
                     const SizedBox(height: 8),
                     Text('Last updated: September 28, 2026', style: AppTypography.labelSm),
                     const SizedBox(height: 20),
-                    _card(
+                    _card(context, 
                       'Overview',
                       '${AppBrand.name} helps you organize personal health information, wearable trends, appointments, and lab documents. ${AppBrand.name} is not a medical device and does not provide diagnosis or treatment.',
                     ),
-                    _card(
+                    _card(context, 
                       'Who can use Cura',
                       'Cura is for adults aged 18 and over. We do not knowingly collect information from children. If you believe a child has created an account, write to ${AppBrand.supportEmail} and we will remove it.',
                     ),
-                    _card(
+                    _card(context, 
                       'Data we collect',
                       'Account details you give us (email address, display name, blood type).\n\n'
                           'Health information you enter: journal reflections, symptoms you describe, mood and mental-health screening answers, meals and water, medications, allergies, chronic conditions, menstrual cycle and pregnancy logs, glucose and blood pressure readings, and emergency contacts.\n\n'
@@ -56,37 +56,41 @@ class PrivacyPolicyScreen extends StatelessWidget {
                           'The city you type when searching for a doctor.\n\n'
                           'Crash and performance diagnostics, so we can fix errors.',
                     ),
-                    _card(
+                    _card(context, 
                       'How we use data',
                       'We authenticate you, sync your records to your private cloud account, produce the summaries and explanations you ask for, and keep the service reliable. We do not sell your health data and we do not use it for advertising.',
                     ),
-                    _card(
+                    _card(context, 
                       'AI processing',
                       'When you use AI chat, symptom guidance, or lab report reading, the relevant content is sent to our own server functions and then to an AI provider we contract with — currently OpenAI, with Google Gemini as a fallback — purely to answer that request.\n\n'
                           'For lab reports this can include the report image itself, or the text read from it, together with a short summary of your medications and recent metrics so the explanation makes sense. Providers process this on our behalf and are not permitted to use it to train their models.\n\n'
                           'AI output is informational, can be incomplete or wrong, and is never a diagnosis. Confirm anything that matters with a clinician.',
                     ),
-                    _card(
+                    _card(context, 
                       'Crash and performance reporting',
                       'We use Sentry to receive crash reports and performance traces. These contain technical details such as the error, screen, device model, and operating system version. They are not used to identify you and they do not carry your health records.',
                     ),
-                    _card(
+                    _card(context, 
+                      'Free-trial check',
+                      'Starting the 7-day Premium trial stores a one-way hash of this phone’s Android ID on your device and, when the service is reachable, on our server. That hash is used only to stop the same phone from starting another free trial with a different email. It is not your advertising ID, and it is not sold.',
+                    ),
+                    _card(context, 
                       'Storage & security',
                       'Cloud data is stored in Supabase with row-level security so only your account can read it. A copy is kept on your phone so the app works offline; that copy is excluded from Google and Apple device backups. If you choose Continue with Google, Google shares your name and email address with Cura so we can open your account. We never receive your Google password. Use a strong password and keep your device locked.',
                     ),
-                    _card(
+                    _card(context, 
                       'Retention & deletion',
                       'Tap your avatar in the top bar, then Delete Account. That removes your cloud records, uploaded documents, and auth account, and erases the copy stored on this phone, including your saved profile and local health history. It cannot be undone. Server backups may retain data briefly before they rotate out.',
                     ),
-                    _card(
+                    _card(context, 
                       'Your choices',
                       'You can turn individual wearable categories on or off in the permission centre, export your data as a PDF at any time, and delete your account entirely. Denying a permission does not stop you from using the rest of the app.',
                     ),
-                    _card(
+                    _card(context, 
                       'Public copy',
                       'A hosted copy of this policy is at ${AppBrand.privacyPolicyUrl}',
                     ),
-                    _card(
+                    _card(context, 
                       'Contact',
                       '${AppBrand.legalEntity}\n${AppBrand.supportEmail}',
                     ),
@@ -100,13 +104,13 @@ class PrivacyPolicyScreen extends StatelessWidget {
     );
   }
 
-  Widget _card(String title, String body) {
+  Widget _card(BuildContext context, String title, String body) {
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(bottom: 14),
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: AppColors.surfaceCard,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
         boxShadow: AppColors.cardShadow,
       ),
@@ -115,7 +119,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
         children: [
           Text(title, style: AppTypography.titleMd),
           const SizedBox(height: 8),
-          Text(body, style: const TextStyle(fontSize: 14, height: 1.5, color: AppColors.textSecondary)),
+          Text(body, style: TextStyle(fontSize: 14, height: 1.5, color: AppColors.textSecondary)),
         ],
       ),
     );

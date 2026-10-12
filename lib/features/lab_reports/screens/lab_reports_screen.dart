@@ -5,6 +5,7 @@ import '../../../core/state/app_state.dart';
 import '../../../core/models/biomarker_report.dart';
 import '../../../core/models/prescription_document.dart';
 import '../../../core/services/lab_report_pdf.dart';
+import '../../appointments/screens/appointments_screen.dart';
 import '../widgets/upload_report_modal.dart';
 import '../widgets/doctor_questions_modal.dart';
 import '../../ai_assistant/widgets/ai_chat_sheet.dart';
@@ -49,8 +50,73 @@ class _LabReportsScreenState extends State<LabReportsScreen> {
           _ensureExpanded(report);
         }
 
+        final segment = widget.appState.biologySegmentIndex;
+        return Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+              child: _biologySwitcher(context, segment),
+            ),
+            Expanded(
+              child: segment == 0
+                  ? _labsScroll(context, report, docs)
+                  : AppointmentsScreen(
+                      appState: widget.appState,
+                      careSection: segment,
+                    ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _biologySwitcher(BuildContext context, int segment) {
+    Widget pill(int index, String label) {
+      final selected = segment == index;
+      return Expanded(
+        child: GestureDetector(
+          onTap: () => widget.appState.setBiologySegment(index),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            decoration: BoxDecoration(
+              color: selected ? AppColors.primaryContainer : Colors.transparent,
+              borderRadius: BorderRadius.circular(999),
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: selected ? Colors.white : AppColors.textSecondary,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceContainerHigh,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        children: [
+          pill(0, 'Labs'),
+          pill(1, 'Visits'),
+          pill(2, 'Family'),
+        ],
+      ),
+    );
+  }
+
+  Widget _labsScroll(BuildContext context, DiagnosticReport? report, List<PrescriptionDocument> docs) {
         return SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 160),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 120),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -105,7 +171,7 @@ class _LabReportsScreenState extends State<LabReportsScreen> {
                 ],
                 const SizedBox(height: 22),
                 if (docs.isNotEmpty) ...[
-                  const Text('Your Uploads', style: AppTypography.titleLg),
+                  Text('Your Uploads', style: AppTypography.titleLg),
                   const SizedBox(height: 10),
                   ...docs.take(5).map(_buildUploadTile),
                   const SizedBox(height: 22),
@@ -113,7 +179,7 @@ class _LabReportsScreenState extends State<LabReportsScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Each test, explained', style: AppTypography.titleLg),
+                    Text('Each test, explained', style: AppTypography.titleLg),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
@@ -135,8 +201,6 @@ class _LabReportsScreenState extends State<LabReportsScreen> {
             ],
           ),
         );
-      },
-    );
   }
 
   Widget _buildUrgencyAndSpecialistCard(DiagnosticReport report) {
@@ -184,10 +248,10 @@ class _LabReportsScreenState extends State<LabReportsScreen> {
           const SizedBox(height: 10),
           Text(
             'Suggested clinician: ${report.recommendedSpecialist}',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12.5,
               fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
         ],
@@ -200,21 +264,21 @@ class _LabReportsScreenState extends State<LabReportsScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surfaceCard,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(18),
         boxShadow: AppColors.cardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('In plain language', style: AppTypography.titleMd),
+          Text('In plain language', style: AppTypography.titleMd),
           const SizedBox(height: 8),
           Text(
             report.overallSynthesis,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13,
               height: 1.45,
-              color: AppColors.textPrimary,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
           if (report.detailedExplanation.isNotEmpty &&
@@ -222,7 +286,7 @@ class _LabReportsScreenState extends State<LabReportsScreen> {
             const SizedBox(height: 10),
             Text(
               report.detailedExplanation,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12.5,
                 height: 1.45,
                 color: AppColors.textSecondary,
@@ -244,7 +308,7 @@ class _LabReportsScreenState extends State<LabReportsScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surfaceCard,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(18),
         boxShadow: AppColors.cardShadow,
       ),
@@ -273,10 +337,10 @@ class _LabReportsScreenState extends State<LabReportsScreen> {
                   Expanded(
                     child: Text(
                       item,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12.5,
                         height: 1.4,
-                        color: AppColors.textPrimary,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                   ),
@@ -294,7 +358,7 @@ class _LabReportsScreenState extends State<LabReportsScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: AppColors.surfaceCard,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(22),
         boxShadow: AppColors.cardShadow,
       ),
@@ -302,9 +366,9 @@ class _LabReportsScreenState extends State<LabReportsScreen> {
         children: [
           const Icon(Icons.cloud_upload_rounded, size: 42, color: AppColors.primaryContainer),
           const SizedBox(height: 12),
-          const Text('No reports yet', style: AppTypography.titleMd),
+          Text('No reports yet', style: AppTypography.titleMd),
           const SizedBox(height: 6),
-          const Text(
+          Text(
             'Upload a prescription or lab report from camera, gallery, or files. We will explain it in plain language.',
             textAlign: TextAlign.center,
             style: AppTypography.labelSm,
@@ -318,7 +382,7 @@ class _LabReportsScreenState extends State<LabReportsScreen> {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
             ),
             icon: const Icon(Icons.upload_file_rounded, size: 18),
-            label: const Text('Upload Prescription / Lab', style: TextStyle(fontWeight: FontWeight.w700)),
+            label: Text('Upload Prescription / Lab', style: TextStyle(fontWeight: FontWeight.w700)),
             onPressed: () => UploadReportModal.show(context, widget.appState),
           ),
         ],
@@ -331,7 +395,7 @@ class _LabReportsScreenState extends State<LabReportsScreen> {
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.surfaceCard,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: AppColors.cardShadow,
       ),
@@ -355,14 +419,14 @@ class _LabReportsScreenState extends State<LabReportsScreen> {
                   doc.fileName,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Theme.of(context).colorScheme.onSurface),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   doc.plainLanguageSummary,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                  style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
                 ),
               ],
             ),
@@ -396,7 +460,7 @@ class _LabReportsScreenState extends State<LabReportsScreen> {
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
           ),
           icon: const Icon(Icons.add_circle_outline_rounded, size: 16),
-          label: const Text('Upload', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+          label: Text('Upload', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
           onPressed: () => UploadReportModal.show(context, widget.appState),
         ),
       ],
@@ -408,7 +472,7 @@ class _LabReportsScreenState extends State<LabReportsScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.surfaceCard,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: AppColors.cardShadow,
       ),
@@ -417,7 +481,7 @@ class _LabReportsScreenState extends State<LabReportsScreen> {
         children: [
           Text(
             stage.isEmpty ? 'Analysing your report' : stage,
-            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Theme.of(context).colorScheme.onSurface),
           ),
           const SizedBox(height: 8),
           LinearProgressIndicator(
@@ -457,7 +521,7 @@ class _LabReportsScreenState extends State<LabReportsScreen> {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: AppColors.surfaceCard,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(22),
         boxShadow: AppColors.cardShadow,
       ),
@@ -518,10 +582,10 @@ class _LabReportsScreenState extends State<LabReportsScreen> {
                             : 'Pending review',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                     ),
@@ -560,7 +624,7 @@ class _LabReportsScreenState extends State<LabReportsScreen> {
             child: OutlinedButton.icon(
               onPressed: () => _openOrCreatePdf(report),
               icon: const Icon(Icons.picture_as_pdf_outlined, size: 18),
-              label: const Text(
+              label: Text(
                 'Open plain-language PDF',
                 style: TextStyle(fontWeight: FontWeight.w700),
               ),
@@ -601,7 +665,7 @@ class _LabReportsScreenState extends State<LabReportsScreen> {
       ),
       child: Column(
         children: [
-          Text(label, style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+          Text(label, style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
           const SizedBox(height: 2),
           Text(
             value,
@@ -626,7 +690,7 @@ class _LabReportsScreenState extends State<LabReportsScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: AppColors.surfaceCard,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
         boxShadow: AppColors.cardShadow,
       ),
@@ -667,10 +731,10 @@ class _LabReportsScreenState extends State<LabReportsScreen> {
                                     isPending ? 'Processing' : bm.code,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w700,
-                                      color: AppColors.textPrimary,
+                                      color: Theme.of(context).colorScheme.onSurface,
                                     ),
                                   ),
                                   const SizedBox(height: 2),
@@ -680,7 +744,7 @@ class _LabReportsScreenState extends State<LabReportsScreen> {
                                         : bm.name,
                                     maxLines: 2,
                                     overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 12,
                                       color: AppColors.textSecondary,
                                     ),
@@ -788,60 +852,60 @@ class _LabReportsScreenState extends State<LabReportsScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Row(
+                              Row(
                                 children: [
                                   Icon(Icons.psychology_rounded, size: 16, color: AppColors.primaryContainer),
                                   SizedBox(width: 6),
-                                  Text('What this test measures', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                                  Text('What this test measures', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Theme.of(context).colorScheme.onSurface)),
                                 ],
                               ),
                               const SizedBox(height: 6),
                               Text(
                                 bm.plainSummary,
-                                style: const TextStyle(fontSize: 12, color: AppColors.onSurfaceVariant, height: 1.4),
+                                style: TextStyle(fontSize: 12, color: AppColors.onSurfaceVariant, height: 1.4),
                               ),
                               if (bm.whatItMeans.isNotEmpty || bm.clinicalContext.isNotEmpty) ...[
                                 const SizedBox(height: 10),
-                                const Text('What your number means', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                                Text('What your number means', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Theme.of(context).colorScheme.onSurface)),
                                 const SizedBox(height: 4),
                                 Text(
                                   bm.whatItMeans.isNotEmpty ? bm.whatItMeans : bm.clinicalContext,
-                                  style: const TextStyle(fontSize: 12, color: AppColors.onSurfaceVariant, height: 1.4),
+                                  style: TextStyle(fontSize: 12, color: AppColors.onSurfaceVariant, height: 1.4),
                                 ),
                               ],
                               if (bm.possibleCauses.isNotEmpty) ...[
                                 const SizedBox(height: 10),
-                                const Text('What can cause this', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+                                Text('What can cause this', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
                                 const SizedBox(height: 4),
-                                ...bm.possibleCauses.map((c) => Text('• $c', style: const TextStyle(fontSize: 12, height: 1.35, color: AppColors.textSecondary))),
+                                ...bm.possibleCauses.map((c) => Text('• $c', style: TextStyle(fontSize: 12, height: 1.35, color: AppColors.textSecondary))),
                               ],
                               if (bm.lifestyleMeasures.isNotEmpty) ...[
                                 const SizedBox(height: 10),
-                                const Text('Lifestyle measures', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+                                Text('Lifestyle measures', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
                                 const SizedBox(height: 4),
-                                ...bm.lifestyleMeasures.map((c) => Text('• $c', style: const TextStyle(fontSize: 12, height: 1.35, color: AppColors.textSecondary))),
+                                ...bm.lifestyleMeasures.map((c) => Text('• $c', style: TextStyle(fontSize: 12, height: 1.35, color: AppColors.textSecondary))),
                               ],
                               if (bm.precautions.isNotEmpty) ...[
                                 const SizedBox(height: 10),
-                                const Text('Precautions', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+                                Text('Precautions', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
                                 const SizedBox(height: 4),
-                                ...bm.precautions.map((c) => Text('• $c', style: const TextStyle(fontSize: 12, height: 1.35, color: AppColors.textSecondary))),
+                                ...bm.precautions.map((c) => Text('• $c', style: TextStyle(fontSize: 12, height: 1.35, color: AppColors.textSecondary))),
                               ],
                               const SizedBox(height: 10),
                               Text(
                                 'See: ${bm.specialist} · Urgency: ${bm.consultUrgency}',
-                                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.primaryContainer),
+                                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.primaryContainer),
                               ),
                               if (bm.commonlyDiscussedMedicines.isNotEmpty) ...[
                                 const SizedBox(height: 10),
-                                const Text('Medicines often discussed (not a prescription)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+                                Text('Medicines often discussed (not a prescription)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
                                 const SizedBox(height: 4),
                                 ...bm.commonlyDiscussedMedicines.map(
                                   (m) => Padding(
                                     padding: const EdgeInsets.only(bottom: 6),
                                     child: Text(
                                       '• ${m.name} — ${m.whyDiscussed}. ${m.note}',
-                                      style: const TextStyle(fontSize: 12, height: 1.35, color: AppColors.textSecondary),
+                                      style: TextStyle(fontSize: 12, height: 1.35, color: AppColors.textSecondary),
                                     ),
                                   ),
                                 ),
@@ -890,7 +954,7 @@ class _LabReportsScreenState extends State<LabReportsScreen> {
                           child: TextButton.icon(
                             style: TextButton.styleFrom(foregroundColor: AppColors.primaryContainer),
                             icon: const Icon(Icons.auto_awesome_rounded, size: 14),
-                            label: Text('Ask AI about ${bm.code}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                            label: Text('Ask AI about ${bm.code}', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
                             onPressed: () {
                               AiChatSheet.show(context, widget.appState);
                             },
@@ -912,7 +976,7 @@ class _LabReportsScreenState extends State<LabReportsScreen> {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: AppColors.surfaceCard,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(22),
         boxShadow: AppColors.cardShadow,
       ),
@@ -931,7 +995,7 @@ class _LabReportsScreenState extends State<LabReportsScreen> {
               ),
               TextButton(
                 onPressed: () => DoctorQuestionsModal.show(context, report),
-                child: const Text('View All', style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.primaryContainer)),
+                child: Text('View All', style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.primaryContainer)),
               ),
             ],
           ),
@@ -940,7 +1004,7 @@ class _LabReportsScreenState extends State<LabReportsScreen> {
             report.recommendedDoctorQuestions.isEmpty
                 ? 'Ask your ${report.recommendedSpecialist} to walk through these results with you.'
                 : 'We prepared ${report.recommendedDoctorQuestions.length} questions for your ${report.recommendedSpecialist} based on this report.',
-            style: const TextStyle(fontSize: 12, color: AppColors.textSecondary, height: 1.35),
+            style: TextStyle(fontSize: 12, color: AppColors.textSecondary, height: 1.35),
           ),
           if (report.recommendedDoctorQuestions.isNotEmpty) ...[
             const SizedBox(height: 10),
@@ -949,7 +1013,7 @@ class _LabReportsScreenState extends State<LabReportsScreen> {
                     padding: const EdgeInsets.only(bottom: 6),
                     child: Text(
                       '• $q',
-                      style: const TextStyle(fontSize: 12.5, height: 1.35, color: AppColors.textPrimary),
+                      style: TextStyle(fontSize: 12.5, height: 1.35, color: Theme.of(context).colorScheme.onSurface),
                     ),
                   ),
                 ),
@@ -964,7 +1028,7 @@ class _LabReportsScreenState extends State<LabReportsScreen> {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
             ),
             icon: const Icon(Icons.chat_bubble_outline_rounded, size: 16),
-            label: const Text('Prepare Consultation Checklist', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
+            label: Text('Prepare Consultation Checklist', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
             onPressed: () => DoctorQuestionsModal.show(context, report),
           ),
         ],

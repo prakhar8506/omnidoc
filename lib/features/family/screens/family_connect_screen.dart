@@ -27,15 +27,15 @@ class _FamilyConnectScreenState extends State<FamilyConnectScreen> {
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
+          icon: Icon(Icons.arrow_back_rounded, color: Theme.of(context).colorScheme.onSurface),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text(
+        title: Text(
           'Family Connectivity',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w700,
-            color: AppColors.textPrimary,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
         centerTitle: true,
@@ -56,7 +56,7 @@ class _FamilyConnectScreenState extends State<FamilyConnectScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('FAMILY MEMBERS', style: TextStyle(
+                    Text('FAMILY MEMBERS', style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 0.8,
@@ -70,7 +70,7 @@ class _FamilyConnectScreenState extends State<FamilyConnectScreen> {
                       ),
                       child: Text(
                         '${widget.appState.familyMembers.length} saved',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
                           color: AppColors.primaryContainer,
@@ -87,7 +87,7 @@ class _FamilyConnectScreenState extends State<FamilyConnectScreen> {
                     width: double.infinity,
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: AppColors.surfaceCard,
+                      color: Theme.of(context).colorScheme.surface,
                       borderRadius: BorderRadius.circular(24),
                       boxShadow: AppColors.cardShadow,
                     ),
@@ -175,7 +175,7 @@ class _FamilyConnectScreenState extends State<FamilyConnectScreen> {
             ],
           ),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'Note down the people you care for and what you would be willing to '
             'share with each of them. Nothing is sent anywhere — these records and '
             'preferences stay on your phone until account-to-account sharing ships.',
@@ -213,7 +213,7 @@ class _FamilyConnectScreenState extends State<FamilyConnectScreen> {
           const SizedBox(width: 6),
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w600,
               color: AppColors.primaryFixedDim,
@@ -229,7 +229,7 @@ class _FamilyConnectScreenState extends State<FamilyConnectScreen> {
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.surfaceCard,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(24),
         boxShadow: AppColors.cardShadow,
       ),
@@ -253,10 +253,10 @@ class _FamilyConnectScreenState extends State<FamilyConnectScreen> {
                       children: [
                         Text(
                           member.name,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
-                            color: AppColors.textPrimary,
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -268,7 +268,7 @@ class _FamilyConnectScreenState extends State<FamilyConnectScreen> {
                           ),
                           child: Text(
                             member.relation,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
                               color: AppColors.primaryContainer,
@@ -280,7 +280,7 @@ class _FamilyConnectScreenState extends State<FamilyConnectScreen> {
                     const SizedBox(height: 2),
                     Text(
                       member.accessLevel,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
                         color: AppColors.textSecondary,
                       ),
@@ -350,7 +350,7 @@ class _FamilyConnectScreenState extends State<FamilyConnectScreen> {
               TextButton.icon(
                 style: TextButton.styleFrom(foregroundColor: AppColors.primaryContainer),
                 icon: const Icon(Icons.tune_rounded, size: 16),
-                label: const Text(
+                label: Text(
                   'Manage record grants',
                   style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
                 ),
@@ -368,7 +368,7 @@ class _FamilyConnectScreenState extends State<FamilyConnectScreen> {
                   );
                 },
               ),
-              const Text(
+              Text(
                 'Connected',
                 style: TextStyle(
                   fontSize: 11,
@@ -395,10 +395,10 @@ class _FamilyConnectScreenState extends State<FamilyConnectScreen> {
         Expanded(
           child: Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w500,
-              color: AppColors.textPrimary,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
         ),
@@ -415,16 +415,16 @@ class _FamilyConnectScreenState extends State<FamilyConnectScreen> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.surfaceCard,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(24),
         boxShadow: AppColors.cardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Add a family member', style: AppTypography.titleMd),
+          Text('Add a family member', style: AppTypography.titleMd),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Saves their name and your sharing preferences on this phone so they are ready when account-to-account sharing ships.',
             style: TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.35),
           ),
@@ -440,7 +440,7 @@ class _FamilyConnectScreenState extends State<FamilyConnectScreen> {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
               ),
               icon: const Icon(Icons.person_add_rounded, size: 18),
-              label: const Text(
+              label: Text(
                 'Add family member',
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
               ),
@@ -480,15 +480,15 @@ class _FamilyConnectScreenState extends State<FamilyConnectScreen> {
       builder: (context) => AlertDialog(
         backgroundColor: AppColors.surfaceCard,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: const Text('Remove Family Member?', style: AppTypography.titleMd),
+        title: Text('Remove Family Member?', style: AppTypography.titleMd),
         content: Text(
           'This removes ${member.name} and their sharing preferences from this phone.',
-          style: const TextStyle(fontSize: 14, color: AppColors.textSecondary, height: 1.4),
+          style: TextStyle(fontSize: 14, color: AppColors.textSecondary, height: 1.4),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel', style: TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.w600)),
+            child: Text('Cancel', style: TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.w600)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -501,7 +501,7 @@ class _FamilyConnectScreenState extends State<FamilyConnectScreen> {
               widget.appState.removeFamilyMember(member.id);
               Navigator.pop(context);
             },
-            child: const Text('Remove', style: TextStyle(fontWeight: FontWeight.w700)),
+            child: Text('Remove', style: TextStyle(fontWeight: FontWeight.w700)),
           ),
         ],
       ),
@@ -519,21 +519,21 @@ class _FamilyConnectScreenState extends State<FamilyConnectScreen> {
           return AlertDialog(
             backgroundColor: AppColors.surfaceCard,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-            title: const Text('Add Family Member', style: AppTypography.titleMd),
+            title: Text('Add Family Member', style: AppTypography.titleMd),
             content: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Name
-                  const Text('Full Name', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+                  Text('Full Name', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
                   const SizedBox(height: 8),
                   TextField(
                     controller: nameController,
-                    style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
+                    style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurface),
                     decoration: InputDecoration(
                       hintText: 'e.g. Alex Rivera',
-                      hintStyle: const TextStyle(color: AppColors.textSecondary),
+                      hintStyle: TextStyle(color: AppColors.textSecondary),
                       filled: true,
                       fillColor: AppColors.surfaceContainerLow,
                       border: OutlineInputBorder(
@@ -546,7 +546,7 @@ class _FamilyConnectScreenState extends State<FamilyConnectScreen> {
                   const SizedBox(height: 16),
 
                   // Relationship
-                  const Text('Relationship', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+                  Text('Relationship', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
                   const SizedBox(height: 8),
                   Wrap(
                     spacing: 8,
@@ -579,7 +579,7 @@ class _FamilyConnectScreenState extends State<FamilyConnectScreen> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel', style: TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.w600)),
+                child: Text('Cancel', style: TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.w600)),
               ),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
@@ -612,7 +612,7 @@ class _FamilyConnectScreenState extends State<FamilyConnectScreen> {
                     ),
                   );
                 },
-                child: const Text('Add member', style: TextStyle(fontWeight: FontWeight.w700)),
+                child: Text('Add member', style: TextStyle(fontWeight: FontWeight.w700)),
               ),
             ],
           );

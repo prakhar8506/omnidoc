@@ -19,7 +19,6 @@ class AppTypography {
         fontWeight: FontWeight.w600,
         height: 1.15,
         letterSpacing: -0.8,
-        color: AppColors.textPrimary,
       );
     }
     return GoogleFonts.newsreader(
@@ -27,7 +26,6 @@ class AppTypography {
       fontWeight: FontWeight.w600,
       height: 1.15,
       letterSpacing: -0.8,
-      color: AppColors.textPrimary,
     );
   }
 
@@ -39,7 +37,6 @@ class AppTypography {
         fontWeight: FontWeight.w600,
         height: 1.2,
         letterSpacing: -0.6,
-        color: AppColors.textPrimary,
       );
     }
     return GoogleFonts.newsreader(
@@ -47,7 +44,6 @@ class AppTypography {
       fontWeight: FontWeight.w600,
       height: 1.2,
       letterSpacing: -0.6,
-      color: AppColors.textPrimary,
     );
   }
 
@@ -59,7 +55,6 @@ class AppTypography {
         fontWeight: FontWeight.w600,
         height: 1.25,
         letterSpacing: -0.4,
-        color: AppColors.textPrimary,
       );
     }
     return GoogleFonts.newsreader(
@@ -67,7 +62,6 @@ class AppTypography {
       fontWeight: FontWeight.w600,
       height: 1.25,
       letterSpacing: -0.4,
-      color: AppColors.textPrimary,
     );
   }
 
@@ -77,7 +71,6 @@ class AppTypography {
     fontWeight: FontWeight.w700,
     height: 36 / 30,
     letterSpacing: -0.6,
-    color: AppColors.textPrimary,
   );
 
   static const TextStyle headlineLgMobile = TextStyle(
@@ -85,7 +78,6 @@ class AppTypography {
     fontWeight: FontWeight.w700,
     height: 32 / 26,
     letterSpacing: -0.5,
-    color: AppColors.textPrimary,
   );
 
   static const TextStyle headlineMd = TextStyle(
@@ -93,7 +85,6 @@ class AppTypography {
     fontWeight: FontWeight.w700,
     height: 28 / 22,
     letterSpacing: -0.4,
-    color: AppColors.textPrimary,
   );
 
   static const TextStyle titleLg = TextStyle(
@@ -101,7 +92,6 @@ class AppTypography {
     fontWeight: FontWeight.w600,
     height: 25 / 19,
     letterSpacing: -0.3,
-    color: AppColors.textPrimary,
   );
 
   static const TextStyle titleMd = TextStyle(
@@ -109,28 +99,24 @@ class AppTypography {
     fontWeight: FontWeight.w600,
     height: 22 / 16,
     letterSpacing: -0.2,
-    color: AppColors.textPrimary,
   );
 
   static const TextStyle bodyLg = TextStyle(
     fontSize: 15,
     fontWeight: FontWeight.w500,
     height: 22 / 15,
-    color: AppColors.textPrimary,
   );
 
   static const TextStyle bodyMd = TextStyle(
     fontSize: 14,
     fontWeight: FontWeight.w400,
     height: 20 / 14,
-    color: AppColors.textPrimary,
   );
 
   static const TextStyle labelMd = TextStyle(
     fontSize: 13,
     fontWeight: FontWeight.w500,
     height: 18 / 13,
-    color: AppColors.textPrimary,
   );
 
   static const TextStyle labelSm = TextStyle(

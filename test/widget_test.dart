@@ -234,7 +234,20 @@ void main() {
       matching: find.byIcon(Icons.calendar_month_rounded),
     ));
     await tester.pump(const Duration(milliseconds: 300));
-    expect(find.text('Upcoming'), findsOneWidget);
+    expect(find.text('Metabolism'), findsOneWidget);
+
+    await tester.tap(find.descendant(
+      of: find.byType(FloatingBottomNav),
+      matching: find.byIcon(Icons.favorite_rounded),
+    ));
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.text('Visits'));
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text('No upcoming visits'), findsOneWidget);
+
+    await tester.tap(find.text('Family'));
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text('Family Health Sharing'), findsOneWidget);
   });
 
   test('AuthService isolates accounts by email', () async {

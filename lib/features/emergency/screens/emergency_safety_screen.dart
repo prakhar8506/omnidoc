@@ -107,14 +107,14 @@ class EmergencySafetyScreen extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
+                          Text(
                             'CRITICAL MEDICAL ID',
                             style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.accentCoral, letterSpacing: 0.8),
                           ),
                           const SizedBox(height: 2),
                           Text(
                             appState.userName,
-                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.onSurface),
                             overflow: TextOverflow.ellipsis,
                           ),
                         ],
@@ -132,7 +132,7 @@ class EmergencySafetyScreen extends StatelessWidget {
                 ),
                 child: Text(
                   'Blood ${appState.bloodType}',
-                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.accentCoral),
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: AppColors.accentCoral),
                 ),
               ),
             ],
@@ -192,7 +192,7 @@ class EmergencySafetyScreen extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Expanded(
+              Expanded(
                 child: Row(
                   children: [
                     Icon(Icons.accessibility_new_rounded, color: AppColors.watchHeartRate, size: 22),
@@ -200,7 +200,7 @@ class EmergencySafetyScreen extends StatelessWidget {
                     Flexible(
                       child: Text(
                         'Wearable Fall Detection',
-                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Theme.of(context).colorScheme.onSurface),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
@@ -266,22 +266,22 @@ class EmergencySafetyScreen extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Expanded(
+              Expanded(
                 child: Text(
                   'Allergies & Medical Warnings',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Theme.of(context).colorScheme.onSurface),
                 ),
               ),
               TextButton.icon(
                 onPressed: () => _showAddAllergyDialog(context),
                 icon: const Icon(Icons.add_rounded, size: 16),
-                label: const Text('Add', style: TextStyle(fontWeight: FontWeight.w700)),
+                label: Text('Add', style: TextStyle(fontWeight: FontWeight.w700)),
               ),
             ],
           ),
           const SizedBox(height: 8),
           if (appState.allergies.isEmpty)
-            const Text(
+            Text(
               'No allergies listed. Add medications or food allergies for emergency responders.',
               style: TextStyle(fontSize: 12.5, color: AppColors.textSecondary, height: 1.35),
             )
@@ -294,7 +294,7 @@ class EmergencySafetyScreen extends StatelessWidget {
                   avatar: const Icon(Icons.warning_amber_rounded, size: 14, color: AppColors.accentCoral),
                   label: Text(
                     a,
-                    style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppColors.accentCoral),
+                    style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppColors.accentCoral),
                   ),
                   backgroundColor: AppColors.accentCoral.withValues(alpha: 0.10),
                   side: BorderSide(color: AppColors.accentCoral.withValues(alpha: 0.25)),
@@ -313,7 +313,7 @@ class EmergencySafetyScreen extends StatelessWidget {
     final result = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Add allergy / warning'),
+        title: Text('Add allergy / warning'),
         content: TextField(
           controller: controller,
           autofocus: true,
@@ -323,10 +323,10 @@ class EmergencySafetyScreen extends StatelessWidget {
           onSubmitted: (v) => Navigator.pop(ctx, v.trim()),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text('Cancel')),
           TextButton(
             onPressed: () => Navigator.pop(ctx, controller.text.trim()),
-            child: const Text('Save'),
+            child: Text('Save'),
           ),
         ],
       ),
@@ -346,22 +346,22 @@ class EmergencySafetyScreen extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Expanded(
+              Expanded(
                 child: Text(
                   'Emergency contacts',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Theme.of(context).colorScheme.onSurface),
                 ),
               ),
               TextButton.icon(
                 onPressed: () => _showAddContactDialog(context),
                 icon: const Icon(Icons.add_rounded, size: 18),
-                label: const Text('Add'),
+                label: Text('Add'),
               ),
             ],
           ),
           const SizedBox(height: 4),
           if (contacts.isEmpty)
-            const Text(
+            Text(
               'Add a name and phone number. It stays on this phone and can be dialed from SOS.',
               style: TextStyle(fontSize: 13, height: 1.35, color: AppColors.textSecondary),
             )
@@ -386,13 +386,13 @@ class EmergencySafetyScreen extends StatelessWidget {
                             contact.name,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
                           ),
                           Text(
                             '${contact.relation} · ${contact.phone}',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                            style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
                           ),
                         ],
                       ),
@@ -438,7 +438,7 @@ class EmergencySafetyScreen extends StatelessWidget {
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: const Text('Confirm Emergency Call', style: AppTypography.titleMd),
+        title: Text('Confirm Emergency Call', style: AppTypography.titleMd),
         content: Text(
           contacts.isEmpty
               ? 'No saved contacts yet. You can still dial emergency services or type a number.'
@@ -446,14 +446,14 @@ class EmergencySafetyScreen extends StatelessWidget {
           style: AppTypography.bodyMd,
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text('Cancel')),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.accentCoral,
               foregroundColor: Colors.white,
             ),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Continue'),
+            child: Text('Continue'),
           ),
         ],
       ),
@@ -481,12 +481,12 @@ class EmergencySafetyScreen extends StatelessWidget {
                 ),
               ListTile(
                 leading: const Icon(Icons.emergency_rounded),
-                title: const Text('Emergency services (112)'),
+                title: Text('Emergency services (112)'),
                 onTap: () => Navigator.pop(ctx, '112'),
               ),
               ListTile(
                 leading: const Icon(Icons.dialpad_rounded),
-                title: const Text('Type another number'),
+                title: Text('Type another number'),
                 onTap: () => Navigator.pop(ctx, ''),
               ),
             ],
@@ -507,7 +507,7 @@ class EmergencySafetyScreen extends StatelessWidget {
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: const Text('Enter number to call', style: AppTypography.titleMd),
+        title: Text('Enter number to call', style: AppTypography.titleMd),
         content: TextField(
           controller: phoneController,
           keyboardType: TextInputType.phone,
@@ -518,14 +518,14 @@ class EmergencySafetyScreen extends StatelessWidget {
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text('Cancel')),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.accentCoral,
               foregroundColor: Colors.white,
             ),
             onPressed: () => Navigator.pop(ctx, phoneController.text.trim()),
-            child: const Text('Call'),
+            child: Text('Call'),
           ),
         ],
       ),
@@ -592,7 +592,7 @@ class EmergencySafetyScreen extends StatelessWidget {
                   child: const Icon(Icons.warning_rounded, color: AppColors.accentCoral, size: 48),
                 ),
                 const SizedBox(height: 18),
-                const Text(
+                Text(
                   'PRACTICE ALERT',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Colors.white, letterSpacing: 0.6),
                 ),
@@ -614,9 +614,9 @@ class EmergencySafetyScreen extends StatelessWidget {
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(999),
                     ),
-                    child: const Text(
+                    child: Text(
                       'I AM OKAY (CANCEL)',
-                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.onSurface),
                     ),
                   ),
                 ),
@@ -640,9 +640,9 @@ class _MedicalIdField extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontSize: 11, color: AppColors.textTertiary, fontWeight: FontWeight.w600)),
+        Text(label, style: TextStyle(fontSize: 11, color: AppColors.textTertiary, fontWeight: FontWeight.w600)),
         const SizedBox(height: 2),
-        Text(value, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+        Text(value, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Theme.of(context).colorScheme.onSurface)),
       ],
     );
   }
@@ -697,7 +697,7 @@ class _AddEmergencyContactDialogState extends State<_AddEmergencyContactDialog> 
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Add emergency contact'),
+      title: Text('Add emergency contact'),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -717,13 +717,13 @@ class _AddEmergencyContactDialogState extends State<_AddEmergencyContactDialog> 
           ),
           if (_error != null) ...[
             const SizedBox(height: 10),
-            Text(_error!, style: const TextStyle(color: AppColors.accentCoral, fontWeight: FontWeight.w600)),
+            Text(_error!, style: TextStyle(color: AppColors.accentCoral, fontWeight: FontWeight.w600)),
           ],
         ],
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-        TextButton(onPressed: _save, child: const Text('Save')),
+        TextButton(onPressed: () => Navigator.pop(context), child: Text('Cancel')),
+        TextButton(onPressed: _save, child: Text('Save')),
       ],
     );
   }

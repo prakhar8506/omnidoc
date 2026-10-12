@@ -167,7 +167,7 @@ class _WomensHealthScreenState extends State<WomensHealthScreen> {
                             elevation: 0,
                           ),
                           icon: const Icon(Icons.water_drop_rounded, size: 20),
-                          label: const Text(
+                          label: Text(
                             'Log Period & Flow Intensity',
                             style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
                           ),
@@ -234,10 +234,10 @@ class _WomensHealthScreenState extends State<WomensHealthScreen> {
                   const SizedBox(height: 6),
                   Text(
                     'Day $cycleDay of $totalDays',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.w800,
-                      color: AppColors.textPrimary,
+                      color: Theme.of(context).colorScheme.onSurface,
                       letterSpacing: -0.6,
                     ),
                   ),
@@ -250,7 +250,7 @@ class _WomensHealthScreenState extends State<WomensHealthScreen> {
                     ),
                     child: Text(
                       '${state.cyclePhase} • Peak Vitality',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
                         color: AppColors.accentRose,
@@ -268,10 +268,10 @@ class _WomensHealthScreenState extends State<WomensHealthScreen> {
                   child: Center(
                     child: Text(
                       'Day $cycleDay',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w800,
-                        color: AppColors.textPrimary,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                   ),
@@ -316,7 +316,7 @@ class _WomensHealthScreenState extends State<WomensHealthScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'FEELING JOURNAL CORRELATION',
                   style: TextStyle(
                     fontSize: 11,
@@ -357,7 +357,7 @@ class _WomensHealthScreenState extends State<WomensHealthScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Logged Period & Flow History', style: AppTypography.titleMd),
+              Text('Logged Period & Flow History', style: AppTypography.titleMd),
               Text(
                 '${widget.appState.menstrualCycleLogs.length} logs',
                 style: AppTypography.labelSm.copyWith(color: AppColors.textTertiary),
@@ -390,10 +390,10 @@ class _WomensHealthScreenState extends State<WomensHealthScreen> {
                       children: [
                         Text(
                           '${date.day} ${_getMonth(date.month)} • $flow Flow',
-                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
                         ),
                         if (symptoms.isNotEmpty)
-                          Text(symptoms, style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                          Text(symptoms, style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
                       ],
                     ),
                   ),
@@ -405,7 +405,7 @@ class _WomensHealthScreenState extends State<WomensHealthScreen> {
                     ),
                     child: Text(
                       flow,
-                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.accentRose),
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.accentRose),
                     ),
                   ),
                 ],
@@ -434,8 +434,8 @@ class _WomensHealthScreenState extends State<WomensHealthScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Track Cycle Symptoms',
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+          Text('Track Cycle Symptoms',
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Theme.of(context).colorScheme.onSurface)),
           const SizedBox(height: 4),
           Text('Tap to record bodily observations for this phase.',
               style: AppTypography.labelSm.copyWith(color: AppColors.textSecondary)),
@@ -481,7 +481,7 @@ class _WomensHealthScreenState extends State<WomensHealthScreen> {
       backgroundColor: Colors.transparent,
       builder: (ctx) => Container(
         padding: const EdgeInsets.all(24),
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
         ),
@@ -490,11 +490,11 @@ class _WomensHealthScreenState extends State<WomensHealthScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text("Women's Health Settings", style: AppTypography.titleLg),
+              Text("Women's Health Settings", style: AppTypography.titleLg),
               const SizedBox(height: 16),
               SwitchListTile(
-                title: const Text('Menstrual Tracking Enabled', style: AppTypography.titleMd),
-                subtitle: const Text('Show cycle telemetry on home and health dashboard', style: AppTypography.labelSm),
+                title: Text('Menstrual Tracking Enabled', style: AppTypography.titleMd),
+                subtitle: Text('Show cycle telemetry on home and health dashboard', style: AppTypography.labelSm),
                 value: widget.appState.isMenstrualTrackingEnabled,
                 activeTrackColor: AppColors.accentRose,
                 onChanged: (val) {
@@ -503,8 +503,8 @@ class _WomensHealthScreenState extends State<WomensHealthScreen> {
                 },
               ),
               SwitchListTile(
-                title: const Text('Pregnancy Mode', style: AppTypography.titleMd),
-                subtitle: const Text('Adapt dashboard for gestational age and prenatal tracking', style: AppTypography.labelSm),
+                title: Text('Pregnancy Mode', style: AppTypography.titleMd),
+                subtitle: Text('Adapt dashboard for gestational age and prenatal tracking', style: AppTypography.labelSm),
                 value: widget.appState.isPregnancyMode,
                 activeTrackColor: const Color(0xFFDB2777),
                 onChanged: (val) {
@@ -545,10 +545,10 @@ class _CycleMetricPill extends StatelessWidget {
         const SizedBox(height: 4),
         Text(
           value,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w700,
-            color: AppColors.textPrimary,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
       ],

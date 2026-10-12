@@ -203,13 +203,13 @@ class _JournalFeelingScreenState extends State<JournalFeelingScreen> with Single
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.7),
+              color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(999),
             ),
             child: Text(
               'Energy from vitals: ${widget.appState.energyScore}/100'
               '${widget.appState.hasVitalsData ? '' : ' • sync wearable for live score'}',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
                 color: AppColors.textSecondary,
@@ -374,10 +374,10 @@ class _JournalFeelingScreenState extends State<JournalFeelingScreen> with Single
                                     const SizedBox(width: 8),
                                     Text(
                                       activeMood['title'] as String,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 13,
                                         fontWeight: FontWeight.w700,
-                                        color: AppColors.textPrimary,
+                                        color: Theme.of(context).colorScheme.onSurface,
                                       ),
                                     ),
                                   ],
@@ -400,11 +400,11 @@ class _JournalFeelingScreenState extends State<JournalFeelingScreen> with Single
                                     width: 56,
                                     height: 56,
                                     decoration: BoxDecoration(
-                                      color: AppColors.textPrimary,
+                                      color: Theme.of(context).colorScheme.onSurface,
                                       shape: BoxShape.circle,
                                       boxShadow: [
                                         BoxShadow(
-                                          color: AppColors.textPrimary.withValues(alpha: 0.35),
+                                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.35),
                                           blurRadius: 16,
                                           offset: const Offset(0, 6),
                                         ),
@@ -422,7 +422,7 @@ class _JournalFeelingScreenState extends State<JournalFeelingScreen> with Single
                                 const SizedBox(height: 6),
                                 Text(
                                   '${widget.appState.feelingStep} of 8 · drag the ring',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w600,
                                     color: AppColors.textSecondary,
@@ -470,16 +470,16 @@ class _JournalFeelingScreenState extends State<JournalFeelingScreen> with Single
                         children: [
                           Text(
                             'State: ${activeMood['title']}',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w700,
-                              color: AppColors.textPrimary,
+                              color: Theme.of(context).colorScheme.onSurface,
                             ),
                           ),
                           const SizedBox(height: 2),
                           Text(
                             activeMood['description'] as String,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 12,
                               color: AppColors.textSecondary,
                               height: 1.35,
@@ -488,7 +488,7 @@ class _JournalFeelingScreenState extends State<JournalFeelingScreen> with Single
                           const SizedBox(height: 6),
                           Text(
                             'Linked energy ${widget.appState.energyScore}% · HR ${widget.appState.restingHeartRate > 0 ? '${widget.appState.restingHeartRate} bpm' : '—'} · Sleep ${widget.appState.sleepDuration}',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
                               color: AppColors.textTertiary,
@@ -516,7 +516,7 @@ class _JournalFeelingScreenState extends State<JournalFeelingScreen> with Single
                     elevation: 0,
                   ),
                   icon: const Icon(Icons.edit_note_rounded, size: 20),
-                  label: const Text(
+                  label: Text(
                     'New Reflection',
                     style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
                   ),
@@ -537,7 +537,7 @@ class _JournalFeelingScreenState extends State<JournalFeelingScreen> with Single
                     backgroundColor: Colors.white.withValues(alpha: 0.7),
                   ),
                   icon: const Icon(Icons.auto_awesome_rounded, size: 18),
-                  label: const Text(
+                  label: Text(
                     'AI Insights',
                     style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
                   ),
@@ -560,7 +560,7 @@ class _JournalFeelingScreenState extends State<JournalFeelingScreen> with Single
                 widget.appState.lastMoodCheck == null
                     ? 'Mood check'
                     : 'Mood check · ${widget.appState.lastMoodCheck!['quality']}',
-                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
               ),
               onPressed: () => Navigator.push(
                 context,
@@ -630,10 +630,10 @@ class _JournalFeelingScreenState extends State<JournalFeelingScreen> with Single
                                 corr['title'] as String,
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w700,
-                                  color: AppColors.textPrimary,
+                                  color: Theme.of(context).colorScheme.onSurface,
                                 ),
                               ),
                             ),
@@ -662,7 +662,7 @@ class _JournalFeelingScreenState extends State<JournalFeelingScreen> with Single
                         const SizedBox(height: 6),
                         Text(
                           corr['insight'] as String,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
                             color: AppColors.textSecondary,
                             height: 1.35,
@@ -679,9 +679,16 @@ class _JournalFeelingScreenState extends State<JournalFeelingScreen> with Single
 
           // Section 2: Reflections Timeline
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Reflections Timeline', style: AppTypography.titleMd),
+              const Expanded(
+                child: Text(
+                  'Reflections Timeline',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.titleMd,
+                ),
+              ),
+              const SizedBox(width: 8),
               Text(
                 '${widget.appState.journalEntries.length} entries',
                 style: AppTypography.labelSm.copyWith(color: AppColors.textTertiary),
@@ -694,7 +701,7 @@ class _JournalFeelingScreenState extends State<JournalFeelingScreen> with Single
               padding: const EdgeInsets.all(28),
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.6),
+                color: Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(20),
               ),
               child: const Column(
@@ -751,7 +758,7 @@ class _JournalFeelingScreenState extends State<JournalFeelingScreen> with Single
                               ),
                               child: Text(
                                 mood,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w700,
                                   color: AppColors.primaryContainer,
@@ -787,14 +794,14 @@ class _JournalFeelingScreenState extends State<JournalFeelingScreen> with Single
                         ),
                         Text(
                           '${date.day}/${date.month} • ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}',
-                          style: const TextStyle(fontSize: 11, color: AppColors.textTertiary),
+                          style: TextStyle(fontSize: 11, color: AppColors.textTertiary),
                         ),
                       ],
                     ),
                     const SizedBox(height: 10),
                     Text(
                       prompt,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
                         color: AppColors.textSecondary,
@@ -803,9 +810,9 @@ class _JournalFeelingScreenState extends State<JournalFeelingScreen> with Single
                     const SizedBox(height: 6),
                     Text(
                       content,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
-                        color: AppColors.textPrimary,
+                        color: Theme.of(context).colorScheme.onSurface,
                         height: 1.4,
                       ),
                     ),
@@ -842,13 +849,15 @@ class _JournalFeelingScreenState extends State<JournalFeelingScreen> with Single
       return {'day': labels[i], 'date': d.day.toString().padLeft(2, '0')};
     });
 
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final ink = Theme.of(context).colorScheme.onSurface;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.6),
+        color: dark ? const Color(0xFF2A2C3A) : Colors.white.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: Colors.white.withValues(alpha: 0.8),
+          color: Colors.white.withValues(alpha: dark ? 0.08 : 0.8),
           width: 1,
         ),
       ),
@@ -867,12 +876,12 @@ class _JournalFeelingScreenState extends State<JournalFeelingScreen> with Single
               duration: const Duration(milliseconds: 200),
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
               decoration: BoxDecoration(
-                color: isSelected ? AppColors.textPrimary : Colors.transparent,
+                color: isSelected ? (dark ? Colors.white : AppColors.textPrimary) : Colors.transparent,
                 borderRadius: BorderRadius.circular(14),
                 boxShadow: isSelected
                     ? [
                         BoxShadow(
-                          color: AppColors.textPrimary.withValues(alpha: 0.25),
+                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.25),
                           blurRadius: 10,
                           offset: const Offset(0, 4),
                         ),
@@ -896,7 +905,9 @@ class _JournalFeelingScreenState extends State<JournalFeelingScreen> with Single
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
-                      color: isSelected ? Colors.white : AppColors.textPrimary,
+                      color: isSelected
+                          ? (dark ? AppColors.textPrimary : Colors.white)
+                          : ink,
                     ),
                   ),
                 ],

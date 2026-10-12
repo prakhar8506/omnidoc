@@ -62,10 +62,10 @@ class PermissionCenterScreen extends StatelessWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: AppColors.textPrimary),
+          icon: Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: Theme.of(context).colorScheme.onSurface),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text('Consent & Permission Center', style: AppTypography.titleLg),
+        title: Text('Consent & Permission Center', style: AppTypography.titleLg),
         centerTitle: false,
       ),
       body: HolographicBackground(
@@ -115,7 +115,7 @@ class PermissionCenterScreen extends StatelessWidget {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text(
+                                  Text(
                                     'Data Quality & Coverage',
                                     style: AppTypography.titleMd,
                                     overflow: TextOverflow.ellipsis,
@@ -138,10 +138,10 @@ class PermissionCenterScreen extends StatelessWidget {
                             const SizedBox(width: 8),
                             Text(
                               '${qualityScore.coveragePercentage}%',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 22,
                                 fontWeight: FontWeight.w800,
-                                color: AppColors.textPrimary,
+                                color: Theme.of(context).colorScheme.onSurface,
                               ),
                             ),
                           ],
@@ -161,7 +161,7 @@ class PermissionCenterScreen extends StatelessWidget {
                         const SizedBox(height: 12),
                         Text(
                           qualityScore.description,
-                          style: const TextStyle(fontSize: 12, color: AppColors.textSecondary, height: 1.4),
+                          style: TextStyle(fontSize: 12, color: AppColors.textSecondary, height: 1.4),
                         ),
                         if (qualityScore.conflictWarning != null) ...[
                           const SizedBox(height: 10),
@@ -179,7 +179,7 @@ class PermissionCenterScreen extends StatelessWidget {
                                 Expanded(
                                   child: Text(
                                     qualityScore.conflictWarning!,
-                                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.warning),
+                                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.warning),
                                   ),
                                 ),
                               ],
@@ -191,12 +191,12 @@ class PermissionCenterScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 24),
 
-                  const Text(
+                  Text(
                     'Biometric & Sensor Permissions',
                     style: AppTypography.titleMd,
                   ),
                   const SizedBox(height: 6),
-                  const Text(
+                  Text(
                     'Least-privilege policy. You can toggle off any stream at any time. Turning off a metric stops new ingestion immediately.',
                     style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
                   ),
@@ -237,10 +237,10 @@ class PermissionCenterScreen extends StatelessWidget {
                                     children: [
                                       Text(
                                         item.title,
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontSize: 14,
                                           fontWeight: FontWeight.w700,
-                                          color: AppColors.textPrimary,
+                                          color: Theme.of(context).colorScheme.onSurface,
                                         ),
                                       ),
                                       const SizedBox(height: 2),
@@ -282,7 +282,7 @@ class PermissionCenterScreen extends StatelessWidget {
                             const SizedBox(height: 10),
                             Text(
                               item.description,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 12,
                                 color: AppColors.textSecondary,
                                 height: 1.35,
@@ -297,13 +297,14 @@ class PermissionCenterScreen extends StatelessWidget {
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Row(
-                                  mainAxisSize: MainAxisSize.min,
                                   children: [
                                     const Icon(Icons.warning_amber_rounded, size: 14, color: AppColors.warning),
                                     const SizedBox(width: 6),
-                                    Text(
-                                      item.dataGapWarning!,
-                                      style: const TextStyle(fontSize: 11, color: AppColors.warning, fontWeight: FontWeight.w500),
+                                    Expanded(
+                                      child: Text(
+                                        item.dataGapWarning!,
+                                        style: TextStyle(fontSize: 11, color: AppColors.warning, fontWeight: FontWeight.w500),
+                                      ),
                                     ),
                                   ],
                                 ),

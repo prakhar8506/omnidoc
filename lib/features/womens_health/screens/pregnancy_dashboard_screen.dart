@@ -84,12 +84,12 @@ class _PregnancyDashboardScreenState extends State<PregnancyDashboardScreen> {
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: const Text('Log Pregnancy Weight', style: AppTypography.titleMd),
+        title: Text('Log Pregnancy Weight', style: AppTypography.titleMd),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Consistent tracking ensures healthy maternal and fetal metabolic progression.',
               style: AppTypography.labelSm,
             ),
@@ -108,7 +108,7 @@ class _PregnancyDashboardScreenState extends State<PregnancyDashboardScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: Text('Cancel'),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -123,7 +123,7 @@ class _PregnancyDashboardScreenState extends State<PregnancyDashboardScreen> {
                 Navigator.pop(ctx);
               }
             },
-            child: const Text('Save'),
+            child: Text('Save'),
           ),
         ],
       ),
@@ -140,7 +140,7 @@ class _PregnancyDashboardScreenState extends State<PregnancyDashboardScreen> {
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: const Text('Add Prenatal Scan', style: AppTypography.titleMd),
+        title: Text('Add Prenatal Scan', style: AppTypography.titleMd),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -176,7 +176,7 @@ class _PregnancyDashboardScreenState extends State<PregnancyDashboardScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: Text('Cancel'),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -197,7 +197,7 @@ class _PregnancyDashboardScreenState extends State<PregnancyDashboardScreen> {
                 Navigator.pop(ctx);
               }
             },
-            child: const Text('Add Scan'),
+            child: Text('Add Scan'),
           ),
         ],
       ),
@@ -233,7 +233,7 @@ class _PregnancyDashboardScreenState extends State<PregnancyDashboardScreen> {
                   const Spacer(),
                   Text('Pregnancy Companion', style: AppTypography.editorialLg),
                   const SizedBox(height: 12),
-                  const Text(
+                  Text(
                     'Set your due date to unlock gestational week tracking, baby milestones, and prenatal tools.',
                     style: AppTypography.bodyMd,
                   ),
@@ -248,7 +248,7 @@ class _PregnancyDashboardScreenState extends State<PregnancyDashboardScreen> {
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       ),
                       onPressed: _pickDueDate,
-                      child: const Text(
+                      child: Text(
                         'Set due date',
                         style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
                       ),
@@ -293,7 +293,7 @@ class _PregnancyDashboardScreenState extends State<PregnancyDashboardScreen> {
                           child: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
                         ),
                       ),
-                      const Text('Pregnancy Companion', style: AppTypography.titleLg),
+                      Text('Pregnancy Companion', style: AppTypography.titleLg),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                         decoration: BoxDecoration(
@@ -301,7 +301,7 @@ class _PregnancyDashboardScreenState extends State<PregnancyDashboardScreen> {
                           borderRadius: BorderRadius.circular(999),
                           border: Border.all(color: const Color(0xFFF472B6)),
                         ),
-                        child: const Text(
+                        child: Text(
                           'Active Mode',
                           style: TextStyle(
                             fontSize: 11,
@@ -375,7 +375,7 @@ class _PregnancyDashboardScreenState extends State<PregnancyDashboardScreen> {
                       const SizedBox(width: 8),
                       Text(
                         trimester.toUpperCase(),
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
                           letterSpacing: 1.0,
@@ -387,16 +387,16 @@ class _PregnancyDashboardScreenState extends State<PregnancyDashboardScreen> {
                   const SizedBox(height: 6),
                   Text(
                     'Week $weeks',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 30,
                       fontWeight: FontWeight.w800,
-                      color: AppColors.textPrimary,
+                      color: Theme.of(context).colorScheme.onSurface,
                       letterSpacing: -0.6,
                     ),
                   ),
                   Text(
                     '+ $days days • $daysRemaining days to due date',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
                       color: AppColors.textSecondary,
@@ -423,13 +423,13 @@ class _PregnancyDashboardScreenState extends State<PregnancyDashboardScreen> {
                     children: [
                       Text(
                         '${(progress * 100).round()}%',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w800,
-                          color: AppColors.textPrimary,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
-                      const Text(
+                      Text(
                         'term',
                         style: TextStyle(fontSize: 10, color: AppColors.textTertiary),
                       ),
@@ -458,14 +458,14 @@ class _PregnancyDashboardScreenState extends State<PregnancyDashboardScreen> {
   Widget _metricBadge(String label, String value) {
     return Column(
       children: [
-        Text(label, style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+        Text(label, style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
         const SizedBox(height: 3),
         Text(
           value,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 12.5,
             fontWeight: FontWeight.w700,
-            color: AppColors.textPrimary,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
       ],
@@ -482,7 +482,7 @@ class _PregnancyDashboardScreenState extends State<PregnancyDashboardScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Baby Development', style: AppTypography.titleMd),
+              Text('Baby Development', style: AppTypography.titleMd),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
@@ -491,7 +491,7 @@ class _PregnancyDashboardScreenState extends State<PregnancyDashboardScreen> {
                 ),
                 child: Text(
                   babyDev['sizeComparison'] as String,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                     color: Color(0xFFBE185D),
@@ -503,9 +503,9 @@ class _PregnancyDashboardScreenState extends State<PregnancyDashboardScreen> {
           const SizedBox(height: 12),
           Text(
             babyDev['milestone'] as String,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13.5,
-              color: AppColors.textPrimary,
+              color: Theme.of(context).colorScheme.onSurface,
               height: 1.4,
             ),
           ),
@@ -525,7 +525,7 @@ class _PregnancyDashboardScreenState extends State<PregnancyDashboardScreen> {
                 Expanded(
                   child: Text(
                     babyDev['careAdvice'] as String,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
                       color: AppColors.textSecondary,
                       height: 1.35,
@@ -572,7 +572,7 @@ class _PregnancyDashboardScreenState extends State<PregnancyDashboardScreen> {
                     color: const Color(0xFFDCFCE7),
                     borderRadius: BorderRadius.circular(999),
                   ),
-                  child: const Text(
+                  child: Text(
                     'Active',
                     style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF15803D)),
                   ),
@@ -609,13 +609,13 @@ class _PregnancyDashboardScreenState extends State<PregnancyDashboardScreen> {
                     const SizedBox(height: 4),
                     Text(
                       '$_currentSessionKicks / 10',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w800,
                         color: Colors.white,
                       ),
                     ),
-                    const Text(
+                    Text(
                       'Tap for kick',
                       style: TextStyle(fontSize: 10, color: Colors.white70),
                     ),
@@ -627,7 +627,7 @@ class _PregnancyDashboardScreenState extends State<PregnancyDashboardScreen> {
           const SizedBox(height: 16),
           // Past kick history
           if (widget.appState.kickCounterLogs.isNotEmpty) ...[
-            const Text('Recent Kick Sessions', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+            Text('Recent Kick Sessions', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
             ...widget.appState.kickCounterLogs.take(2).map((k) {
               return Padding(
@@ -639,7 +639,7 @@ class _PregnancyDashboardScreenState extends State<PregnancyDashboardScreen> {
                     Expanded(
                       child: Text(
                         '${k['kicks']} kicks in ${k['durationMinutes']} mins',
-                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -648,7 +648,7 @@ class _PregnancyDashboardScreenState extends State<PregnancyDashboardScreen> {
                     Flexible(
                       child: Text(
                         k['status'] as String,
-                        style: const TextStyle(fontSize: 11, color: AppColors.textTertiary),
+                        style: TextStyle(fontSize: 11, color: AppColors.textTertiary),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         textAlign: TextAlign.end,
@@ -679,7 +679,7 @@ class _PregnancyDashboardScreenState extends State<PregnancyDashboardScreen> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Maternal Weight Gain', style: AppTypography.titleMd),
+                  Text('Maternal Weight Gain', style: AppTypography.titleMd),
                   const SizedBox(height: 2),
                   Text('Pre-pregnancy: ${state.prePregnancyWeightKg} kg', style: AppTypography.labelSm),
                 ],
@@ -687,7 +687,7 @@ class _PregnancyDashboardScreenState extends State<PregnancyDashboardScreen> {
               OutlinedButton.icon(
                 onPressed: _showLogWeightDialog,
                 icon: const Icon(Icons.add_rounded, size: 16),
-                label: const Text('Log'),
+                label: Text('Log'),
                 style: OutlinedButton.styleFrom(
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -708,9 +708,9 @@ class _PregnancyDashboardScreenState extends State<PregnancyDashboardScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Current Weight', style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                      Text('Current Weight', style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
                       const SizedBox(height: 4),
-                      Text('${state.currentPregnancyWeightKg} kg', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
+                      Text('${state.currentPregnancyWeightKg} kg', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
                     ],
                   ),
                 ),
@@ -726,9 +726,9 @@ class _PregnancyDashboardScreenState extends State<PregnancyDashboardScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Total Gain', style: TextStyle(fontSize: 11, color: Color(0xFFDB2777))),
+                      Text('Total Gain', style: TextStyle(fontSize: 11, color: Color(0xFFDB2777))),
                       const SizedBox(height: 4),
-                      Text('+${gain.toStringAsFixed(1)} kg', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: Color(0xFFDB2777))),
+                      Text('+${gain.toStringAsFixed(1)} kg', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: Color(0xFFDB2777))),
                     ],
                   ),
                 ),
@@ -736,7 +736,7 @@ class _PregnancyDashboardScreenState extends State<PregnancyDashboardScreen> {
             ],
           ),
           const SizedBox(height: 12),
-          const Text(
+          Text(
             'Target recommended gain for 1st trimester: 1.0 – 2.0 kg • On Track (ACOG guidelines)',
             style: TextStyle(fontSize: 11.5, color: Color(0xFF15803D), fontWeight: FontWeight.w500),
           ),
@@ -772,7 +772,7 @@ class _PregnancyDashboardScreenState extends State<PregnancyDashboardScreen> {
           ),
           const SizedBox(height: 14),
           if (state.prenatalScans.isEmpty)
-            const Text(
+            Text(
               'No scans yet. Tap + to add ultrasound notes.',
               style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
             ),
@@ -794,7 +794,7 @@ class _PregnancyDashboardScreenState extends State<PregnancyDashboardScreen> {
                       Expanded(
                         child: Text(
                           scan['gestationalWeek'] as String? ?? '',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
                             color: AppColors.primaryContainer,
@@ -806,7 +806,7 @@ class _PregnancyDashboardScreenState extends State<PregnancyDashboardScreen> {
                       Flexible(
                         child: Text(
                           scan['doctorName'] as String? ?? '',
-                          style: const TextStyle(fontSize: 11, color: AppColors.textTertiary),
+                          style: TextStyle(fontSize: 11, color: AppColors.textTertiary),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           textAlign: TextAlign.end,
@@ -832,12 +832,12 @@ class _PregnancyDashboardScreenState extends State<PregnancyDashboardScreen> {
                   const SizedBox(height: 4),
                   Text(
                     scan['title'] as String? ?? '',
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     scan['findings'] as String? ?? '',
-                    style: const TextStyle(fontSize: 12, color: AppColors.textSecondary, height: 1.35),
+                    style: TextStyle(fontSize: 12, color: AppColors.textSecondary, height: 1.35),
                   ),
                 ],
               ),

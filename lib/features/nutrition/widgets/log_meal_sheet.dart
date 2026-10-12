@@ -10,9 +10,10 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 
 class LogMealSheet extends StatefulWidget {
-  const LogMealSheet({super.key, required this.appState});
+  const LogMealSheet({super.key, required this.appState, this.initialMealType = 'Breakfast'});
 
   final AppState appState;
+  final String initialMealType;
 
   @override
   State<LogMealSheet> createState() => _LogMealSheetState();
@@ -22,11 +23,17 @@ class _LogMealSheetState extends State<LogMealSheet> {
   final _text = TextEditingController();
   final _speech = SpeechToText();
   final _picker = ImagePicker();
-  String _mealType = 'Breakfast';
+  late String _mealType;
   String? _photoPath;
   bool _listening = false;
   String? _error;
   ParsedMeal _parsed = parseMealText('');
+
+  @override
+  void initState() {
+    super.initState();
+    _mealType = widget.initialMealType;
+  }
 
   @override
   void dispose() {
@@ -113,9 +120,9 @@ class _LogMealSheetState extends State<LogMealSheet> {
       child: Container(
         constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.9),
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
         ),
         child: SingleChildScrollView(
           child: Column(

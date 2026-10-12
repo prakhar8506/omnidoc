@@ -8,6 +8,7 @@ import '../state/app_state.dart';
 import 'avatar_image.dart';
 import '../../features/community/screens/activity_clubs_screen.dart';
 import '../../features/family/screens/family_connect_screen.dart';
+import '../../features/premium/premium_screen.dart';
 import '../../features/ai_assistant/widgets/ai_chat_sheet.dart';
 import '../../features/legal/screens/privacy_policy_screen.dart';
 import '../../features/legal/screens/terms_of_use_screen.dart';
@@ -35,6 +36,9 @@ class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
   Widget build(BuildContext context) {
     final topPad = MediaQuery.of(context).padding.top;
     final nowFormatted = DateFormat('EEE, dd MMM').format(DateTime.now());
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final ink = dark ? const Color(0xFFF4F2FA) : AppColors.textPrimary;
+    final glass = dark ? const Color(0xCC171924) : Colors.white.withValues(alpha: 0.70);
 
     return Container(
       padding: EdgeInsets.only(
@@ -50,7 +54,7 @@ class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.70),
+              color: glass,
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
                 color: Colors.white.withValues(alpha: 0.85),
@@ -100,7 +104,7 @@ class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.65),
+                          color: dark ? const Color(0xFF242636) : Colors.white.withValues(alpha: 0.65),
                           borderRadius: BorderRadius.circular(999),
                           border: Border.all(
                             color: Colors.white.withValues(alpha: 0.9),
@@ -117,10 +121,10 @@ class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
                                     : appState.currentTabIndex == 1
                                         ? "${appState.firstName}'s Journal"
                                         : subtitle,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w600,
-                                  color: AppColors.textPrimary,
+                                  color: ink,
                                   letterSpacing: -0.2,
                                 ),
                                 overflow: TextOverflow.ellipsis,
@@ -172,7 +176,9 @@ class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
             child: Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.92),
+                color: Theme.of(dialogContext).brightness == Brightness.dark
+                    ? const Color(0xFF171924)
+                    : Colors.white.withValues(alpha: 0.92),
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
                 border: Border.all(
                   color: Colors.white.withValues(alpha: 0.8),
@@ -242,6 +248,42 @@ class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
                         ),
                       );
                     },
+                  ),
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.workspace_premium_rounded, color: AppColors.primaryContainer),
+                    title: Text(
+                      appState.hasPremium ? 'Premium is active' : 'Go Premium',
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    subtitle: Text(
+                      appState.hasPremium ? 'Lab explanations, AI, plans, and export are open.' : '₹599/year · 7 days free, once per phone',
+                      style: const TextStyle(fontSize: 12),
+                    ),
+                    trailing: const Icon(Icons.chevron_right_rounded, size: 20, color: AppColors.textSecondary),
+                    onTap: () {
+                      Navigator.pop(dialogContext);
+                      PremiumScreen.show(context, appState);
+                    },
+                  ),
+                  StatefulBuilder(
+                    builder: (context, setLocal) => SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      secondary: Icon(
+                        appState.useDarkMode ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
+                        color: AppColors.primaryContainer,
+                      ),
+                      title: const Text('Dark mode', style: TextStyle(fontWeight: FontWeight.w600)),
+                      subtitle: const Text(
+                        'A darker background for low light.',
+                        style: TextStyle(fontSize: 12),
+                      ),
+                      value: appState.useDarkMode,
+                      onChanged: (value) {
+                        appState.setDarkMode(value);
+                        setLocal(() {});
+                      },
+                    ),
                   ),
                   StatefulBuilder(
                     builder: (context, setLocal) => SwitchListTile(
@@ -316,6 +358,11 @@ class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
                       Navigator.pop(dialogContext);
                       _confirmDeleteAccount(context);
                     },
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '© 2026 ${AppBrand.name}. All rights reserved. This app is licensed for your personal use. Copying the product, modifying it, or reverse engineering it is not permitted except where the law does not allow that limit.',
+                    style: const TextStyle(fontSize: 11, height: 1.35, color: AppColors.textSecondary),
                   ),
                   const SizedBox(height: 12),
                   SizedBox(

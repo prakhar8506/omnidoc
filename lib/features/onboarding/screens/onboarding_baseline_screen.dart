@@ -100,7 +100,7 @@ class _OnboardingBaselineScreenState extends State<OnboardingBaselineScreen> {
                         color: AppColors.primaryContainer.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(999),
                       ),
-                      child: const Text(
+                      child: Text(
                         'Step 2 of 2 • Baseline Setup',
                         style: TextStyle(
                           fontSize: 11,
@@ -111,7 +111,7 @@ class _OnboardingBaselineScreenState extends State<OnboardingBaselineScreen> {
                     ),
                     TextButton(
                       onPressed: _finishOnboarding,
-                      child: const Text(
+                      child: Text(
                         'Skip for now',
                         style: TextStyle(
                           fontSize: 13,
@@ -125,18 +125,18 @@ class _OnboardingBaselineScreenState extends State<OnboardingBaselineScreen> {
                 const SizedBox(height: 16),
 
                 // Editorial Title
-                const Text(
+                Text(
                   'Establish your\nclinical baseline',
                   style: TextStyle(
                     fontSize: 32,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
+                    color: Theme.of(context).colorScheme.onSurface,
                     letterSpacing: -0.8,
                     height: 1.15,
                   ),
                 ),
                 const SizedBox(height: 8),
-                const Text(
+                Text(
                   'Optional telemetry to personalize your daily balance, recovery score, and biomarker ranges.',
                   style: TextStyle(
                     fontSize: 14,
@@ -179,7 +179,7 @@ class _OnboardingBaselineScreenState extends State<OnboardingBaselineScreen> {
                                 color: const Color(0xFFDCFCE7),
                                 borderRadius: BorderRadius.circular(999),
                               ),
-                              child: const Text(
+                              child: Text(
                                 'Uploaded',
                                 style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF15803D)),
                               ),
@@ -188,7 +188,7 @@ class _OnboardingBaselineScreenState extends State<OnboardingBaselineScreen> {
                         ],
                       ),
                       const SizedBox(height: 8),
-                      const Text(
+                      Text(
                         'Upload a PDF or photo of recent bloodwork (CBC, CMP, Lipids). Our AI will extract your reference ranges.',
                         style: TextStyle(fontSize: 12.5, color: AppColors.textSecondary, height: 1.35),
                       ),
@@ -210,7 +210,7 @@ class _OnboardingBaselineScreenState extends State<OnboardingBaselineScreen> {
                           _labUploaded || widget.appState.prescriptions.isNotEmpty
                               ? 'Upload Another Document'
                               : 'Upload Recent Lab / Prescription',
-                          style: const TextStyle(fontWeight: FontWeight.w600),
+                          style: TextStyle(fontWeight: FontWeight.w600),
                         ),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: AppColors.primaryContainer,
@@ -242,7 +242,7 @@ class _OnboardingBaselineScreenState extends State<OnboardingBaselineScreen> {
                             child: const Icon(Icons.straighten_rounded, color: Color(0xFF0EA5E9), size: 20),
                           ),
                           const SizedBox(width: 10),
-                          const Text('Body Metrics', style: AppTypography.titleMd),
+                          Text('Body Metrics', style: AppTypography.titleMd),
                         ],
                       ),
                       const SizedBox(height: 14),
@@ -299,13 +299,13 @@ class _OnboardingBaselineScreenState extends State<OnboardingBaselineScreen> {
                                 child: const Icon(Icons.photo_camera_rounded, color: Color(0xFF8B5CF6), size: 20),
                               ),
                               const SizedBox(width: 10),
-                              const Text('Baseline Progress Photo', style: AppTypography.titleMd),
+                              Text('Baseline Progress Photo', style: AppTypography.titleMd),
                             ],
                           ),
                         ],
                       ),
                       const SizedBox(height: 8),
-                      const Text(
+                      Text(
                         'Keep an optional private photo to document posture, body composition, or physical recovery over time.',
                         style: TextStyle(fontSize: 12.5, color: AppColors.textSecondary, height: 1.35),
                       ),
@@ -363,7 +363,7 @@ class _OnboardingBaselineScreenState extends State<OnboardingBaselineScreen> {
                                 onTap: () => setState(() => _progressPhotoPath = null),
                                 child: Container(
                                   padding: const EdgeInsets.all(6),
-                                  decoration: const BoxDecoration(
+                                  decoration: BoxDecoration(
                                     color: Colors.black54,
                                     shape: BoxShape.circle,
                                   ),
@@ -380,7 +380,7 @@ class _OnboardingBaselineScreenState extends State<OnboardingBaselineScreen> {
                               child: OutlinedButton.icon(
                                 onPressed: () => _pickProgressPhoto(ImageSource.camera),
                                 icon: const Icon(Icons.camera_alt_rounded, size: 18),
-                                label: const Text('Take Photo'),
+                                label: Text('Take Photo'),
                                 style: OutlinedButton.styleFrom(
                                   foregroundColor: AppColors.textPrimary,
                                   side: const BorderSide(color: AppColors.surfaceContainerHigh),
@@ -393,7 +393,7 @@ class _OnboardingBaselineScreenState extends State<OnboardingBaselineScreen> {
                               child: OutlinedButton.icon(
                                 onPressed: () => _pickProgressPhoto(ImageSource.gallery),
                                 icon: const Icon(Icons.photo_library_rounded, size: 18),
-                                label: const Text('Gallery'),
+                                label: Text('Gallery'),
                                 style: OutlinedButton.styleFrom(
                                   foregroundColor: AppColors.textPrimary,
                                   side: const BorderSide(color: AppColors.surfaceContainerHigh),

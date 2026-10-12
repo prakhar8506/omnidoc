@@ -27,7 +27,7 @@ class _TodaysMovementPanelState extends State<TodaysMovementPanel> {
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: const Text('Log Completed Workout', style: AppTypography.titleMd),
+        title: Text('Log Completed Workout', style: AppTypography.titleMd),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -45,8 +45,8 @@ class _TodaysMovementPanelState extends State<TodaysMovementPanel> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('Category', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
-                      Text(cat, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                      Text('Category', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                      Text(cat, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
                     ],
                   ),
                   const SizedBox(height: 6),
@@ -65,7 +65,7 @@ class _TodaysMovementPanelState extends State<TodaysMovementPanel> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: Text('Cancel'),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -96,7 +96,7 @@ class _TodaysMovementPanelState extends State<TodaysMovementPanel> {
                 ),
               );
             },
-            child: const Text('Confirm & Log'),
+            child: Text('Confirm & Log'),
           ),
         ],
       ),
@@ -210,7 +210,7 @@ class _TodaysMovementPanelState extends State<TodaysMovementPanel> {
                     Expanded(
                       child: Text(
                         title,
-                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
@@ -223,7 +223,7 @@ class _TodaysMovementPanelState extends State<TodaysMovementPanel> {
                       ),
                       child: Text(
                         duration,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
                           color: AppColors.primaryContainer,
@@ -235,10 +235,10 @@ class _TodaysMovementPanelState extends State<TodaysMovementPanel> {
                 const SizedBox(height: 4),
                 Text(
                   '$cat • Target $targetHr',
-                  style: const TextStyle(fontSize: 12, color: AppColors.textSecondary, fontWeight: FontWeight.w500),
+                  style: TextStyle(fontSize: 12, color: AppColors.textSecondary, fontWeight: FontWeight.w500),
                 ),
                 const SizedBox(height: 8),
-                Text(benefit, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary, height: 1.35)),
+                Text(benefit, style: TextStyle(fontSize: 12, color: AppColors.textSecondary, height: 1.35)),
                 if (warning != null) ...[
                   const SizedBox(height: 8),
                   Container(
@@ -254,7 +254,7 @@ class _TodaysMovementPanelState extends State<TodaysMovementPanel> {
                         Expanded(
                           child: Text(
                             warning,
-                            style: const TextStyle(fontSize: 11, color: Color(0xFFB45309), fontWeight: FontWeight.w500),
+                            style: TextStyle(fontSize: 11, color: Color(0xFFB45309), fontWeight: FontWeight.w500),
                           ),
                         ),
                       ],
@@ -267,7 +267,7 @@ class _TodaysMovementPanelState extends State<TodaysMovementPanel> {
                   child: TextButton.icon(
                     onPressed: () => _logWorkoutDialog(ex),
                     icon: const Icon(Icons.check_circle_outline_rounded, size: 16),
-                    label: const Text('Log Completed'),
+                    label: Text('Log Completed'),
                     style: TextButton.styleFrom(
                       foregroundColor: AppColors.primaryContainer,
                       visualDensity: VisualDensity.compact,
@@ -282,9 +282,16 @@ class _TodaysMovementPanelState extends State<TodaysMovementPanel> {
 
         // 4. Completed Workouts Activity Log
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text('Completed Workouts', style: AppTypography.titleMd),
+            const Expanded(
+              child: Text(
+                'Completed Workouts',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppTypography.titleMd,
+              ),
+            ),
+            const SizedBox(width: 8),
             Text(
               '${state.completedWorkouts.length} logged',
               style: AppTypography.labelSm.copyWith(color: AppColors.textTertiary),
@@ -303,9 +310,9 @@ class _TodaysMovementPanelState extends State<TodaysMovementPanel> {
             margin: const EdgeInsets.only(bottom: 10),
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.78),
+              color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: Colors.white),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
             ),
             child: Row(
               children: [
@@ -322,13 +329,21 @@ class _TodaysMovementPanelState extends State<TodaysMovementPanel> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
+                      Text(title, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
                       const SizedBox(height: 2),
-                      Text('$cat • $dur • $avgHr bpm avg', style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                      Text(
+                        [
+                          cat,
+                          dur,
+                          if (avgHr > 0) '$avgHr bpm avg',
+                        ].join(' • '),
+                        style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                      ),
                     ],
                   ),
                 ),
-                Text('+$cals kcal', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF10B981))),
+                if (cals > 0)
+                  Text('+$cals kcal', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF10B981))),
               ],
             ),
           );
@@ -373,16 +388,16 @@ class _TodaysMovementPanelState extends State<TodaysMovementPanel> {
                     const SizedBox(height: 6),
                     Text(
                       '$rec%',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 34,
                         fontWeight: FontWeight.w800,
-                        color: AppColors.textPrimary,
+                        color: Theme.of(context).colorScheme.onSurface,
                         letterSpacing: -0.6,
                       ),
                     ),
                     Text(
                       status,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
                         color: Color(0xFF10B981),
@@ -441,14 +456,14 @@ class _TodaysMovementPanelState extends State<TodaysMovementPanel> {
   Widget _metricPill(String label, String value) {
     return Column(
       children: [
-        Text(label, style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+        Text(label, style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
         const SizedBox(height: 3),
         Text(
           value,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w700,
-            color: AppColors.textPrimary,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
       ],
@@ -503,7 +518,7 @@ class _TodaysMovementPanelState extends State<TodaysMovementPanel> {
                 ),
                 child: Text(
                   duration,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                     color: AppColors.primaryContainer,
@@ -513,9 +528,9 @@ class _TodaysMovementPanelState extends State<TodaysMovementPanel> {
             ],
           ),
           const SizedBox(height: 12),
-          Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+          Text(title, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.onSurface)),
           const SizedBox(height: 2),
-          Text(subtitle, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
+          Text(subtitle, style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
           const SizedBox(height: 8),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -525,13 +540,13 @@ class _TodaysMovementPanelState extends State<TodaysMovementPanel> {
             ),
             child: Text(
               'Target: $intensity',
-              style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+              style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface),
             ),
           ),
           const SizedBox(height: 12),
           Text(
             reasoning,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12.5,
               color: AppColors.textSecondary,
               height: 1.4,
@@ -552,7 +567,7 @@ class _TodaysMovementPanelState extends State<TodaysMovementPanel> {
                   Expanded(
                     child: Text(
                       caution,
-                      style: const TextStyle(fontSize: 11.5, color: Color(0xFFB91C1C), fontWeight: FontWeight.w500),
+                      style: TextStyle(fontSize: 11.5, color: Color(0xFFB91C1C), fontWeight: FontWeight.w500),
                     ),
                   ),
                 ],

@@ -86,7 +86,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
+          icon: Icon(Icons.arrow_back_rounded, color: Theme.of(context).colorScheme.onSurface),
           onPressed: () {
             if (widget.onBackToSignIn != null) {
               widget.onBackToSignIn!();
@@ -95,12 +95,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
             }
           },
         ),
-        title: const Text(
+        title: Text(
           'Create Account',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w700,
-            color: AppColors.textPrimary,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
       ),
@@ -114,17 +114,17 @@ class _SignUpScreenState extends State<SignUpScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 8),
-                const Text(
+                Text(
                   'Set up your health profile',
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
+                    color: Theme.of(context).colorScheme.onSurface,
                     letterSpacing: -0.4,
                   ),
                 ),
                 const SizedBox(height: 8),
-                const Text(
+                Text(
                   'Continue with Google, or use your email. Your account opens right away.',
                   style: TextStyle(fontSize: 14, color: AppColors.textSecondary, height: 1.4),
                 ),
@@ -260,7 +260,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         child: Wrap(
                           crossAxisAlignment: WrapCrossAlignment.center,
                           children: [
-                            const Text(
+                            Text(
                               'I am 18 or older and I accept the ',
                               style: TextStyle(
                                 fontSize: 13,
@@ -269,7 +269,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                               ),
                             ),
                             _legalLink('Terms of Use', const TermsOfUseScreen()),
-                            const Text(
+                            Text(
                               ' and ',
                               style: TextStyle(
                                 fontSize: 13,
@@ -278,7 +278,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                               ),
                             ),
                             _legalLink('Privacy Policy', const PrivacyPolicyScreen()),
-                            const Text(
+                            Text(
                               '.',
                               style: TextStyle(
                                 fontSize: 13,
@@ -296,7 +296,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   const SizedBox(height: 12),
                   Text(
                     _errorText!,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: AppColors.accentCoral,
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
@@ -321,7 +321,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             height: 22,
                             child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
                           )
-                        : const Text(
+                        : Text(
                             'Create Account',
                             style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
                           ),
@@ -337,7 +337,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         Navigator.pop(context);
                       }
                     },
-                    child: const Text(
+                    child: Text(
                       'Already have an account? Sign in',
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
@@ -362,7 +362,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         ),
         child: Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 13,
             height: 1.4,
             fontWeight: FontWeight.w700,
@@ -375,17 +375,17 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   Widget _label(String text) => Text(
         text,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 13,
           fontWeight: FontWeight.w600,
-          color: AppColors.textPrimary,
+          color: Theme.of(context).colorScheme.onSurface,
         ),
       );
 
   InputDecoration _decoration(String hint, IconData icon, {Widget? suffix}) {
     return InputDecoration(
       hintText: hint,
-      hintStyle: const TextStyle(color: AppColors.textSecondary),
+      hintStyle: TextStyle(color: AppColors.textSecondary),
       prefixIcon: Icon(icon, color: AppColors.textSecondary, size: 20),
       suffixIcon: suffix,
       filled: true,

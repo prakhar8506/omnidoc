@@ -50,18 +50,27 @@ class _HolographicBackgroundState extends State<HolographicBackground>
           1.0 - 0.2 * progress,
         );
 
+        final dark = Theme.of(context).brightness == Brightness.dark;
         return Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: alignTop,
               end: alignBottom,
-              colors: const [
-                AppColors.holoPeach,
-                AppColors.holoLavender,
-                AppColors.holoIceCyan,
-                AppColors.holoBlush,
-                AppColors.surface,
-              ],
+              colors: dark
+                  ? const [
+                      Color(0xFF101218),
+                      Color(0xFF171628),
+                      Color(0xFF121820),
+                      Color(0xFF1A1522),
+                      Color(0xFF101218),
+                    ]
+                  : const [
+                      AppColors.holoPeach,
+                      AppColors.holoLavender,
+                      AppColors.holoIceCyan,
+                      AppColors.holoBlush,
+                      AppColors.surface,
+                    ],
               stops: const [0.0, 0.28, 0.58, 0.85, 1.0],
             ),
           ),

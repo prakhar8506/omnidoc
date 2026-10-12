@@ -155,7 +155,7 @@ class _ChronicCareScreenState extends State<ChronicCareScreen> {
             color: AppColors.accentTeal.withValues(alpha: 0.2),
             borderRadius: BorderRadius.circular(999),
           ),
-          child: const Text(
+          child: Text(
             'Target Range',
             style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.accentTeal),
           ),
@@ -187,14 +187,14 @@ class _ChronicCareScreenState extends State<ChronicCareScreen> {
       Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Text('Recent Glucose History',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+          Text('Recent Glucose History',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Theme.of(context).colorScheme.onSurface)),
           BouncingTap(
             onTap: () => _showLogGlucoseDialog(context),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
               decoration: BoxDecoration(
-                color: AppColors.textPrimary,
+                color: Theme.of(context).colorScheme.onSurface,
                 borderRadius: BorderRadius.circular(999),
               ),
               child: const Row(
@@ -234,7 +234,7 @@ class _ChronicCareScreenState extends State<ChronicCareScreen> {
                     Container(
                       width: 10,
                       height: 10,
-                      decoration: const BoxDecoration(
+                      decoration: BoxDecoration(
                         color: AppColors.watchGlucose,
                         shape: BoxShape.circle,
                       ),
@@ -244,15 +244,15 @@ class _ChronicCareScreenState extends State<ChronicCareScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text('${item['val']} mg/dL',
-                            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+                            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
                         Text(item['status'] as String,
-                            style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                            style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
                       ],
                     ),
                   ],
                 ),
                 Text(item['time'] as String,
-                    style: const TextStyle(fontSize: 12, color: AppColors.textTertiary)),
+                    style: TextStyle(fontSize: 12, color: AppColors.textTertiary)),
               ],
             ),
           ),
@@ -277,7 +277,7 @@ class _ChronicCareScreenState extends State<ChronicCareScreen> {
             color: AppColors.accentTeal.withValues(alpha: 0.2),
             borderRadius: BorderRadius.circular(999),
           ),
-          child: const Text(
+          child: Text(
             '< 120/80',
             style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.accentTeal),
           ),
@@ -310,14 +310,14 @@ class _ChronicCareScreenState extends State<ChronicCareScreen> {
       Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Text('Recent BP Readings',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+          Text('Recent BP Readings',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Theme.of(context).colorScheme.onSurface)),
           BouncingTap(
             onTap: () => _showLogBpDialog(context),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
               decoration: BoxDecoration(
-                color: AppColors.textPrimary,
+                color: Theme.of(context).colorScheme.onSurface,
                 borderRadius: BorderRadius.circular(999),
               ),
               child: const Row(
@@ -357,7 +357,7 @@ class _ChronicCareScreenState extends State<ChronicCareScreen> {
                     Container(
                       width: 10,
                       height: 10,
-                      decoration: const BoxDecoration(
+                      decoration: BoxDecoration(
                         color: AppColors.accentTeal,
                         shape: BoxShape.circle,
                       ),
@@ -367,15 +367,15 @@ class _ChronicCareScreenState extends State<ChronicCareScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text('${item['sys']}/${item['dia']} mmHg',
-                            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+                            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
                         Text(item['category'] as String,
-                            style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                            style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
                       ],
                     ),
                   ],
                 ),
                 Text(item['time'] as String,
-                    style: const TextStyle(fontSize: 12, color: AppColors.textTertiary)),
+                    style: TextStyle(fontSize: 12, color: AppColors.textTertiary)),
               ],
             ),
           ),
@@ -399,7 +399,7 @@ class _ChronicCareScreenState extends State<ChronicCareScreen> {
               Expanded(
                 child: Text(
                   title,
-                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Theme.of(context).colorScheme.onSurface),
                 ),
               ),
             ],
@@ -410,7 +410,7 @@ class _ChronicCareScreenState extends State<ChronicCareScreen> {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('• ', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
+                    Text('• ', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
                     Expanded(
                       child: Text(
                         q,
@@ -445,7 +445,7 @@ class _ChronicCareScreenState extends State<ChronicCareScreen> {
           Expanded(
             child: Text(
               notice,
-              style: const TextStyle(fontSize: 11.5, height: 1.4, color: AppColors.textSecondary),
+              style: TextStyle(fontSize: 11.5, height: 1.4, color: AppColors.textSecondary),
             ),
           ),
         ],
@@ -480,7 +480,7 @@ class _ChronicCareScreenState extends State<ChronicCareScreen> {
             DropdownButtonFormField<String>(
               initialValue: status,
               items: ['Fasting (Morning)', 'Pre-Meal', '2h Post-Prandial', 'Bedtime']
-                  .map((s) => DropdownMenuItem(value: s, child: Text(s, style: const TextStyle(fontSize: 13))))
+                  .map((s) => DropdownMenuItem(value: s, child: Text(s, style: TextStyle(fontSize: 13))))
                   .toList(),
               onChanged: (val) {
                 if (val != null) status = val;
@@ -495,7 +495,7 @@ class _ChronicCareScreenState extends State<ChronicCareScreen> {
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(dialogCtx), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(dialogCtx), child: Text('Cancel')),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.textPrimary,
@@ -506,7 +506,7 @@ class _ChronicCareScreenState extends State<ChronicCareScreen> {
               widget.appState.logGlucose(val, status);
               Navigator.pop(dialogCtx);
             },
-            child: const Text('Save Entry', style: TextStyle(color: Colors.white)),
+            child: Text('Save Entry', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -550,7 +550,7 @@ class _ChronicCareScreenState extends State<ChronicCareScreen> {
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(dialogCtx), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(dialogCtx), child: Text('Cancel')),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.textPrimary,
@@ -562,7 +562,7 @@ class _ChronicCareScreenState extends State<ChronicCareScreen> {
               widget.appState.logBloodPressure(sys, dia);
               Navigator.pop(dialogCtx);
             },
-            child: const Text('Save Entry', style: TextStyle(color: Colors.white)),
+            child: Text('Save Entry', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),

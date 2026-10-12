@@ -10,7 +10,10 @@ import '../../../core/widgets/watch_face_tile.dart';
 import '../../../core/widgets/bouncing_tap.dart';
 import '../../appointments/widgets/book_appointment_modal.dart';
 import '../../wearables/widgets/wearable_permissions_sheet.dart';
+import '../../nutrition/screens/diet_plan_screen.dart';
 import '../../nutrition/screens/nutrition_hydration_screen.dart';
+import '../../nutrition/widgets/log_meal_sheet.dart';
+import '../../premium/premium_screen.dart';
 import '../../womens_health/screens/womens_health_screen.dart';
 import '../../chronic_care/screens/chronic_care_screen.dart';
 import '../../data_portability/screens/data_portability_screen.dart';
@@ -32,7 +35,7 @@ class HomeScreen extends StatelessWidget {
       listenable: appState,
       builder: (context, _) {
         return SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 220),
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 156),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -50,6 +53,8 @@ class HomeScreen extends StatelessWidget {
 
               // Action Buttons ([Log How You Feel], [Review Week])
               _buildRecoveryActionRow(context),
+              const SizedBox(height: 16),
+              _buildMealLog(context),
               const SizedBox(height: 20),
 
               // Clinical Preventive Care Banner (USPSTF / CDC Guidelines)
@@ -136,7 +141,7 @@ class HomeScreen extends StatelessWidget {
                       ),
                       child: Text(
                         (reminder['guideline'] as String? ?? 'USPSTF GUIDELINE').toUpperCase(),
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 9.5,
                           fontWeight: FontWeight.w700,
                           letterSpacing: 0.8,
@@ -160,7 +165,7 @@ class HomeScreen extends StatelessWidget {
                 const SizedBox(height: 6),
                 Text(
                   reminder['title'] as String? ?? '',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
                     color: Colors.white,
@@ -194,62 +199,239 @@ class HomeScreen extends StatelessWidget {
       totalHistoricalDays: appState.historicalDaysCount,
     );
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
+    final name = appState.userName.trim();
+    final ink = Theme.of(context).brightness == Brightness.dark
+        ? const Color(0xFFF4F2FA)
+        : AppColors.textPrimary;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (appState.firstName.isNotEmpty)
-                Text(
-                  'Good morning, ${appState.firstName}',
-                  style: AppTypography.editorialLg,
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 2,
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                _greetingForNow(),
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: ink.withValues(alpha: 0.72),
                 ),
-            ],
-          ),
-        ),
-        const SizedBox(width: 8),
-        GestureDetector(
-          onTap: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => PermissionCenterScreen(appState: appState),
-              ),
-            );
-          },
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(999),
-              border: Border.all(
-                color: Colors.white.withValues(alpha: 0.2),
-                width: 1,
               ),
             ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  quality.coveragePercentage >= 75 ? Icons.shield_rounded : Icons.shield_outlined,
-                  size: 14,
-                  color: quality.coveragePercentage >= 75 ? AppColors.success : AppColors.warning,
+            GestureDetector(
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => PermissionCenterScreen(appState: appState),
+                  ),
+                );
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                decoration: BoxDecoration(
+                  color: ink.withValues(alpha: 0.06),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(color: ink.withValues(alpha: 0.12)),
                 ),
-                const SizedBox(width: 6),
-                Text(
-                  '${quality.coveragePercentage}% Coverage',
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      quality.coveragePercentage >= 75 ? Icons.shield_rounded : Icons.shield_outlined,
+                      size: 14,
+                      color: quality.coveragePercentage >= 75 ? AppColors.success : AppColors.warning,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      '${quality.coveragePercentage}% Coverage',
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: ink),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+        if (!appState.hasPremium)
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              onPressed: () => PremiumScreen.show(context, appState),
+              icon: const Icon(Icons.workspace_premium_rounded, size: 16),
+              label: const Text('Go Premium'),
+            ),
+          ),
+        if (name.isNotEmpty) ...[
+          const SizedBox(height: 2),
+          Text(
+            name,
+            style: TextStyle(
+              fontSize: 22,
+              height: 1.2,
+              fontWeight: FontWeight.w700,
+              letterSpacing: -0.3,
+              color: ink,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  String _greetingForNow() {
+    final hour = DateTime.now().hour;
+    if (hour >= 5 && hour < 12) return 'Good morning';
+    if (hour >= 12 && hour < 17) return 'Good afternoon';
+    if (hour >= 17 && hour < 21) return 'Good evening';
+    return 'Good night';
+  }
+
+  Widget _buildMealLog(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final card = dark ? const Color(0xFF1C1E2A) : Colors.white;
+    final ink = dark ? const Color(0xFFF4F2FA) : AppColors.textPrimary;
+    final now = DateTime.now();
+    bool loggedToday(String category) {
+      return appState.loggedMeals.any((meal) {
+        final type = (meal['category'] ?? meal['time'] ?? '').toString();
+        if (type != category) return false;
+        final at = DateTime.tryParse(meal['loggedAt']?.toString() ?? '');
+        if (at == null) return false;
+        return at.year == now.year && at.month == now.month && at.day == now.day;
+      });
+    }
+
+    const slots = [
+      ('Breakfast', '🥣'),
+      ('Lunch', '🥗'),
+      ('Dinner', '🍽️'),
+      ('Snack', '🍎'),
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                'Log meals',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: ink),
+              ),
+            ),
+            TextButton.icon(
+              onPressed: () => PremiumAccess.require(context, appState, () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => DietPlanScreen(appState: appState)),
+                );
+              }),
+              icon: Icon(appState.hasPremium ? Icons.restaurant_menu_rounded : Icons.lock_rounded, size: 16),
+              label: const Text('Meal plan'),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            for (final slot in slots) ...[
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Material(
+                    color: card.withValues(alpha: dark ? 1 : 0.86),
+                    borderRadius: BorderRadius.circular(18),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(18),
+                      onTap: () => showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        backgroundColor: Colors.transparent,
+                        builder: (_) => LogMealSheet(
+                          appState: appState,
+                          initialMealType: slot.$1,
+                        ),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
+                        child: Column(
+                          children: [
+                            Text(slot.$2, style: TextStyle(fontSize: 28, height: 1)),
+                            const SizedBox(height: 6),
+                            Text(
+                              slot.$1,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: ink),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              loggedToday(slot.$1) ? 'Logged' : 'Add',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                                color: loggedToday(slot.$1) ? AppColors.accentTeal : AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-              ],
-            ),
-          ),
+              ),
+            ],
+          ],
+        ),
+        const SizedBox(height: 12),
+        _buildWaterLog(context, dark, card, ink),
+      ],
+    );
+  }
+
+  Widget _buildWaterLog(BuildContext context, bool dark, Color card, Color ink) {
+    final now = DateTime.now();
+    var mlToday = 0;
+    for (final sip in appState.hydrationLogs) {
+      final at = DateTime.tryParse(sip['at']?.toString() ?? '');
+      if (at == null || at.year != now.year || at.month != now.month || at.day != now.day) continue;
+      mlToday += (sip['ml'] as num?)?.toInt() ?? 0;
+    }
+    final filled = (mlToday / 250).floor().clamp(0, 8);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          mlToday == 0 ? 'Water · tap a glass to log 250 ml' : 'Water · $mlToday ml today',
+          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: ink.withValues(alpha: 0.8)),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            for (var i = 0; i < 8; i++)
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 2),
+                  child: Material(
+                    color: card.withValues(alpha: dark ? 1 : 0.86),
+                    borderRadius: BorderRadius.circular(12),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(12),
+                      onTap: () => appState.addHydration(250),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: Icon(
+                          Icons.water_drop_rounded,
+                          size: 18,
+                          color: i < filled ? const Color(0xFF3B82F6) : ink.withValues(alpha: 0.28),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
         ),
       ],
     );
@@ -276,21 +458,21 @@ class HomeScreen extends StatelessWidget {
                   child: const Icon(Icons.bolt_rounded, size: 16, color: AppColors.primaryContainer),
                 ),
                 const SizedBox(width: 8),
-                const Text('Recovery', style: AppTypography.titleMd),
+                Text('Recovery', style: AppTypography.titleMd),
               ],
             ),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               '—',
               style: TextStyle(
                 fontSize: 52,
                 fontWeight: FontWeight.w800,
-                color: AppColors.textPrimary,
+                color: Theme.of(context).colorScheme.onSurface,
                 height: 1.0,
               ),
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'Insufficient data',
               style: TextStyle(
                 fontSize: 14,
@@ -329,47 +511,52 @@ class HomeScreen extends StatelessWidget {
         children: [
           // Top Row: Recovery Title, Readiness State, and Confidence Pill
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryContainer.withValues(alpha: 0.15),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.bolt_rounded, size: 16, color: AppColors.primaryContainer),
-                  ),
-                  const SizedBox(width: 8),
-                  const Text('Recovery', style: AppTypography.titleMd),
-                ],
-              ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: confColor.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(999),
-                  border: Border.all(color: confColor.withValues(alpha: 0.25)),
+                  color: AppColors.primaryContainer.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      isProvisional ? Icons.info_outline_rounded : Icons.check_circle_rounded,
-                      size: 12,
-                      color: confColor,
+                child: const Icon(Icons.bolt_rounded, size: 16, color: AppColors.primaryContainer),
+              ),
+              const SizedBox(width: 8),
+              Text('Recovery', style: AppTypography.titleMd),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: confColor.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(color: confColor.withValues(alpha: 0.25)),
                     ),
-                    const SizedBox(width: 5),
-                    Text(
-                      confLabel,
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: confColor,
-                      ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          isProvisional ? Icons.info_outline_rounded : Icons.check_circle_rounded,
+                          size: 12,
+                          color: confColor,
+                        ),
+                        const SizedBox(width: 5),
+                        Flexible(
+                          child: Text(
+                            confLabel,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: confColor,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
             ],
@@ -382,10 +569,10 @@ class HomeScreen extends StatelessWidget {
             children: [
               Text(
                 '${recovery.score}',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 52,
                   fontWeight: FontWeight.w800,
-                  color: AppColors.textPrimary,
+                  color: Theme.of(context).colorScheme.onSurface,
                   height: 1.0,
                   letterSpacing: -1.5,
                 ),
@@ -402,21 +589,26 @@ class HomeScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              const Spacer(),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 6),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: AppColors.surfaceBright,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    recovery.readinessState,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
+              const SizedBox(width: 8),
+              Flexible(
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceBright,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      recovery.readinessState,
+                      textAlign: TextAlign.end,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
                     ),
                   ),
                 ),
@@ -441,7 +633,7 @@ class HomeScreen extends StatelessWidget {
                   Expanded(
                     child: Text(
                       'Provisional Score • Establishing baseline (${appState.historicalDaysCount} of 14 days recorded)',
-                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.warning),
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.warning),
                     ),
                   ),
                 ],
@@ -479,10 +671,10 @@ class HomeScreen extends StatelessWidget {
                 const SizedBox(height: 6),
                 Text(
                   recovery.recommendedAction,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
+                    color: Theme.of(context).colorScheme.onSurface,
                     height: 1.3,
                   ),
                 ),
@@ -492,7 +684,7 @@ class HomeScreen extends StatelessWidget {
           const SizedBox(height: 16),
 
           // Drivers Section ("What influenced today")
-          const Text(
+          Text(
             'What influenced today',
             style: TextStyle(
               fontSize: 12,
@@ -516,10 +708,10 @@ class HomeScreen extends StatelessWidget {
                     Expanded(
                       child: Text(
                         driver.label,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
-                          color: AppColors.textPrimary,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                     ),
@@ -598,22 +790,22 @@ class HomeScreen extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 '—',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.w800,
-                  color: AppColors.textPrimary,
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
               Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w500,
                   color: AppColors.textSecondary,
                 ),
               ),
               const SizedBox(height: 6),
-              const Text(
+              Text(
                 'Connect a wearable or log data',
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
@@ -641,31 +833,22 @@ class HomeScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Icon(Icons.bedtime_rounded, size: 16, color: Color(0xFF5C6BC0)),
-                      Text(
-                        sleep.confidence == ScoreConfidence.high ? 'High' : 'Provisional',
-                        style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: AppColors.textTertiary),
-                      ),
-                    ],
-                  ),
+                  const Icon(Icons.bedtime_rounded, size: 16, color: Color(0xFF5C6BC0)),
                   const SizedBox(height: 8),
                   Text(
                     '${sleep.score}',
-                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.onSurface),
                   ),
                   Text(
                     sleep.durationFormatted,
-                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: AppColors.textSecondary),
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: AppColors.textSecondary),
                   ),
                   const SizedBox(height: 6),
                   Text(
                     sleep.drivers.isNotEmpty ? sleep.drivers.first.label : 'Sleep score',
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 10, color: AppColors.textTertiary),
+                    style: TextStyle(fontSize: 10, color: AppColors.textTertiary),
                   ),
                 ],
               ),
@@ -686,28 +869,22 @@ class HomeScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Icon(Icons.local_fire_department_rounded, size: 16, color: Color(0xFFFF9800)),
-                      Text('Adaptive', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: AppColors.textTertiary)),
-                    ],
-                  ),
+                  const Icon(Icons.local_fire_department_rounded, size: 16, color: Color(0xFFFF9800)),
                   const SizedBox(height: 8),
                   Text(
                     load.currentStrain.toStringAsFixed(1),
-                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.onSurface),
                   ),
                   Text(
                     'Target: ${load.targetMin.toInt()}–${load.targetMax.toInt()}',
-                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: AppColors.textSecondary),
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: AppColors.textSecondary),
                   ),
                   const SizedBox(height: 6),
                   Text(
                     load.drivers.isNotEmpty ? load.drivers.first.label : 'Daily load',
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 10, color: AppColors.textTertiary),
+                    style: TextStyle(fontSize: 10, color: AppColors.textTertiary),
                   ),
                 ],
               ),
@@ -728,16 +905,7 @@ class HomeScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Icon(Icons.spa_rounded, size: 16, color: Color(0xFF38BDF8)),
-                      Text(
-                        stress.confidence == ScoreConfidence.high ? 'High' : 'Provisional',
-                        style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: AppColors.textTertiary),
-                      ),
-                    ],
-                  ),
+                  const Icon(Icons.spa_rounded, size: 16, color: Color(0xFF38BDF8)),
                   const SizedBox(height: 8),
                   FittedBox(
                     fit: BoxFit.scaleDown,
@@ -745,19 +913,19 @@ class HomeScreen extends StatelessWidget {
                     child: Text(
                       stress.level,
                       maxLines: 1,
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.onSurface),
                     ),
                   ),
                   Text(
                     '${stress.score.toInt()}/100 index',
-                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: AppColors.textSecondary),
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: AppColors.textSecondary),
                   ),
                   const SizedBox(height: 6),
                   Text(
                     stress.drivers.isNotEmpty ? stress.drivers.first.label : 'Stress index',
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 10, color: AppColors.textTertiary),
+                    style: TextStyle(fontSize: 10, color: AppColors.textTertiary),
                   ),
                 ],
               ),
@@ -778,8 +946,8 @@ class HomeScreen extends StatelessWidget {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
               side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
             ),
-            icon: const Icon(Icons.mood_rounded, size: 16, color: AppColors.textPrimary),
-            label: const Text('Log how you feel', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+            icon: Icon(Icons.mood_rounded, size: 16, color: Theme.of(context).colorScheme.onSurface),
+            label: Text('Log how you feel', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
             onPressed: () => appState.setTabIndex(1),
           ),
         ),
@@ -792,7 +960,7 @@ class HomeScreen extends StatelessWidget {
               side: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
             ),
             icon: const Icon(Icons.sync_rounded, size: 16, color: AppColors.primaryContainer),
-            label: const Text('Sync Wearable', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primaryContainer)),
+            label: Text('Sync Wearable', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primaryContainer)),
             onPressed: () => WearablePermissionsSheet.show(context, appState),
           ),
         ),
@@ -836,7 +1004,7 @@ class HomeScreen extends StatelessWidget {
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.72),
+                    color: Theme.of(context).colorScheme.surface,
                     borderRadius: BorderRadius.circular(999),
                     border: Border.all(
                       color: Colors.white.withValues(alpha: 0.9),
@@ -857,7 +1025,7 @@ class HomeScreen extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary.withValues(alpha: 0.9),
+                            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.9),
                             letterSpacing: -0.1,
                           ),
                           overflow: TextOverflow.ellipsis,
@@ -896,7 +1064,7 @@ class HomeScreen extends StatelessWidget {
                           );
                         },
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
                           decoration: BoxDecoration(
                             color: Colors.white.withValues(alpha: 0.65),
                             borderRadius: BorderRadius.circular(20),
@@ -906,11 +1074,10 @@ class HomeScreen extends StatelessWidget {
                             ),
                           ),
                           child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Container(
-                                width: 28,
-                                height: 28,
+                                width: 24,
+                                height: 24,
                                 decoration: BoxDecoration(
                                   color: AppColors.primaryContainer.withValues(alpha: 0.15),
                                   shape: BoxShape.circle,
@@ -918,19 +1085,22 @@ class HomeScreen extends StatelessWidget {
                                 child: const Icon(
                                   Icons.directions_run_rounded,
                                   color: AppColors.primaryContainer,
-                                  size: 16,
+                                  size: 14,
                                 ),
                               ),
-                              const SizedBox(width: 8),
-                              const Text(
-                                'Active',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.textPrimary,
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  'Active',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w700,
+                                    color: Theme.of(context).colorScheme.onSurface,
+                                  ),
                                 ),
                               ),
-                              const SizedBox(width: 4),
                               const Icon(
                                 Icons.keyboard_arrow_down_rounded,
                                 size: 16,
@@ -1003,14 +1173,14 @@ class HomeScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       "Today's energy",
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
+                        color: Theme.of(context).colorScheme.onSurface,
                         letterSpacing: -0.2,
                       ),
                     ),
@@ -1021,7 +1191,7 @@ class HomeScreen extends StatelessWidget {
                           : 'Sync a wearable to populate stress energy',
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 11,
                         color: AppColors.textSecondary,
                       ),
@@ -1080,16 +1250,19 @@ class HomeScreen extends StatelessWidget {
           Row(
             children: [
               _buildStressMetric(
+                context,
                 value: '${appState.stressHighest > 0 ? appState.stressHighest : appState.energyScore}',
                 label: 'Highest',
               ),
               const SizedBox(width: 24),
               _buildStressMetric(
+                context,
                 value: '${appState.stressLowest > 0 ? appState.stressLowest : (appState.energyScore * 0.35).round()}',
                 label: 'Lowest',
               ),
               const SizedBox(width: 24),
               _buildStressMetric(
+                context,
                 value: '${appState.stressAverage > 0 ? appState.stressAverage : appState.energyScore}',
                 label: 'Average',
               ),
@@ -1142,7 +1315,7 @@ class HomeScreen extends StatelessWidget {
               const SizedBox(width: 10),
               Text(
                 '${appState.energyScore}%',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
                   color: AppColors.textSecondary,
@@ -1155,23 +1328,23 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildStressMetric({required String value, required String label}) {
+  Widget _buildStressMetric(BuildContext context, {required String value, required String label}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           value,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.w700,
-            color: AppColors.textPrimary,
+            color: Theme.of(context).colorScheme.onSurface,
             letterSpacing: -0.5,
           ),
         ),
         const SizedBox(height: 2),
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.w500,
             color: AppColors.textSecondary,
@@ -1188,13 +1361,13 @@ class HomeScreen extends StatelessWidget {
       children: [
         Row(
           children: [
-            const Expanded(
+            Expanded(
               child: Text(
                 "Today's Vitals & Wearables",
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -1229,7 +1402,7 @@ class HomeScreen extends StatelessWidget {
                     appState.isWearableConnected
                         ? appState.wearableDeviceName
                         : (appState.isSyncingVitals ? 'Syncing...' : 'Connect Wearable'),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                       color: Colors.white,
@@ -1306,9 +1479,15 @@ class HomeScreen extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Medication Regimen', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+              Expanded(
+                child: Text(
+                  'Medication Regimen',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Theme.of(context).colorScheme.onSurface),
+                ),
+              ),
               if (appState.medications.isNotEmpty)
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -1318,7 +1497,7 @@ class HomeScreen extends StatelessWidget {
                   ),
                   child: Text(
                     '${appState.medications.where((m) => m.isTaken).length}/${appState.medications.length} taken',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
                       color: AppColors.textSecondary,
@@ -1385,7 +1564,7 @@ class HomeScreen extends StatelessWidget {
                                 const SizedBox(height: 2),
                                 Text(
                                   '${med.dosage} • ${med.scheduleTime}',
-                                  style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                                  style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
                                 ),
                               ],
                             ),
@@ -1435,15 +1614,18 @@ class HomeScreen extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'UPCOMING CONSULTATION',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.8,
-                  color: AppColors.textSecondary,
+              const Expanded(
+                child: Text(
+                  'UPCOMING CONSULTATION',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.8,
+                    color: AppColors.textSecondary,
+                  ),
                 ),
               ),
               Container(
@@ -1454,7 +1636,7 @@ class HomeScreen extends StatelessWidget {
                 ),
                 child: Text(
                   nextAppt.status,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                     color: AppColors.primaryContainer,
@@ -1476,7 +1658,7 @@ class HomeScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(nextAppt.doctorName, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                    Text(nextAppt.doctorName, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Theme.of(context).colorScheme.onSurface)),
                     const SizedBox(height: 2),
                     Text(
                       '${nextAppt.specialty} • ${DateFormat('EEE, MMM d • h:mm a').format(nextAppt.dateTime)}',
@@ -1504,10 +1686,11 @@ class HomeScreen extends StatelessWidget {
               ),
               label: Text(
                 nextAppt.isVideoConsult ? 'Join Video Visit' : 'Manage Consultation',
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
               ),
               onPressed: () {
-                appState.setTabIndex(3); // Visits tab
+                appState.setBiologySegment(1);
+                appState.setTabIndex(4);
               },
             ),
           ),
@@ -1547,7 +1730,7 @@ class HomeScreen extends StatelessWidget {
         ),
       },
       {
-        'title': 'Emergency Medical ID',
+        'title': 'SOS ID',
         'icon': Icons.emergency_rounded,
         'color': const Color(0xFFEF4444),
         'action': () => Navigator.push(
@@ -1559,13 +1742,17 @@ class HomeScreen extends StatelessWidget {
         'title': 'Export FHIR & PDF',
         'icon': Icons.file_download_rounded,
         'color': const Color(0xFF6366F1),
-        'action': () => Navigator.push(
+        'action': () => PremiumAccess.require(
           context,
-          MaterialPageRoute(builder: (_) => DataPortabilityScreen(appState: appState)),
+          appState,
+          () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => DataPortabilityScreen(appState: appState)),
+          ),
         ),
       },
       {
-        'title': 'Apple HealthKit Sync',
+        'title': 'Wearables',
         'icon': Icons.watch_rounded,
         'color': const Color(0xFFEC4899),
         'action': () => WearablePermissionsSheet.show(context, appState),
@@ -1587,7 +1774,8 @@ class HomeScreen extends StatelessWidget {
         'icon': Icons.calendar_month_rounded,
         'color': AppColors.accentTeal,
         'action': () {
-          appState.setTabIndex(3);
+          appState.setBiologySegment(1);
+          appState.setTabIndex(4);
           BookAppointmentModal.show(context, appState);
         },
       },
@@ -1595,14 +1783,23 @@ class HomeScreen extends StatelessWidget {
         'title': 'Lab Interpreter',
         'icon': Icons.biotech_rounded,
         'color': const Color(0xFF8B5CF6),
-        'action': () => appState.setTabIndex(4),
+        'action': () => PremiumAccess.require(context, appState, () => appState.setTabIndex(4)),
       },
     ];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Quick Access & Clinical Care', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+        Text(
+          'Quick Access & Clinical Care',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFFF4F2FA)
+                : AppColors.textPrimary,
+          ),
+        ),
         const SizedBox(height: 12),
         GridView.builder(
           shrinkWrap: true,
@@ -1611,7 +1808,7 @@ class HomeScreen extends StatelessWidget {
             crossAxisCount: 2,
             crossAxisSpacing: 12,
             mainAxisSpacing: 12,
-            childAspectRatio: 2.3,
+            mainAxisExtent: 76,
           ),
           itemCount: actions.length,
           itemBuilder: (context, index) {
@@ -1621,7 +1818,7 @@ class HomeScreen extends StatelessWidget {
             return BouncingTap(
               onTap: act['action'] as VoidCallback,
               child: Material(
-                color: Colors.white.withValues(alpha: 0.72),
+                color: Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(18),
                 elevation: 0,
                 child: Container(
@@ -1649,10 +1846,10 @@ class HomeScreen extends StatelessWidget {
                           act['title'] as String,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary,
+                            color: Theme.of(context).colorScheme.onSurface,
                             height: 1.15,
                           ),
                         ),

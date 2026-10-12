@@ -23,6 +23,7 @@ import 'features/appointments/screens/appointments_screen.dart';
 import 'features/lab_reports/screens/lab_reports_screen.dart';
 import 'features/ai_assistant/widgets/floating_ai_button.dart';
 import 'features/auth/screens/sign_in_screen.dart';
+import 'features/onboarding/screens/health_intake_screen.dart';
 import 'features/onboarding/screens/onboarding_baseline_screen.dart';
 
 Future<void> main() async {
@@ -134,6 +135,8 @@ class _HealthCompanionAppState extends State<HealthCompanionApp> {
           title: AppBrand.name,
           debugShowCheckedModeBanner: false,
           theme: AppTheme.lightTheme,
+          darkTheme: AppTheme.darkTheme,
+          themeMode: _appState.useDarkMode ? ThemeMode.dark : ThemeMode.light,
           locale: _appState.currentLocale,
           supportedLocales: AppLocalizations.supportedLocales,
           localizationsDelegates: const [
@@ -162,6 +165,11 @@ class _HealthCompanionAppState extends State<HealthCompanionApp> {
                         key: const ValueKey('sign_in_screen'),
                         appState: _appState,
                       )
+                    : (!_appState.healthIntakeCompleted)
+                        ? HealthIntakeScreen(
+                            key: const ValueKey('health_intake'),
+                            appState: _appState,
+                          )
                     : (!_appState.isOnboardingBaselineCompleted)
                         ? OnboardingBaselineScreen(
                             key: const ValueKey('onboarding_baseline'),
@@ -196,9 +204,9 @@ class HealthCompanionShell extends StatelessWidget {
       case 2:
         return 'Symptom Triage';
       case 3:
-        return 'Appointments & Fitness';
+        return 'Fitness';
       case 4:
-        return 'Biology & Labs';
+        return 'Biology';
       default:
         return AppBrand.tagline;
     }
@@ -220,12 +228,12 @@ class HealthCompanionShell extends StatelessWidget {
         ];
 
         return AnnotatedRegion<SystemUiOverlayStyle>(
-          value: const SystemUiOverlayStyle(
+          value: SystemUiOverlayStyle(
             statusBarColor: Colors.transparent,
-            statusBarIconBrightness: Brightness.dark,
-            statusBarBrightness: Brightness.light,
+            statusBarIconBrightness: appState.useDarkMode ? Brightness.light : Brightness.dark,
+            statusBarBrightness: appState.useDarkMode ? Brightness.dark : Brightness.light,
             systemNavigationBarColor: Colors.transparent,
-            systemNavigationBarIconBrightness: Brightness.dark,
+            systemNavigationBarIconBrightness: appState.useDarkMode ? Brightness.light : Brightness.dark,
           ),
           child: HolographicBackground(
           child: Scaffold(

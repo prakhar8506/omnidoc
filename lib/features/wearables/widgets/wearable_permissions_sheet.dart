@@ -63,9 +63,9 @@ class WearablePermissionsSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: EdgeInsets.fromLTRB(24, 16, 24, MediaQuery.of(context).viewInsets.bottom + 24),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
         boxShadow: AppColors.dockShadow,
       ),
       child: Column(
@@ -116,10 +116,11 @@ class WearablePermissionsSheet extends StatelessWidget {
           Text(
             'Cura requests read access via Apple HealthKit (iOS) or Google Health Connect (Android). '
             'Your health data stays encrypted on your device and is never sold to third parties.',
-            style: AppTypography.bodyMd.copyWith(color: AppColors.textPrimary, height: 1.4),
+            style: AppTypography.bodyMd.copyWith(color: Theme.of(context).colorScheme.onSurface, height: 1.4),
           ),
           const SizedBox(height: 18),
           _buildPermissionRow(
+            context,
             icon: Icons.favorite_rounded,
             color: AppColors.watchHeartRate,
             title: 'Heart Rate & Resting HR',
@@ -127,6 +128,7 @@ class WearablePermissionsSheet extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           _buildPermissionRow(
+            context,
             icon: Icons.nightlight_round,
             color: AppColors.watchSleep,
             title: 'Sleep Architecture (REM/Deep)',
@@ -134,6 +136,7 @@ class WearablePermissionsSheet extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           _buildPermissionRow(
+            context,
             icon: Icons.directions_walk_rounded,
             color: AppColors.watchActivity,
             title: 'Steps & Daily Movement',
@@ -141,6 +144,7 @@ class WearablePermissionsSheet extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           _buildPermissionRow(
+            context,
             icon: Icons.air_rounded,
             color: AppColors.watchSpO2,
             title: 'Blood Oxygen (SpO2)',
@@ -190,11 +194,11 @@ class WearablePermissionsSheet extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 16),
               decoration: BoxDecoration(
-                color: AppColors.textPrimary,
+                color: Theme.of(context).colorScheme.onSurface,
                 borderRadius: BorderRadius.circular(18),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.textPrimary.withValues(alpha: 0.3),
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3),
                     blurRadius: 16,
                     offset: const Offset(0, 6),
                   ),
@@ -229,7 +233,7 @@ class WearablePermissionsSheet extends StatelessWidget {
                 }
               },
               icon: const Icon(Icons.settings_rounded, size: 18),
-              label: const Text(
+              label: Text(
                 'Open Health Settings',
                 style: TextStyle(fontWeight: FontWeight.w700),
               ),
@@ -253,7 +257,7 @@ class WearablePermissionsSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildPermissionRow({
+  Widget _buildPermissionRow(BuildContext context, {
     required IconData icon,
     required Color color,
     required String title,
@@ -277,10 +281,10 @@ class WearablePermissionsSheet extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
               const SizedBox(height: 2),

@@ -1,6 +1,7 @@
 package com.healthcompanion.health_companion
 
 import android.content.Intent
+import android.provider.Settings
 import androidx.core.content.FileProvider
 import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -14,6 +15,9 @@ class MainActivity : FlutterFragmentActivity() {
             .setMethodCallHandler { call, result ->
                 when (call.method) {
                     "openPermissions" -> result.success(openHealthConnectPermissions())
+                    "androidId" -> result.success(
+                        Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID) ?: ""
+                    )
                     "openPdf" -> {
                         val path = call.argument<String>("path")
                         result.success(if (path.isNullOrBlank()) false else openPdf(path))

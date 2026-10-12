@@ -115,7 +115,7 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -220,7 +220,7 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
                                       height: 20,
                                       child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                                     )
-                                  : const Text(
+                                  : Text(
                                       'Try demo mode',
                                       style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
                                     ),
@@ -230,12 +230,12 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
                           const SizedBox(height: 8),
                         ],
 
-                        const Text(
+                        Text(
                           'Email',
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary,
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -244,9 +244,9 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
                           keyboardType: TextInputType.emailAddress,
                           textInputAction: TextInputAction.next,
                           autofillHints: const [AutofillHints.email],
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 15,
-                            color: AppColors.textPrimary,
+                            color: Theme.of(context).colorScheme.onSurface,
                             fontWeight: FontWeight.w500,
                           ),
                           validator: (value) {
@@ -263,12 +263,12 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
                           ),
                         ),
                         const SizedBox(height: 18),
-                        const Text(
+                        Text(
                           'Password',
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary,
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -278,9 +278,9 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
                           textInputAction: TextInputAction.done,
                           autofillHints: const [AutofillHints.password],
                           onFieldSubmitted: (_) => _handleSignIn(),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 15,
-                            color: AppColors.textPrimary,
+                            color: Theme.of(context).colorScheme.onSurface,
                             fontWeight: FontWeight.w500,
                           ),
                           validator: (value) {
@@ -307,7 +307,7 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
                           const SizedBox(height: 12),
                           Text(
                             _errorText!,
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: AppColors.accentCoral,
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
@@ -339,7 +339,7 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
                                       color: Colors.white,
                                     ),
                                   )
-                                : const Text(
+                                : Text(
                                     'Sign In',
                                     style: TextStyle(
                                       fontSize: 15,
@@ -362,7 +362,7 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
                               ),
                             ),
                             onPressed: _isLoading ? null : _openSignUp,
-                            child: const Text(
+                            child: Text(
                               'Create New Account',
                               style: TextStyle(
                                 fontSize: 15,
@@ -420,7 +420,7 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
   }) {
     return InputDecoration(
       hintText: hint,
-      hintStyle: const TextStyle(color: AppColors.textTertiary),
+      hintStyle: TextStyle(color: AppColors.textTertiary),
       prefixIcon: Icon(prefix, color: AppColors.textSecondary, size: 20),
       suffixIcon: suffix,
       filled: true,
