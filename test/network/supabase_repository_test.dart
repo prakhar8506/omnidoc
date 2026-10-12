@@ -42,6 +42,9 @@ class MockSupabaseBackendRepository implements HealthBackendRepository {
   }) async => null;
 
   @override
+  RemoteIdentity? get remoteIdentity => null;
+
+  @override
   Future<PreparedAccount?> prepareAccount({
     required String email,
     required String password,

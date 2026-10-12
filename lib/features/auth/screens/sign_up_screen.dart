@@ -3,6 +3,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/state/app_state.dart';
 import '../../../core/services/auth_service.dart';
 import '../../legal/screens/privacy_policy_screen.dart';
+import '../widgets/google_sign_in_button.dart';
 import '../../legal/screens/terms_of_use_screen.dart';
 
 class SignUpScreen extends StatefulWidget {
@@ -124,10 +125,39 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  'Use your email. Your account opens right away. There is nothing to confirm.',
+                  'Continue with Google, or use your email. Your account opens right away.',
                   style: TextStyle(fontSize: 14, color: AppColors.textSecondary, height: 1.4),
                 ),
                 const SizedBox(height: 28),
+                GoogleSignInButton(
+                  appState: widget.appState,
+                  enabled: !_isLoading,
+                  beforeStart: () => _termsAccepted
+                      ? null
+                      : 'Please confirm you are 18 or older and accept the Terms and Privacy Policy.',
+                  onError: (message) {
+                    if (mounted) setState(() => _errorText = message);
+                  },
+                ),
+                const SizedBox(height: 16),
+                const Row(
+                  children: [
+                    Expanded(child: Divider(color: Color(0xFFD9D4E0))),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 12),
+                      child: Text(
+                        'or use email',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ),
+                    Expanded(child: Divider(color: Color(0xFFD9D4E0))),
+                  ],
+                ),
+                const SizedBox(height: 16),
                 _label('Full name'),
                 const SizedBox(height: 8),
                 TextFormField(

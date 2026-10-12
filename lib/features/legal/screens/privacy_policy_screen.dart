@@ -72,7 +72,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                     ),
                     _card(
                       'Storage & security',
-                      'Cloud data is stored in Supabase with row-level security so only your account can read it. A copy is kept on your phone so the app works offline; that copy is excluded from Google and Apple device backups. Use a strong password and keep your device locked.',
+                      'Cloud data is stored in Supabase with row-level security so only your account can read it. A copy is kept on your phone so the app works offline; that copy is excluded from Google and Apple device backups. If you choose Continue with Google, Google shares your name and email address with Cura so we can open your account. We never receive your Google password. Use a strong password and keep your device locked.',
                     ),
                     _card(
                       'Retention & deletion',

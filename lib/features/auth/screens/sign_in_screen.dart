@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/env/app_env.dart';
 import '../../../core/theme/app_colors.dart';
+import '../widgets/google_sign_in_button.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/state/app_state.dart';
 import '../../../core/services/auth_service.dart';
@@ -169,6 +170,32 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
                           style: AppTypography.bodyMd,
                         ),
                         const SizedBox(height: 28),
+                        GoogleSignInButton(
+                          appState: widget.appState,
+                          enabled: !_isLoading && !_isDemoLoading,
+                          onError: (message) {
+                            if (mounted) setState(() => _errorText = message);
+                          },
+                        ),
+                        const SizedBox(height: 20),
+                        Row(
+                          children: [
+                            Expanded(child: Divider(color: AppColors.textTertiary.withValues(alpha: 0.3))),
+                            const Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 12),
+                              child: Text(
+                                'or use email',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ),
+                            Expanded(child: Divider(color: AppColors.textTertiary.withValues(alpha: 0.3))),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
 
                         if (AppEnv.enableDemo) ...[
                           SizedBox(
@@ -200,25 +227,7 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
                               onPressed: _isDemoLoading ? null : _handleDemoSignIn,
                             ),
                           ),
-                          const SizedBox(height: 20),
-                          Row(
-                            children: [
-                              Expanded(child: Divider(color: AppColors.textTertiary.withValues(alpha: 0.3))),
-                              const Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 12),
-                                child: Text(
-                                  'or sign in with email',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w500,
-                                    color: AppColors.textSecondary,
-                                  ),
-                                ),
-                              ),
-                              Expanded(child: Divider(color: AppColors.textTertiary.withValues(alpha: 0.3))),
-                            ],
-                          ),
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 8),
                         ],
 
                         const Text(

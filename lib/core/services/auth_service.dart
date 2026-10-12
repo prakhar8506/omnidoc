@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 import '../models/user_account.dart';
 import '../network/supabase_repository.dart';
+import 'google_auth.dart';
 
 class AuthException implements Exception {
   final String message;
@@ -270,7 +271,70 @@ class AuthService {
     return user;
   }
 
+  /// Saves a Google account as the on-device session. Does not call Supabase.
+  Future<({UserAccount user, bool isNew})> signInWithGoogleAccount({
+    required String googleUserId,
+    required String email,
+    required String? fullName,
+  }) async {
+    final normalized = email.trim().toLowerCase();
+    if (!_isValidEmail(normalized)) {
+      throw AuthException('Google did not share an email address.');
+    }
+
+    final local = await findByEmail(normalized);
+    final providedName = (fullName ?? '').trim();
+    final name = providedName.isNotEmpty
+        ? providedName
+        : (local?.fullName ?? normalized.split('@').first);
+    final id = (local?.id ?? googleUserId.trim()).isNotEmpty
+        ? (local?.id ?? googleUserId.trim())
+        : normalized;
+    final user = UserAccount(
+      id: id,
+      fullName: name,
+      email: normalized,
+      passwordHash: '',
+      bloodType: local?.bloodType ?? 'Unknown',
+      avatarPath: local?.avatarPath,
+      createdAt: local?.createdAt ?? DateTime.now(),
+    );
+    await _persistUserLocally(user);
+    final prefs = await _prefs;
+    await prefs.setString(_sessionUserIdKey, user.id);
+    return (user: user, isNew: local == null);
+  }
+
+  /// Writes the current Supabase user into the on-device session.
+  /// Returns null when nobody is signed in remotely.
+  /// [isNew] is true only when this email has never been stored on the device.
+  Future<({UserAccount user, bool isNew})?> adoptRemoteSession() async {
+    final remote = backendRepository?.remoteIdentity;
+    if (remote == null || remote.id.isEmpty || remote.email.isEmpty) return null;
+
+    final local = await findByEmail(remote.email);
+    final name = remote.fullName.isNotEmpty
+        ? remote.fullName
+        : (local?.fullName ?? remote.email.split('@').first);
+    final user = UserAccount(
+      id: remote.id,
+      fullName: name,
+      email: remote.email,
+      passwordHash: '',
+      bloodType: remote.bloodType == 'Unknown'
+          ? (local?.bloodType ?? 'Unknown')
+          : remote.bloodType,
+      avatarPath: local?.avatarPath,
+      createdAt: local?.createdAt ?? remote.createdAt ?? DateTime.now(),
+    );
+    await _persistUserLocally(user);
+    final prefs = await _prefs;
+    await prefs.setString(_sessionUserIdKey, user.id);
+    return (user: user, isNew: local == null);
+  }
+
   Future<void> signOut() async {
+    await GoogleAuth.signOut();
     if (backendRepository != null && backendRepository!.isConfigured) {
       try {
         await backendRepository!.signOut();

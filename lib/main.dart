@@ -112,7 +112,7 @@ class _HealthCompanionAppState extends State<HealthCompanionApp> {
     if (!_authLinkHosts.contains(uri.host)) return;
     try {
       await Supabase.instance.client.auth.getSessionFromUrl(uri);
-      await _appState.hydrate();
+      await _appState.adoptRemoteSession();
     } catch (e) {
       debugPrint('[Cura] auth deep link failed: $e');
     }

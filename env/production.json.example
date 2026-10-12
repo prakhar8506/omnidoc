@@ -3,5 +3,6 @@
   "SUPABASE_ANON_KEY": "YOUR_SUPABASE_ANON_PUBLIC_KEY",
   "AI_GATEWAY_URL": "",
   "SENTRY_DSN": "",
-  "ENABLE_DEMO": "false"
+  "ENABLE_DEMO": "false",
+  "GOOGLE_WEB_CLIENT_ID": ""
 }

@@ -3,6 +3,23 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../data/health_event.dart';
 import '../env/app_env.dart';
 
+/// The signed-in person as Supabase currently knows them.
+class RemoteIdentity {
+  final String id;
+  final String email;
+  final String fullName;
+  final String bloodType;
+  final DateTime? createdAt;
+
+  const RemoteIdentity({
+    required this.id,
+    required this.email,
+    required this.fullName,
+    required this.bloodType,
+    this.createdAt,
+  });
+}
+
 /// Abstract contract for backend operations. UI and state layers only interact
 /// with this interface, never invoking Supabase client directly.
 abstract class HealthBackendRepository {
@@ -23,6 +40,9 @@ abstract class HealthBackendRepository {
     required String email,
     required String password,
   });
+
+  /// Who is signed in on the live Supabase client, if anyone.
+  RemoteIdentity? get remoteIdentity;
 
   /// Creates an account and asks Cura to send a greeting.
   ///
@@ -237,6 +257,22 @@ class SupabaseRepository implements HealthBackendRepository {
     return await _client!.auth.signInWithPassword(
       email: email.trim(),
       password: password,
+    );
+  }
+
+  @override
+  RemoteIdentity? get remoteIdentity {
+    final user = _client?.auth.currentUser;
+    if (user == null) return null;
+    final meta = user.userMetadata ?? const <String, dynamic>{};
+    final name = (meta['full_name'] ?? meta['name'] ?? '').toString().trim();
+    final blood = (meta['blood_type'] ?? 'Unknown').toString();
+    return RemoteIdentity(
+      id: user.id,
+      email: (user.email ?? '').trim().toLowerCase(),
+      fullName: name,
+      bloodType: blood.isEmpty ? 'Unknown' : blood,
+      createdAt: DateTime.tryParse(user.createdAt),
     );
   }
 

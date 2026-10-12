@@ -14,6 +14,7 @@ import '../models/user_account.dart';
 import '../branding/app_brand.dart';
 import '../models/prescription_document.dart';
 import '../services/auth_service.dart';
+import '../services/google_auth.dart';
 import '../services/user_data_service.dart';
 import '../nutrition/nutrition_targets.dart';
 import '../services/report_interpreter_service.dart';
@@ -368,6 +369,51 @@ class AppState extends ChangeNotifier {
     await _bindUser(user);
     _isSignedIn = true;
     notifyListeners();
+  }
+
+  /// Opens the Google account picker and signs that person in on this device.
+  Future<void> signInWithGoogle() async {
+    final account = await GoogleAuth.pickAccount();
+    final result = await _auth.signInWithGoogleAccount(
+      googleUserId: account.id,
+      email: account.email,
+      fullName: account.displayName,
+    );
+    await _bindUser(result.user, isNew: result.isNew);
+    _isSignedIn = true;
+    notifyListeners();
+  }
+
+  bool _adoptingRemoteSession = false;
+
+  /// Turns a finished Google (or other remote) session into the local account.
+  Future<void> adoptRemoteSession() async {
+    if (_adoptingRemoteSession) return;
+    _adoptingRemoteSession = true;
+    try {
+      final adopted = await _auth.adoptRemoteSession();
+      if (adopted == null) return;
+      final user = adopted.user;
+      if (_isSignedIn && _currentUser?.id == user.id) return;
+      await _bindUser(user, isNew: adopted.isNew);
+      _isSignedIn = true;
+      notifyListeners();
+      final id = userId;
+      if (id != null) {
+        unawaited(() async {
+          try {
+            await supabaseSyncService.pullRemoteEvents(id);
+            historicalDaysCount = _computeHistoricalDays();
+            recalculateRecoveryEngine();
+            notifyListeners();
+          } catch (e) {
+            debugPrint('[AppState] Google session sync skipped: $e');
+          }
+        }());
+      }
+    } finally {
+      _adoptingRemoteSession = false;
+    }
   }
 
   /// Debug-only demo. Disabled in release and unless ENABLE_DEMO=true.
