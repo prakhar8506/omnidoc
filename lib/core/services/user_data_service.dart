@@ -1,15 +1,14 @@
 import 'dart:convert';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../models/prescription_document.dart';
 import '../models/vitals_data.dart';
+import '../storage/secure_store.dart';
 
 /// Per-user persisted health profile (isolated by user id).
 class UserDataService {
   String _key(String userId) => 'hc_user_data_$userId';
 
   Future<Map<String, dynamic>> load(String userId) async {
-    final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString(_key(userId));
+    final raw = await SecureStore.readString(_key(userId));
     if (raw == null || raw.isEmpty) {
       return _emptyProfile();
     }
@@ -17,14 +16,12 @@ class UserDataService {
   }
 
   Future<void> save(String userId, Map<String, dynamic> data) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_key(userId), jsonEncode(data));
+    await SecureStore.writeString(_key(userId), jsonEncode(data));
   }
 
   /// Removes everything stored on this device for [userId].
   Future<void> purge(String userId) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_key(userId));
+    await SecureStore.delete(_key(userId));
   }
 
   Map<String, dynamic> _emptyProfile() => {

@@ -1,10 +1,10 @@
 import 'dart:convert';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 import '../models/user_account.dart';
 import '../network/supabase_repository.dart';
+import '../storage/secure_store.dart';
 import 'google_auth.dart';
 
 class AuthException implements Exception {
@@ -26,21 +26,17 @@ class AuthService {
 
   AuthService({this.backendRepository});
 
-  Future<SharedPreferences> get _prefs async => SharedPreferences.getInstance();
-
   String hashPassword(String password, String salt) {
     final bytes = utf8.encode('$salt::$password');
     return sha256.convert(bytes).toString();
   }
 
   Future<List<UserAccount>> getUsers() async {
-    final prefs = await _prefs;
-    return UserAccount.listFromJsonString(prefs.getString(_usersKey));
+    return UserAccount.listFromJsonString(await SecureStore.readString(_usersKey));
   }
 
   Future<void> _saveUsers(List<UserAccount> users) async {
-    final prefs = await _prefs;
-    await prefs.setString(_usersKey, UserAccount.listToJsonString(users));
+    await SecureStore.writeString(_usersKey, UserAccount.listToJsonString(users));
   }
 
   Future<void> _persistUserLocally(UserAccount user) async {
@@ -55,8 +51,7 @@ class AuthService {
   }
 
   Future<String?> getSessionUserId() async {
-    final prefs = await _prefs;
-    return prefs.getString(_sessionUserIdKey);
+    return SecureStore.readString(_sessionUserIdKey);
   }
 
   Future<UserAccount?> getSessionUser() async {
@@ -76,8 +71,7 @@ class AuthService {
     final users = await getUsers();
     users.removeWhere((u) => u.id == userId);
     await _saveUsers(users);
-    final prefs = await _prefs;
-    await prefs.remove(_sessionUserIdKey);
+    await SecureStore.delete(_sessionUserIdKey);
   }
 
   Future<UserAccount?> findByEmail(String email) async {
@@ -186,8 +180,7 @@ class AuthService {
 
     await _persistUserLocally(user);
 
-    final prefs = await _prefs;
-    await prefs.setString(_sessionUserIdKey, user.id);
+    await SecureStore.writeString(_sessionUserIdKey, user.id);
     return user;
   }
 
@@ -231,8 +224,7 @@ class AuthService {
           // Always persist so getSessionUser works after remote sign-in
           await _persistUserLocally(persisted);
 
-          final prefs = await _prefs;
-          await prefs.setString(_sessionUserIdKey, persisted.id);
+          await SecureStore.writeString(_sessionUserIdKey, persisted.id);
           return persisted;
         }
         if (kReleaseMode) {
@@ -266,8 +258,7 @@ class AuthService {
       throw AuthException('Incorrect password. Please try again.');
     }
 
-    final prefs = await _prefs;
-    await prefs.setString(_sessionUserIdKey, user.id);
+    await SecureStore.writeString(_sessionUserIdKey, user.id);
     return user;
   }
 
@@ -300,8 +291,7 @@ class AuthService {
       createdAt: local?.createdAt ?? DateTime.now(),
     );
     await _persistUserLocally(user);
-    final prefs = await _prefs;
-    await prefs.setString(_sessionUserIdKey, user.id);
+    await SecureStore.writeString(_sessionUserIdKey, user.id);
     return (user: user, isNew: local == null);
   }
 
@@ -328,8 +318,7 @@ class AuthService {
       createdAt: local?.createdAt ?? remote.createdAt ?? DateTime.now(),
     );
     await _persistUserLocally(user);
-    final prefs = await _prefs;
-    await prefs.setString(_sessionUserIdKey, user.id);
+    await SecureStore.writeString(_sessionUserIdKey, user.id);
     return (user: user, isNew: local == null);
   }
 
@@ -342,8 +331,7 @@ class AuthService {
         debugPrint('[AuthService] Remote signOut error: $e');
       }
     }
-    final prefs = await _prefs;
-    await prefs.remove(_sessionUserIdKey);
+    await SecureStore.delete(_sessionUserIdKey);
   }
 
   Future<UserAccount> updateProfile(UserAccount updated) async {

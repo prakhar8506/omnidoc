@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import '../storage/secure_store.dart';
 import 'health_event.dart';
 
 /// Offline-first append-only local event log with deduplication,
@@ -16,8 +16,7 @@ class EventStore {
   Future<void> initialize() async {
     if (_isInitialized) return;
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final rawList = prefs.getStringList(_storageKey) ?? [];
+      final rawList = await SecureStore.readStringList(_storageKey);
       for (final raw in rawList) {
         try {
           final event = HealthEvent.fromJson(jsonDecode(raw) as Map<String, dynamic>);
@@ -128,15 +127,13 @@ class EventStore {
 
   Future<void> clear() async {
     _eventsById.clear();
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_storageKey);
+    await SecureStore.delete(_storageKey);
   }
 
   Future<void> _persist() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
       final serialized = _eventsById.values.map((e) => jsonEncode(e.toJson())).toList();
-      await prefs.setStringList(_storageKey, serialized);
+      await SecureStore.writeStringList(_storageKey, serialized);
     } catch (e) {
       debugPrint('EventStore persist error: $e');
     }

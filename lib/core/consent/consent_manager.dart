@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import '../storage/secure_store.dart';
 
 enum PermissionCategory {
   steps,
@@ -134,8 +134,7 @@ class ConsentManager extends ChangeNotifier {
   /// account is deleted so no consent history survives on the device.
   Future<void> reset() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove(_storageKey);
+      await SecureStore.delete(_storageKey);
     } catch (e) {
       debugPrint('ConsentManager reset error: $e');
     }
@@ -145,8 +144,7 @@ class ConsentManager extends ChangeNotifier {
   Future<void> initialize() async {
     if (_isInitialized) return;
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final rawJson = prefs.getString(_storageKey);
+      final rawJson = await SecureStore.readString(_storageKey);
       if (rawJson != null) {
         final map = jsonDecode(rawJson) as Map<String, dynamic>;
         for (final entry in map.entries) {
@@ -231,12 +229,11 @@ class ConsentManager extends ChangeNotifier {
 
   Future<void> _persist() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
       final map = <String, dynamic>{};
       for (final item in _permissions.values) {
         map[item.category.name] = item.toJson();
       }
-      await prefs.setString(_storageKey, jsonEncode(map));
+      await SecureStore.writeString(_storageKey, jsonEncode(map));
     } catch (e) {
       debugPrint('ConsentManager persist error: $e');
     }
