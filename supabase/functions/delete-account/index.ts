@@ -54,6 +54,7 @@ const USER_ID_TABLES: string[] = [
   "medical_id",
   "consent_settings",
   "wearable_connections",
+  "family_links",
 ];
 
 Deno.serve(async (req: Request) => {
@@ -94,20 +95,7 @@ Deno.serve(async (req: Request) => {
 
     if (!serviceRoleKey) {
       return jsonResponse(
-        {
-          ok: false,
-          user_id: userId,
-          message:
-            "SUPABASE_SERVICE_ROLE_KEY not set. Documented steps only — no deletions performed.",
-          documented_steps: [
-            "1. Verify JWT → auth.uid()",
-            "2. Delete user-owned rows (biomarker_results, lab_documents, pregnancy_*, nutrition_logs, cycle_logs, chronic_readings, workouts, appointments, medications, family_members, ai_messages, habit_logs, journal_entries, check_ins, scores, health_events)",
-            "3. Delete medical_id, consent_settings, wearable_connections",
-            "4. Remove Storage objects under lab-uploads/{uid}/ and avatars/{uid}/",
-            "5. Delete profiles where id = uid",
-            "6. admin.auth.admin.deleteUser(uid)",
-          ],
-        },
+        { ok: false, error: "Account deletion is not available right now." },
         503,
       );
     }

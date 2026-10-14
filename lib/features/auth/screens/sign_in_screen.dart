@@ -6,6 +6,8 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/state/app_state.dart';
 import '../../../core/services/auth_service.dart';
 import '../../../core/branding/app_brand.dart';
+import '../../legal/screens/privacy_policy_screen.dart';
+import '../../legal/screens/terms_of_use_screen.dart';
 import 'sign_up_screen.dart';
 
 class SignInScreen extends StatefulWidget {
@@ -27,6 +29,7 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
   bool _isLoading = false;
   bool _isDemoLoading = false;
   bool _obscurePassword = true;
+  bool _termsAccepted = false;
   bool _showSignUp = false;
   String? _errorText;
   late AnimationController _fadeController;
@@ -64,6 +67,10 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
 
   Future<void> _handleSignIn() async {
     setState(() => _errorText = null);
+    if (!_termsAccepted) {
+      setState(() => _errorText = 'Please confirm you are 18 or older and accept the Terms and Privacy Policy.');
+      return;
+    }
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
     setState(() => _isLoading = true);
@@ -84,6 +91,10 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
   }
 
   Future<void> _handleDemoSignIn() async {
+    if (!_termsAccepted) {
+      setState(() => _errorText = 'Please confirm you are 18 or older and accept the Terms and Privacy Policy.');
+      return;
+    }
     setState(() {
       _errorText = null;
       _isDemoLoading = true;
@@ -173,9 +184,44 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
                         GoogleSignInButton(
                           appState: widget.appState,
                           enabled: !_isLoading && !_isDemoLoading,
+                          beforeStart: () => _termsAccepted
+                              ? null
+                              : 'Please confirm you are 18 or older and accept the Terms and Privacy Policy.',
                           onError: (message) {
                             if (mounted) setState(() => _errorText = message);
                           },
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Checkbox(
+                              value: _termsAccepted,
+                              onChanged: (value) => setState(() => _termsAccepted = value ?? false),
+                              visualDensity: VisualDensity.compact,
+                            ),
+                            Expanded(
+                              child: Padding(
+                                padding: const EdgeInsets.only(top: 10),
+                                child: Wrap(
+                                  crossAxisAlignment: WrapCrossAlignment.center,
+                                  children: [
+                                    Text('I am 18 or older and I accept the ', style: TextStyle(fontSize: 13, height: 1.4, color: AppColors.textSecondary)),
+                                    GestureDetector(
+                                      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const TermsOfUseScreen())),
+                                      child: Text('Terms of Use', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.primaryContainer)),
+                                    ),
+                                    Text(' and ', style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                                    GestureDetector(
+                                      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PrivacyPolicyScreen())),
+                                      child: Text('Privacy Policy', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.primaryContainer)),
+                                    ),
+                                    Text('.', style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                         const SizedBox(height: 20),
                         Row(

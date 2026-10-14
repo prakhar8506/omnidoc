@@ -475,42 +475,37 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Deletes cloud account via Edge Function, then clears local session.
+  /// Deletes a Supabase account when one exists, then always clears this phone.
   Future<void> deleteAccount() async {
-    final base = AppEnv.functionsBaseUrl;
-    if (base.isEmpty || !AppEnv.isSupabaseConfigured) {
-      throw StateError('Account deletion requires a configured backend.');
-    }
-
+    final deletedUserId = userId;
     String? accessToken;
     try {
       accessToken = Supabase.instance.client.auth.currentSession?.accessToken;
     } catch (_) {
       accessToken = null;
     }
-    if (accessToken == null || accessToken.isEmpty) {
-      throw StateError('You must be signed in to delete your account.');
-    }
 
-    final deletedUserId = userId;
-    final response = await http
-        .post(
-          Uri.parse('$base/delete-account'),
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer $accessToken',
-            'apikey': AppEnv.supabaseAnonKey,
-          },
-          body: '{}',
-        )
-        .timeout(const Duration(seconds: 60));
+    final base = AppEnv.functionsBaseUrl;
+    if (accessToken != null && accessToken.isNotEmpty && base.isNotEmpty && AppEnv.isSupabaseConfigured) {
+      final response = await http
+          .post(
+            Uri.parse('$base/delete-account'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $accessToken',
+              'apikey': AppEnv.supabaseAnonKey,
+            },
+            body: '{}',
+          )
+          .timeout(const Duration(seconds: 60));
 
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      debugPrint('[AppState] delete-account ${response.statusCode}: ${response.body}');
-      throw StateError(
-        'Your account could not be deleted right now. Please check your '
-        'connection and try again, or contact ${AppBrand.supportEmail}.',
-      );
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        debugPrint('[AppState] delete-account ${response.statusCode}');
+        throw StateError(
+          'Your cloud account could not be deleted right now. The copy on this phone was kept. '
+          'Try again, or write to ${AppBrand.supportEmail}.',
+        );
+      }
     }
 
     // The cloud account is gone, so nothing may survive on this device either:
