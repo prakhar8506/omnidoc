@@ -355,6 +355,20 @@ class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
                   ),
                   ListTile(
                     dense: true,
+                    leading: const Icon(Icons.menu_book_outlined, color: AppColors.primaryContainer),
+                    title: const Text('Open-source licenses', style: TextStyle(fontWeight: FontWeight.w600)),
+                    trailing: const Icon(Icons.chevron_right_rounded, size: 20, color: AppColors.textSecondary),
+                    onTap: () {
+                      Navigator.pop(dialogContext);
+                      showLicensePage(
+                        context: context,
+                        applicationName: AppBrand.name,
+                        applicationLegalese: 'Plus Jakarta Sans is used under the SIL Open Font License 1.1.',
+                      );
+                    },
+                  ),
+                  ListTile(
+                    dense: true,
                     leading: const Icon(Icons.description_outlined, color: AppColors.primaryContainer),
                     title: const Text('Terms of Use', style: TextStyle(fontWeight: FontWeight.w600)),
                     trailing: const Icon(Icons.chevron_right_rounded, size: 20, color: AppColors.textSecondary),
