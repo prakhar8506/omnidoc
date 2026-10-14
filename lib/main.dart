@@ -26,6 +26,7 @@ import 'features/family/widgets/family_invite_sheet.dart';
 import 'features/auth/screens/sign_in_screen.dart';
 import 'features/onboarding/screens/health_intake_screen.dart';
 import 'features/onboarding/screens/onboarding_baseline_screen.dart';
+import 'features/dev/chart_gallery_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -151,6 +152,15 @@ class _HealthCompanionAppState extends State<HealthCompanionApp> {
             GlobalWidgetsLocalizations.delegate,
             GlobalCupertinoLocalizations.delegate,
           ],
+          onGenerateRoute: (settings) {
+            if (kDebugMode && settings.name == '/dev/gallery') {
+              return MaterialPageRoute<void>(
+                settings: settings,
+                builder: (_) => const ChartGalleryScreen(),
+              );
+            }
+            return null;
+          },
           home: AnimatedSwitcher(
             duration: const Duration(milliseconds: 500),
             switchInCurve: Curves.easeOutCubic,

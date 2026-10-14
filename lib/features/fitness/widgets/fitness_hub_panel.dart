@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/charts/charts.dart';
 import '../../../core/fitness/fitness_goal.dart';
 import '../../../core/nutrition/nutrition_targets.dart';
 import '../../../core/state/app_state.dart';
@@ -85,16 +86,29 @@ class FitnessHubPanel extends StatelessWidget {
             'The week-by-week coach is part of Premium. Meals, weight, water, steps, and BMI stay available without it.',
             style: TextStyle(fontSize: 12, height: 1.35, color: muted),
           ),
+          const SizedBox(height: 12),
+          if (appState.recoveryResult == null)
+            const GhostLine(caption: 'Readiness appears after a wearable sync.')
+          else
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: ReadinessGauge(
+                score: appState.recoveryResult!.score.toDouble(),
+                caption: appState.recoveryResult!.readinessState,
+              ),
+            ),
           const SizedBox(height: 16),
           Text('Body', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: ink)),
           const SizedBox(height: 6),
-          Text(
-            bmi == null
-                ? 'BMI needs a measured height and weight. Nothing is filled in for you.'
-                : 'BMI ${bmi.value} · ${bmi.label}',
-            style: TextStyle(color: ink, height: 1.35, fontWeight: FontWeight.w600),
-          ),
-          if (bmi != null) Text(bmi.note, style: TextStyle(color: muted, height: 1.35, fontSize: 12)),
+          if (bmi == null)
+            const GhostLine(caption: 'BMI needs a measured height and weight.')
+          else
+            RangeBar(
+              value: bmi.value,
+              low: 18.5,
+              high: 24.9,
+              caption: 'BMI ${bmi.value.toStringAsFixed(1)} · ${bmi.label}',
+            ),
           const SizedBox(height: 4),
           Text(
             appState.userWeightKg == null
@@ -117,6 +131,18 @@ class FitnessHubPanel extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text('Food diary', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: ink)),
+          const SizedBox(height: 8),
+          WeekBars(
+            values: [
+              for (var i = 6; i >= 0; i--)
+                () {
+                  final day = DateTime(now.year, now.month, now.day).subtract(Duration(days: i));
+                  final food = foodOnDay(appState.loggedMeals, day);
+                  return food.meals == 0 ? null : food.calories.toDouble();
+                }(),
+            ],
+            caption: 'Calories on days you logged a meal.',
+          ),
           const SizedBox(height: 6),
           Text(
             today.meals == 0

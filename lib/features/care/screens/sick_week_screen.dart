@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import '../../../core/charts/charts.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -13,6 +14,27 @@ class SickWeekScreen extends StatelessWidget {
   const SickWeekScreen({super.key, required this.appState});
 
   final AppState appState;
+
+  List<int> _logCounts() {
+    final today = DateTime.now();
+    final start = DateTime(today.year, today.month, today.day).subtract(const Duration(days: 34));
+    final counts = List<int>.filled(35, 0);
+    void bump(String? raw) {
+      final at = DateTime.tryParse(raw ?? '');
+      if (at == null) return;
+      final day = DateTime(at.year, at.month, at.day);
+      final index = day.difference(start).inDays;
+      if (index >= 0 && index < 35) counts[index]++;
+    }
+
+    for (final dose in appState.doseLogs) {
+      bump(dose['takenAt']?.toString());
+    }
+    for (final day in appState.sickDays) {
+      bump(day['day']?.toString());
+    }
+    return counts;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -43,6 +65,10 @@ class SickWeekScreen extends StatelessWidget {
                 'You do not need to know in advance. Mark the days after you have been unwell, then write what you took.',
                 style: TextStyle(color: muted, height: 1.4),
               ),
+              const SizedBox(height: 14),
+              Text('Days with a log', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: ink)),
+              const SizedBox(height: 8),
+              ConsistencyHeatmap(counts: _logCounts()),
               const SizedBox(height: 14),
               if (open == null)
                 _actionTile(

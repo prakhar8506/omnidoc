@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/charts/charts.dart';
 import '../../../core/state/app_state.dart';
 import '../../../core/theme/app_colors.dart';
 
@@ -106,20 +107,7 @@ class _HealthIntakeScreenState extends State<HealthIntakeScreen> {
                 child: Text('Goals', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
               ),
               const SizedBox(height: 14),
-              Row(
-                children: List.generate(3, (i) {
-                  return Expanded(
-                    child: Container(
-                      height: 4,
-                      margin: EdgeInsets.only(right: i == 2 ? 0 : 6),
-                      decoration: BoxDecoration(
-                        color: i <= _step ? const Color(0xFF3B82F6) : ink.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(99),
-                      ),
-                    ),
-                  );
-                }),
-              ),
+              StepDots(count: 3, index: _step),
               const SizedBox(height: 28),
               Text(
                 title,

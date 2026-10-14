@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/charts/charts.dart';
 import '../../../core/mental/mood_check.dart';
 import '../../../core/state/app_state.dart';
 import '../../../core/theme/app_colors.dart';
@@ -69,6 +70,8 @@ class _MoodCheckScreenState extends State<MoodCheckScreen> {
     return ListView(
       padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
       children: [
+        StepDots(count: moodQuestions.length, index: _index),
+        const SizedBox(height: 8),
         Text(
           'Question ${_index + 1} of ${moodQuestions.length}',
           style: TextStyle(color: muted, fontWeight: FontWeight.w600),
@@ -109,10 +112,12 @@ class _MoodCheckScreenState extends State<MoodCheckScreen> {
     return ListView(
       padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
       children: [
-        Text(result.quality, style: AppTypography.editorialMd.copyWith(color: ink)),
+        Center(child: MoodOrb(mood: result.quality, size: 140)),
+        const SizedBox(height: 12),
+        RadialProgress(value: (result.answerScore / 24).clamp(0, 1).toDouble(), label: 'Answers', size: 72),
         const SizedBox(height: 8),
         Text(
-          'Check score ${result.checkScore} · answers ${result.answerScore}/24 · pace ${result.pace}',
+          '${result.answerScore} of 24 · ${result.pace}',
           style: TextStyle(fontWeight: FontWeight.w700, color: ink),
         ),
         const SizedBox(height: 12),

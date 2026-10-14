@@ -1,5 +1,5 @@
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import '../../../core/charts/charts.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/glass_container.dart';
@@ -23,9 +23,6 @@ class NutritionHydrationScreen extends StatelessWidget {
     return ListenableBuilder(
       listenable: appState,
       builder: (context, _) {
-        final hydrationProgress =
-            (appState.dailyHydrationMl / appState.targetHydrationMl).clamp(0.0, 1.0);
-
         return Scaffold(
           body: HolographicBackground(
             child: SafeArea(
@@ -63,7 +60,7 @@ class NutritionHydrationScreen extends StatelessWidget {
                     sliver: SliverList(
                       delegate: SliverChildListDelegate([
                         // Hydration Hero Ring Card
-                        _buildHydrationCard(context, hydrationProgress),
+                        _buildHydrationCard(context),
                         const SizedBox(height: 14),
                         _buildTodayMacros(),
                         const SizedBox(height: 12),
@@ -232,64 +229,24 @@ class NutritionHydrationScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHydrationCard(BuildContext context, double progress) {
+  Widget _buildHydrationCard(BuildContext context) {
+    final glasses = (appState.dailyHydrationMl / 250).floor().clamp(0, 8);
     return GlassContainer(
       padding: const EdgeInsets.all(22),
       borderRadius: 28,
       child: Column(
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      const Icon(Icons.water_drop_rounded, color: AppColors.watchHydration, size: 20),
-                      const SizedBox(width: 8),
-                      Text(
-                        'DAILY HYDRATION',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 1.0,
-                          color: AppColors.textSecondary.withValues(alpha: 0.8),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    '${appState.dailyHydrationMl} / ${appState.targetHydrationMl} ml',
-                    style: TextStyle(
-                      fontSize: 26,
-                      fontWeight: FontWeight.w800,
-                      color: Theme.of(context).colorScheme.onSurface,
-                      letterSpacing: -0.5,
-                    ),
-                  ),
-                ],
-              ),
-              // Circular Ring Gauge
-              SizedBox(
-                width: 72,
-                height: 72,
-                child: CustomPaint(
-                  painter: _HydrationRingPainter(progress: progress),
-                  child: Center(
-                    child: Text(
-                      '${(progress * 100).toInt()}%',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w800,
-                        color: Theme.of(context).colorScheme.onSurface,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
+          SizedBox(
+            height: 28,
+            child: DropPictogram(
+              filled: glasses,
+              onAdd: () => appState.addHydration(250),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            appState.dailyHydrationMl == 0 ? 'Tap a drop to log 250 ml.' : '${appState.dailyHydrationMl} ml logged.',
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface),
           ),
           const SizedBox(height: 20),
 
@@ -492,42 +449,4 @@ class NutritionHydrationScreen extends StatelessWidget {
       ),
     );
   }
-}
-
-class _HydrationRingPainter extends CustomPainter {
-  final double progress;
-
-  _HydrationRingPainter({required this.progress});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final radius = size.width / 2 - 6;
-
-    final trackPaint = Paint()
-      ..color = AppColors.watchHydration.withValues(alpha: 0.20)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 7
-      ..strokeCap = StrokeCap.round;
-
-    final progressPaint = Paint()
-      ..color = AppColors.watchHydration
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 7
-      ..strokeCap = StrokeCap.round;
-
-    canvas.drawCircle(center, radius, trackPaint);
-    final sweepAngle = 2 * math.pi * progress;
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: radius),
-      -math.pi / 2,
-      sweepAngle,
-      false,
-      progressPaint,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant _HydrationRingPainter oldDelegate) =>
-      oldDelegate.progress != progress;
 }

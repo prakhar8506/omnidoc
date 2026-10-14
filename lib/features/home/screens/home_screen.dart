@@ -20,7 +20,7 @@ import '../../care/screens/sick_week_screen.dart';
 import '../../data_portability/screens/data_portability_screen.dart';
 import '../../consent/screens/permission_center_screen.dart';
 import '../../emergency/screens/emergency_safety_screen.dart';
-import '../../../core/domains/data_quality_service.dart';
+import '../../../core/charts/charts.dart';
 
 class HomeScreen extends StatelessWidget {
   final AppState appState;
@@ -227,28 +227,10 @@ class HomeScreen extends StatelessWidget {
                   ),
                 );
               },
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                decoration: BoxDecoration(
-                  color: ink.withValues(alpha: 0.06),
-                  borderRadius: BorderRadius.circular(999),
-                  border: Border.all(color: ink.withValues(alpha: 0.12)),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      quality.coveragePercentage >= 75 ? Icons.shield_rounded : Icons.shield_outlined,
-                      size: 14,
-                      color: quality.coveragePercentage >= 75 ? AppColors.success : AppColors.warning,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      '${quality.coveragePercentage}% Coverage',
-                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: ink),
-                    ),
-                  ],
-                ),
+              child: RadialProgress(
+                value: (quality.coveragePercentage / 100).clamp(0, 1).toDouble(),
+                label: 'Coverage',
+                size: 48,
               ),
             ),
           ],
@@ -376,12 +358,12 @@ class HomeScreen extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 12),
-        _buildWaterLog(context, dark, card, ink),
+        _buildWaterLog(context, ink),
       ],
     );
   }
 
-  Widget _buildWaterLog(BuildContext context, bool dark, Color card, Color ink) {
+  Widget _buildWaterLog(BuildContext context, Color ink) {
     final now = DateTime.now();
     var mlToday = 0;
     for (final sip in appState.hydrationLogs) {
@@ -395,413 +377,85 @@ class HomeScreen extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          mlToday == 0 ? 'Water · tap a glass to log 250 ml' : 'Water · $mlToday ml today',
+          mlToday == 0 ? 'Tap a drop to log 250 ml.' : '$mlToday ml today.',
           style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: ink.withValues(alpha: 0.8)),
         ),
         const SizedBox(height: 8),
-        Row(
-          children: [
-            for (var i = 0; i < 8; i++)
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 2),
-                  child: Material(
-                    color: card.withValues(alpha: dark ? 1 : 0.86),
-                    borderRadius: BorderRadius.circular(12),
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(12),
-                      onTap: () => appState.addHydration(250),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        child: Icon(
-                          Icons.water_drop_rounded,
-                          size: 18,
-                          color: i < filled ? const Color(0xFF3B82F6) : ink.withValues(alpha: 0.28),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-          ],
+        SizedBox(
+          height: 28,
+          child: DropPictogram(
+            filled: filled,
+            onAdd: () => appState.addHydration(250),
+          ),
         ),
       ],
     );
   }
 
-  /// Dominant Recovery Hero Card: Score + Confidence + Drivers + One Clear Action Plan
   Widget _buildDominantRecoveryCard(BuildContext context) {
     final recovery = appState.recoveryResult;
-    if (recovery == null) {
-      return GlassContainer(
-        padding: const EdgeInsets.all(22),
-        borderRadius: 26,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: AppColors.primaryContainer.withValues(alpha: 0.15),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.bolt_rounded, size: 16, color: AppColors.primaryContainer),
-                ),
-                const SizedBox(width: 8),
-                Text('Recovery', style: AppTypography.titleMd),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Text(
-              '—',
-              style: TextStyle(
-                fontSize: 52,
-                fontWeight: FontWeight.w800,
-                color: Theme.of(context).colorScheme.onSurface,
-                height: 1.0,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Insufficient data',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textSecondary,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Connect HealthKit / Health Connect or log sleep and vitals so Cura can compute a recovery score. Empty is correct until real samples exist.',
-              style: TextStyle(
-                fontSize: 13,
-                height: 1.35,
-                color: AppColors.textSecondary.withValues(alpha: 0.95),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    final isProvisional = recovery.isProvisional;
-    final confLabel = recovery.confidence == ScoreConfidence.high
-        ? 'High confidence'
-        : (recovery.confidence == ScoreConfidence.moderate ? 'Moderate confidence' : 'Provisional');
-
-    final confColor = recovery.confidence == ScoreConfidence.high
-        ? AppColors.success
-        : (recovery.confidence == ScoreConfidence.moderate ? const Color(0xFF38BDF8) : AppColors.warning);
-
+    final strain = appState.dailySteps > 0 ? appState.dailyStrainScore : null;
+    final caption = recovery == null
+        ? 'Connect a wearable to score recovery.'
+        : recovery.recommendedAction;
     return GlassContainer(
-      padding: const EdgeInsets.all(22),
+      padding: const EdgeInsets.all(18),
       borderRadius: 26,
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Top Row: Recovery Title, Readiness State, and Confidence Pill
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: AppColors.primaryContainer.withValues(alpha: 0.15),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.bolt_rounded, size: 16, color: AppColors.primaryContainer),
-              ),
-              const SizedBox(width: 8),
-              Text('Recovery', style: AppTypography.titleMd),
-              const SizedBox(width: 8),
-              Flexible(
-                child: Align(
-                  alignment: Alignment.centerRight,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: confColor.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(999),
-                      border: Border.all(color: confColor.withValues(alpha: 0.25)),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          isProvisional ? Icons.info_outline_rounded : Icons.check_circle_rounded,
-                          size: 12,
-                          color: confColor,
-                        ),
-                        const SizedBox(width: 5),
-                        Flexible(
-                          child: Text(
-                            confLabel,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: confColor,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-
-          // Score & Readiness Hero Display
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                '${recovery.score}',
-                style: TextStyle(
-                  fontSize: 52,
-                  fontWeight: FontWeight.w800,
-                  color: Theme.of(context).colorScheme.onSurface,
-                  height: 1.0,
-                  letterSpacing: -1.5,
-                ),
-              ),
-              const SizedBox(width: 4),
-              const Padding(
-                padding: EdgeInsets.only(bottom: 8),
-                child: Text(
-                  '/100',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textTertiary,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Flexible(
-                child: Padding(
-                  padding: const EdgeInsets.only(bottom: 6),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: AppColors.surfaceBright,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      recovery.readinessState,
-                      textAlign: TextAlign.end,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: Theme.of(context).colorScheme.onSurface,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-
-          // Provisional baseline alert notice if under 7 days
-          if (isProvisional) ...[
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: AppColors.warning.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.warning.withValues(alpha: 0.2)),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.calendar_today_rounded, size: 14, color: AppColors.warning),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Provisional Score • Establishing baseline (${appState.historicalDaysCount} of 14 days recorded)',
-                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.warning),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-          const SizedBox(height: 16),
-
-          // Recommended Action Box (One clear plan)
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: AppColors.primaryContainer.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.primaryContainer.withValues(alpha: 0.2)),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    const Icon(Icons.flag_rounded, size: 14, color: AppColors.primaryContainer),
-                    const SizedBox(width: 6),
-                    Text(
-                      'YOUR PLAN FOR TODAY',
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.primaryContainer.withValues(alpha: 0.9),
-                        letterSpacing: 0.8,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  recovery.recommendedAction,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: Theme.of(context).colorScheme.onSurface,
-                    height: 1.3,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Drivers Section ("What influenced today")
-          Text(
-            'What influenced today',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textSecondary,
-            ),
+          ActivityRings(
+            recovery: recovery == null ? null : recovery.score.toDouble(),
+            sleepHours: _sleepHours(),
+            strain: strain,
+            strainTarget: 18.5,
+            size: 220,
           ),
           const SizedBox(height: 8),
-          Column(
-            children: recovery.drivers.map((driver) {
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 6),
-                child: Row(
-                  children: [
-                    Icon(
-                      driver.isPositive ? Icons.add_circle_outline_rounded : Icons.remove_circle_outline_rounded,
-                      size: 15,
-                      color: driver.isPositive ? AppColors.success : AppColors.warning,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        driver.label,
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: Theme.of(context).colorScheme.onSurface,
-                        ),
-                      ),
-                    ),
-                    Text(
-                      driver.impact,
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: driver.isPositive ? AppColors.success : AppColors.warning,
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 14),
-
-          // Target Readiness Mode Selector ([Push] [Maintain] [Recover])
-          Row(
-            children: [
-              Expanded(child: _buildReadinessPill('Push', recovery.score >= 75)),
-              const SizedBox(width: 8),
-              Expanded(child: _buildReadinessPill('Maintain', recovery.score >= 55 && recovery.score < 75)),
-              const SizedBox(width: 8),
-              Expanded(child: _buildReadinessPill('Recover', recovery.score < 55)),
-            ],
+          Text(
+            caption,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 13,
+              height: 1.3,
+              fontWeight: FontWeight.w600,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildReadinessPill(String label, bool isActive) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      decoration: BoxDecoration(
-        color: isActive ? AppColors.textPrimary : Colors.white.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isActive ? Colors.transparent : Colors.white.withValues(alpha: 0.15),
-        ),
-      ),
-      child: Center(
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-            color: isActive ? Colors.white : AppColors.textSecondary,
-          ),
-        ),
-      ),
-    );
+  double? _sleepHours() {
+    final raw = appState.sleepDuration;
+    if (raw == '—' || raw.isEmpty) return null;
+    final match = RegExp(r'(\d+)\s*h(?:\s*(\d+)\s*m)?').firstMatch(raw);
+    if (match == null) return double.tryParse(raw);
+    final hours = double.parse(match.group(1)!);
+    final minutes = double.tryParse(match.group(2) ?? '') ?? 0;
+    return hours + minutes / 60;
   }
 
-  /// Tri-Stat Supporting Row: Sleep, Load, and Stress Cards
   Widget _buildTriStatCards(BuildContext context) {
     final sleep = appState.sleepResult;
     final load = appState.loadResult;
     final stress = appState.stressResult;
-
-    Widget emptyCard({
-      required IconData icon,
-      required Color iconColor,
-      required String title,
-    }) {
+    Widget card({required double? value, required String caption, required List<Color> colors}) {
       return Expanded(
         child: GlassContainer(
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.fromLTRB(8, 12, 8, 12),
           borderRadius: 18,
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(icon, size: 16, color: iconColor),
-              const SizedBox(height: 8),
-              Text(
-                '—',
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w800,
-                  color: Theme.of(context).colorScheme.onSurface,
-                ),
-              ),
-              Text(
-                title,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.textSecondary,
-                ),
-              ),
+              RadialProgress(value: value, label: caption, size: 64, colors: colors),
               const SizedBox(height: 6),
               Text(
-                'Connect a wearable or log data',
-                maxLines: 2,
+                caption,
+                maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(fontSize: 10, color: AppColors.textTertiary),
+                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
               ),
             ],
           ),
@@ -811,118 +465,23 @@ class HomeScreen extends StatelessWidget {
 
     return Row(
       children: [
-        if (sleep == null)
-          emptyCard(
-            icon: Icons.bedtime_rounded,
-            iconColor: const Color(0xFF5C6BC0),
-            title: 'Sleep',
-          )
-        else
-          Expanded(
-            child: GlassContainer(
-              padding: const EdgeInsets.all(14),
-              borderRadius: 18,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Icon(Icons.bedtime_rounded, size: 16, color: Color(0xFF5C6BC0)),
-                  const SizedBox(height: 8),
-                  Text(
-                    '${sleep.score}',
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.onSurface),
-                  ),
-                  Text(
-                    sleep.durationFormatted,
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: AppColors.textSecondary),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    sleep.drivers.isNotEmpty ? sleep.drivers.first.label : 'Sleep score',
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: 10, color: AppColors.textTertiary),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        const SizedBox(width: 10),
-        if (load == null)
-          emptyCard(
-            icon: Icons.local_fire_department_rounded,
-            iconColor: const Color(0xFFFF9800),
-            title: 'Load',
-          )
-        else
-          Expanded(
-            child: GlassContainer(
-              padding: const EdgeInsets.all(14),
-              borderRadius: 18,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Icon(Icons.local_fire_department_rounded, size: 16, color: Color(0xFFFF9800)),
-                  const SizedBox(height: 8),
-                  Text(
-                    load.currentStrain.toStringAsFixed(1),
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.onSurface),
-                  ),
-                  Text(
-                    'Target: ${load.targetMin.toInt()}–${load.targetMax.toInt()}',
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: AppColors.textSecondary),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    load.drivers.isNotEmpty ? load.drivers.first.label : 'Daily load',
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: 10, color: AppColors.textTertiary),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        const SizedBox(width: 10),
-        if (stress == null)
-          emptyCard(
-            icon: Icons.spa_rounded,
-            iconColor: const Color(0xFF38BDF8),
-            title: 'Stress',
-          )
-        else
-          Expanded(
-            child: GlassContainer(
-              padding: const EdgeInsets.all(14),
-              borderRadius: 18,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Icon(Icons.spa_rounded, size: 16, color: Color(0xFF38BDF8)),
-                  const SizedBox(height: 8),
-                  FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      stress.level,
-                      maxLines: 1,
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.onSurface),
-                    ),
-                  ),
-                  Text(
-                    '${stress.score.toInt()}/100 index',
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: AppColors.textSecondary),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    stress.drivers.isNotEmpty ? stress.drivers.first.label : 'Stress index',
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: 10, color: AppColors.textTertiary),
-                  ),
-                ],
-              ),
-            ),
-          ),
+        card(
+          value: sleep == null ? null : (sleep.score / 100).clamp(0, 1).toDouble(),
+          caption: 'Sleep',
+          colors: const [ChartColors.mint, ChartColors.sky],
+        ),
+        const SizedBox(width: 8),
+        card(
+          value: load == null || load.targetMax <= 0 ? null : (load.currentStrain / load.targetMax).clamp(0, 1).toDouble(),
+          caption: 'Load',
+          colors: const [ChartColors.amber, ChartColors.coral],
+        ),
+        const SizedBox(width: 8),
+        card(
+          value: stress == null ? null : (stress.score / 100).clamp(0, 1).toDouble(),
+          caption: 'Stress',
+          colors: const [ChartColors.iris, ChartColors.violet],
+        ),
       ],
     );
   }
@@ -1238,112 +797,16 @@ class HomeScreen extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 18),
-
-          // 3 Column stats from live energy / stress fields
-          Row(
-            children: [
-              _buildStressMetric(
-                context,
-                value: '${appState.stressHighest > 0 ? appState.stressHighest : appState.energyScore}',
-                label: 'Highest',
-              ),
-              const SizedBox(width: 24),
-              _buildStressMetric(
-                context,
-                value: '${appState.stressLowest > 0 ? appState.stressLowest : (appState.energyScore * 0.35).round()}',
-                label: 'Lowest',
-              ),
-              const SizedBox(width: 24),
-              _buildStressMetric(
-                context,
-                value: '${appState.stressAverage > 0 ? appState.stressAverage : appState.energyScore}',
-                label: 'Average',
-              ),
-            ],
-          ),
-          const SizedBox(height: 18),
-
-          // Sparkline bar indicator with thunderbolt icon ⚡ and percentage "0%"
-          Row(
-            children: [
-              Container(
-                width: 28,
-                height: 28,
-                decoration: BoxDecoration(
-                  color: AppColors.primaryContainer.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.bolt_rounded,
-                  color: AppColors.primaryContainer,
-                  size: 16,
-                ),
-              ),
-              const SizedBox(width: 10),
-              // Mini vertical sparkline bars (Reference design)
-              Expanded(
-                child: SizedBox(
-                  height: 24,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: List.generate(24, (index) {
-                      final energy = appState.energyScore;
-                      final peak = energy > 0 ? (4.0 + (energy / 100) * 18) : 4.0;
-                      final wave = (index % 5 == 0) ? peak : (index % 3 == 0) ? peak * 0.55 : 4.0;
-                      return Container(
-                        width: 4,
-                        height: wave.clamp(4.0, 22.0),
-                        decoration: BoxDecoration(
-                          color: energy > 0
-                              ? AppColors.primaryContainer.withValues(alpha: index % 5 == 0 ? 0.85 : 0.25)
-                              : Colors.black.withValues(alpha: 0.06),
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                      );
-                    }),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Text(
-                '${appState.energyScore}%',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textSecondary,
-                ),
-              ),
-            ],
+          StressScale(
+            value: appState.stressResult == null
+                ? null
+                : (appState.stressResult!.score / 100).clamp(0.0, 1.0),
+            caption: appState.stressResult == null
+                ? 'No stress reading from your wearable.'
+                : appState.stressResult!.level,
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildStressMetric(BuildContext context, {required String value, required String label}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w700,
-            color: Theme.of(context).colorScheme.onSurface,
-            letterSpacing: -0.5,
-          ),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w500,
-            color: AppColors.textSecondary,
-          ),
-        ),
-      ],
     );
   }
 
@@ -1425,9 +888,9 @@ class HomeScreen extends StatelessWidget {
           children: [
             WatchFaceTile(
               title: 'Heart Rate',
-              value: '${appState.restingHeartRate}',
-              unit: 'BPM',
-              subtitle: 'Resting • Optimal',
+              value: appState.restingHeartRate > 0 ? '${appState.restingHeartRate}' : '—',
+              unit: appState.restingHeartRate > 0 ? 'BPM' : '',
+              subtitle: appState.restingHeartRate > 0 ? 'Resting' : 'Not from this watch',
               icon: Icons.favorite_rounded,
               glowColor: AppColors.watchHeartRate,
               onTap: () => appState.syncVitals(),
@@ -1435,31 +898,35 @@ class HomeScreen extends StatelessWidget {
             WatchFaceTile(
               title: 'Sleep',
               value: appState.sleepDuration,
-              subtitle: 'Deep & REM • 88% Qual',
+              subtitle: appState.sleepDuration == '—' ? 'Not from this watch' : 'Last night',
               icon: Icons.bedtime_rounded,
               glowColor: AppColors.watchSleep,
               onTap: () => appState.syncVitals(),
             ),
             WatchFaceTile(
               title: 'Steps',
-              value: '${(appState.dailySteps / 1000).toStringAsFixed(1)}k',
-              unit: '/ 10k',
-              subtitle: '${((appState.dailySteps / 10000) * 100).clamp(0, 999).round()}% of daily goal',
+              value: appState.dailySteps > 0 ? '${(appState.dailySteps / 1000).toStringAsFixed(1)}k' : '—',
+              unit: appState.dailySteps > 0 ? '/ 10k' : '',
+              subtitle: appState.dailySteps > 0 ? 'From your watch' : 'Not from this watch',
               icon: Icons.directions_walk_rounded,
               glowColor: AppColors.watchActivity,
               onTap: () => appState.syncVitals(),
             ),
             WatchFaceTile(
               title: 'SpO2',
-              value: '${appState.bloodOxygen}',
-              unit: '%',
-              subtitle: 'Blood oxygen • Normal',
+              value: appState.bloodOxygen > 0 ? '${appState.bloodOxygen}' : '—',
+              unit: appState.bloodOxygen > 0 ? '%' : '',
+              subtitle: appState.bloodOxygen > 0 ? 'Blood oxygen' : 'Not from this watch',
               icon: Icons.air_rounded,
               glowColor: AppColors.watchSpO2,
               onTap: () => appState.syncVitals(),
             ),
           ],
         ),
+        if (appState.restingHeartRate <= 0) ...[
+          const SizedBox(height: 12),
+          const GhostLine(caption: 'Heart rate was not on this watch.'),
+        ],
       ],
     );
   }

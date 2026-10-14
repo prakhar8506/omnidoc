@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/charts/charts.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/state/app_state.dart';
@@ -115,10 +116,13 @@ class _FamilyConnectScreenState extends State<FamilyConnectScreen> {
                       ],
                     ),
                   )
-                else
+                else ...[
+                  AvatarStack(names: widget.appState.familyMembers.map((member) => member.name).toList()),
+                  const SizedBox(height: 12),
                   ...widget.appState.familyMembers.map(
                     (member) => _buildFamilyMemberCard(member),
                   ),
+                ],
                 const SizedBox(height: 24),
 
                 // Add New Member CTA

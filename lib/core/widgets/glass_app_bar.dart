@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../branding/app_brand.dart';
@@ -12,6 +13,7 @@ import '../../features/premium/premium_screen.dart';
 import '../../features/ai_assistant/widgets/ai_chat_sheet.dart';
 import '../../features/legal/screens/privacy_policy_screen.dart';
 import '../../features/legal/screens/terms_of_use_screen.dart';
+import '../../features/dev/chart_gallery_screen.dart';
 
 class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
@@ -270,6 +272,22 @@ class GlassAppBar extends StatelessWidget implements PreferredSizeWidget {
                       PremiumScreen.show(context, appState);
                     },
                   ),
+                  if (kDebugMode)
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.palette_outlined, color: AppColors.primaryContainer),
+                      title: const Text('Chart gallery', style: TextStyle(fontWeight: FontWeight.w600)),
+                      subtitle: const Text('Debug only', style: TextStyle(fontSize: 12)),
+                      onTap: () {
+                        Navigator.pop(dialogContext);
+                        Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            settings: const RouteSettings(name: '/dev/gallery'),
+                            builder: (_) => const ChartGalleryScreen(),
+                          ),
+                        );
+                      },
+                    ),
                   StatefulBuilder(
                     builder: (context, setLocal) => SwitchListTile(
                       contentPadding: EdgeInsets.zero,

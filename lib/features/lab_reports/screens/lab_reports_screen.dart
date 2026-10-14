@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/charts/charts.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/state/app_state.dart';
@@ -200,6 +201,19 @@ class _LabReportsScreenState extends State<LabReportsScreen> {
                       ),
                     ),
                   ],
+                ),
+                const SizedBox(height: 14),
+                Center(
+                  child: MarkerDonut(
+                    slices: [
+                      for (final marker in report.biomarkers)
+                        if (marker.code != 'OCR')
+                          MarkerSlice(
+                            inRange: !marker.isAttentionFlagged &&
+                                (marker.status == BiomarkerStatus.normal || marker.status == BiomarkerStatus.optimal),
+                          ),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 14),
                 ...report.biomarkers.map((bm) => _buildBiomarkerCard(bm)),
@@ -757,13 +771,24 @@ class _LabReportsScreenState extends State<LabReportsScreen> {
                                       color: AppColors.textSecondary,
                                     ),
                                   ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    'Ref: ${bm.referenceRange}',
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: AppTypography.labelSm,
-                                  ),
+                                  if (!isPending && bm.code != 'OCR') ...[
+                                    const SizedBox(height: 8),
+                                    Builder(
+                                      builder: (context) {
+                                        final range = parseReferenceRange(bm.referenceRange);
+                                        final reading = firstNumber(bm.value);
+                                        if (range == null || reading == null) {
+                                          return const GhostLine(caption: 'This marker has no numeric range.');
+                                        }
+                                        return RangeBar(
+                                          value: reading,
+                                          low: range.$1,
+                                          high: range.$2,
+                                          caption: '${bm.value} ${bm.unit}',
+                                        );
+                                      },
+                                    ),
+                                  ],
                                 ],
                               ),
                             ),

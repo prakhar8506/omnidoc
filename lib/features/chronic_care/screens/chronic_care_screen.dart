@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/charts/charts.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/widgets/glass_container.dart';
@@ -139,6 +140,16 @@ class _ChronicCareScreenState extends State<ChronicCareScreen> {
     );
   }
 
+  List<double> _glucosePoints() {
+    final points = <double>[];
+    for (final item in widget.appState.glucoseHistory.reversed) {
+      final match = RegExp(r'\d+(?:\.\d+)?').firstMatch('${item['val']}'.replaceAll(',', ''));
+      final value = match == null ? null : double.tryParse(match.group(0)!);
+      if (value != null && value > 0) points.add(value);
+    }
+    return points;
+  }
+
   List<Widget> _buildDiabetesView(BuildContext context) {
     return [
       // Watch Face Tile for Glucose
@@ -210,16 +221,20 @@ class _ChronicCareScreenState extends State<ChronicCareScreen> {
         ],
       ),
       const SizedBox(height: 12),
-      if (widget.appState.glucoseHistory.isEmpty)
-        const GlassContainer(
-          padding: EdgeInsets.all(16),
+      if (_glucosePoints().length >= 2)
+        GlassContainer(
+          padding: const EdgeInsets.all(16),
           borderRadius: 20,
-          child: Text(
-            'No glucose readings yet. Tap Log Value to add one from your meter.',
-            style: TextStyle(fontSize: 13, height: 1.4, color: AppColors.textSecondary),
-          ),
+          child: TrendArea(values: _glucosePoints(), caption: 'Your logged glucose'),
         )
       else
+        GhostLine(
+          caption: _glucosePoints().isEmpty
+              ? 'No glucose readings yet.'
+              : 'One reading saved. A trend needs a second.',
+        ),
+      const SizedBox(height: 12),
+      if (widget.appState.glucoseHistory.isNotEmpty)
       ...widget.appState.glucoseHistory.map((item) {
         return Container(
           margin: const EdgeInsets.only(bottom: 10),
@@ -266,9 +281,9 @@ class _ChronicCareScreenState extends State<ChronicCareScreen> {
       // Watch Face Tile for BP
       WatchFaceTile(
         title: 'Blood Pressure',
-        value: widget.appState.bloodPressure,
-        unit: 'mmHg',
-        subtitle: 'Optimal • American Heart Association Guideline',
+        value: widget.appState.systolicBp > 0 ? widget.appState.bloodPressure : '—',
+        unit: widget.appState.systolicBp > 0 ? 'mmHg' : '',
+        subtitle: widget.appState.systolicBp > 0 ? 'Latest logged reading' : 'No blood pressure logged',
         icon: Icons.monitor_heart_rounded,
         glowColor: AppColors.accentTeal,
         trailingBadge: Container(
