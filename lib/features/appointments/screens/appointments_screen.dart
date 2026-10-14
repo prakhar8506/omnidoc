@@ -6,6 +6,7 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/state/app_state.dart';
 import '../../../core/models/appointment.dart';
 import '../../../core/widgets/avatar_image.dart';
+import '../../fitness/widgets/fitness_hub_panel.dart';
 import '../../fitness/widgets/metabolism_panel.dart';
 import '../../fitness/widgets/training_coach_panel.dart';
 import '../../fitness/widgets/watch_signals_panel.dart';
@@ -40,6 +41,8 @@ class AppointmentsScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               if (currentSegment == 0) ...[
+                FitnessHubPanel(appState: appState),
+                const SizedBox(height: 16),
                 MetabolismPanel(appState: appState),
                 const SizedBox(height: 16),
                 TrainingCoachPanel(appState: appState),

@@ -6,6 +6,7 @@ import '../../../core/models/biomarker_report.dart';
 import '../../../core/models/prescription_document.dart';
 import '../../../core/services/lab_report_pdf.dart';
 import '../../appointments/screens/appointments_screen.dart';
+import '../../care/screens/sick_week_screen.dart';
 import '../widgets/upload_report_modal.dart';
 import '../widgets/doctor_questions_modal.dart';
 import '../../ai_assistant/widgets/ai_chat_sheet.dart';
@@ -60,10 +61,12 @@ class _LabReportsScreenState extends State<LabReportsScreen> {
             Expanded(
               child: segment == 0
                   ? _labsScroll(context, report, docs)
-                  : AppointmentsScreen(
-                      appState: widget.appState,
-                      careSection: segment,
-                    ),
+                  : segment == 3
+                      ? SickWeekScreen(appState: widget.appState)
+                      : AppointmentsScreen(
+                          appState: widget.appState,
+                          careSection: segment,
+                        ),
             ),
           ],
         );
@@ -72,6 +75,8 @@ class _LabReportsScreenState extends State<LabReportsScreen> {
   }
 
   Widget _biologySwitcher(BuildContext context, int segment) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final ink = Theme.of(context).colorScheme.onSurface;
     Widget pill(int index, String label) {
       final selected = segment == index;
       return Expanded(
@@ -87,10 +92,12 @@ class _LabReportsScreenState extends State<LabReportsScreen> {
             alignment: Alignment.center,
             child: Text(
               label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: 13,
+                fontSize: 12,
                 fontWeight: FontWeight.w700,
-                color: selected ? Colors.white : AppColors.textSecondary,
+                color: selected ? Colors.white : ink,
               ),
             ),
           ),
@@ -101,7 +108,7 @@ class _LabReportsScreenState extends State<LabReportsScreen> {
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: AppColors.surfaceContainerHigh,
+        color: dark ? const Color(0xFF2A2C3A) : AppColors.surfaceContainerHigh,
         borderRadius: BorderRadius.circular(999),
       ),
       child: Row(
@@ -109,6 +116,7 @@ class _LabReportsScreenState extends State<LabReportsScreen> {
           pill(0, 'Labs'),
           pill(1, 'Visits'),
           pill(2, 'Family'),
+          pill(3, 'Sick'),
         ],
       ),
     );

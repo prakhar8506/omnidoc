@@ -5,6 +5,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import '../../../core/care/visit_record.dart';
 import '../../../core/state/app_state.dart';
 
 /// Clinical Data Portability Service: Generates standard HL7 FHIR Bundles
@@ -114,6 +115,9 @@ class DataExportService {
             }
           }
         },
+
+        // Everyday doses and sick-week intake the person actually logged.
+        ..._loggedIntakeResources(state),
 
         // Active Medications
         for (var med in state.medications)
@@ -242,6 +246,8 @@ class DataExportService {
               cellPadding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 5),
             ),
           pw.SizedBox(height: 18),
+          ..._visitPdfBlocks(state),
+          pw.SizedBox(height: 18),
 
           // Upcoming Consultations
           pw.Text('3. CLINICAL CONSULTATIONS & CARE PLAN',
@@ -285,6 +291,99 @@ class DataExportService {
     );
 
     return pdf.save();
+  }
+
+  static List<Map<String, dynamic>> _loggedIntakeResources(AppState state) {
+    final resources = <Map<String, dynamic>>[];
+    for (final dose in state.doseLogs) {
+      final name = dose['name']?.toString().trim() ?? '';
+      if (name.isEmpty) continue;
+      resources.add({
+        'resource': {
+          'resourceType': 'MedicationStatement',
+          'status': 'completed',
+          'medicationCodeableConcept': {'text': name},
+          'effectiveDateTime': dose['takenAt'],
+          'dosage': [
+            {'text': (dose['amount'] ?? '').toString()}
+          ],
+          'note': [
+            {'text': 'Everyday dose log. ${(dose['note'] ?? '').toString()}'.trim()}
+          ],
+        }
+      });
+    }
+    for (final day in state.sickDays) {
+      final temperature = day['temperatureC'];
+      if (temperature is num) {
+        resources.add({
+          'resource': {
+            'resourceType': 'Observation',
+            'status': 'final',
+            'code': {'text': 'Body temperature, as entered'},
+            'effectiveDateTime': day['day'],
+            'valueQuantity': {'value': temperature, 'unit': 'Cel'},
+          }
+        });
+      }
+      for (final raw in (day['items'] as List?) ?? const []) {
+        if (raw is! Map) continue;
+        final item = Map<String, dynamic>.from(raw);
+        final name = item['name']?.toString().trim() ?? '';
+        if (name.isEmpty) continue;
+        final medicine = item['kind'] == 'medicine';
+        resources.add({
+          'resource': medicine
+              ? {
+                  'resourceType': 'MedicationStatement',
+                  'status': 'completed',
+                  'medicationCodeableConcept': {'text': name},
+                  'effectiveDateTime': day['day'],
+                  'dosage': [
+                    {'text': (item['amount'] ?? '').toString()}
+                  ],
+                  'note': [
+                    {'text': 'Taken during a sick week.'}
+                  ],
+                }
+              : {
+                  'resourceType': 'Observation',
+                  'status': 'final',
+                  'code': {'text': 'Other intake during a sick week'},
+                  'effectiveDateTime': day['day'],
+                  'valueString': '$name ${(item['amount'] ?? '')}'.trim(),
+                },
+        });
+      }
+    }
+    return resources;
+  }
+
+  static List<pw.Widget> _visitPdfBlocks(AppState state) {
+    final blocks = buildVisitBlocks(
+      patientName: state.userName,
+      allergies: state.allergies,
+      conditions: state.chronicConditions,
+      profileMedicines: [
+        for (final med in state.medications)
+          {'name': med.name, 'dosage': med.dosage, 'scheduleTime': med.scheduleTime},
+      ],
+      doseLogs: state.doseLogs,
+      sickPeriods: state.sickPeriods,
+      sickDays: state.sickDays,
+    );
+    return [
+      pw.Text('4. SICK WEEK AND DOSE LOG', style: const pw.TextStyle(fontSize: 12, color: PdfColors.indigo900)),
+      pw.SizedBox(height: 4),
+      pw.Text(visitDisclaimer, style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700)),
+      pw.SizedBox(height: 8),
+      for (final block in blocks) ...[
+        pw.Text(block.title, style: pw.TextStyle(fontSize: 11, fontWeight: pw.FontWeight.bold)),
+        for (final line in block.lines)
+          pw.Text(line, style: const pw.TextStyle(fontSize: 9)),
+        pw.SizedBox(height: 6),
+      ],
+    ];
   }
 
   /// Generate a clinical PDF document using the `pdf` package

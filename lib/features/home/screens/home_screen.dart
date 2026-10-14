@@ -16,6 +16,7 @@ import '../../nutrition/widgets/log_meal_sheet.dart';
 import '../../premium/premium_screen.dart';
 import '../../womens_health/screens/womens_health_screen.dart';
 import '../../chronic_care/screens/chronic_care_screen.dart';
+import '../../care/screens/sick_week_screen.dart';
 import '../../data_portability/screens/data_portability_screen.dart';
 import '../../consent/screens/permission_center_screen.dart';
 import '../../emergency/screens/emergency_safety_screen.dart';
@@ -1592,6 +1593,23 @@ class HomeScreen extends StatelessWidget {
                 ),
               );
             }),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            children: [
+              TextButton(
+                onPressed: () => showDoseLogSheet(context, appState),
+                child: const Text('Log a dose'),
+              ),
+              TextButton(
+                onPressed: () {
+                  appState.setBiologySegment(3);
+                  appState.setTabIndex(4);
+                },
+                child: const Text('Mark sick week'),
+              ),
+            ],
+          ),
         ],
       ),
     );
@@ -1713,6 +1731,15 @@ class HomeScreen extends StatelessWidget {
           context,
           MaterialPageRoute(builder: (_) => WomensHealthScreen(appState: appState)),
         ),
+      },
+      {
+        'title': 'Mark sick week',
+        'icon': Icons.sick_outlined,
+        'color': const Color(0xFF0F766E),
+        'action': () {
+          appState.setBiologySegment(3);
+          appState.setTabIndex(4);
+        },
       },
       {
         'title': 'Chronic Care',

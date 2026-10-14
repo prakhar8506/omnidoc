@@ -1,23 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Health data must never leave the device through Google backup or a
-  device-to-device transfer. Everything Cura writes locally (journal entries,
-  mood checks, cycle and pregnancy logs, medications, emergency contacts) is
-  excluded from both channels.
+  The on-phone health profile lives in shared preferences. It is included in
+  the phone's own backup and device-to-device transfer so an update or a
+  reinstall on this phone can restore it. Caches and files are left out.
 -->
 <data-extraction-rules>
     <cloud-backup>
         <exclude domain="root" />
         <exclude domain="file" />
         <exclude domain="database" />
-        <exclude domain="sharedpref" />
         <exclude domain="external" />
     </cloud-backup>
     <device-transfer>
         <exclude domain="root" />
         <exclude domain="file" />
         <exclude domain="database" />
-        <exclude domain="sharedpref" />
         <exclude domain="external" />
     </device-transfer>
 </data-extraction-rules>

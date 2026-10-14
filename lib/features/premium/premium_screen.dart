@@ -41,6 +41,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
     ('Health AI', 'Questions about your logged vitals, meals, and reports.'),
     ('Meal plans', 'A weekly plan that follows the goal you already set.'),
     ('Workout plan', 'A session matched to today’s readiness, medicines, and time.'),
+    ('Coach program', 'A week of sessions for the goal you chose, using the health data already on file.'),
     ('Heart-rate zones', 'Zone ranges when a real resting heart rate and date of birth are saved.'),
     ('Export', 'A PDF and FHIR copy of what you have logged.'),
   ];

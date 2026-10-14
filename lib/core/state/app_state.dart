@@ -160,6 +160,13 @@ class AppState extends ChangeNotifier {
   String dietGoal = 'maintain';
   String dietStyle = 'eggetarian';
   String activityLevel = 'moderate';
+  String fitnessAim = '';
+  String fitnessEvent = '';
+  String? raceDateIso;
+  String? fitnessGoalStartedIso;
+  int weeklyTrainingHours = 5;
+  double? waistCm;
+  final List<Map<String, dynamic>> weightLogs = [];
   bool shareActivityForCompetition = true;
   final List<Map<String, dynamic>> clubs = [];
 
@@ -287,6 +294,9 @@ class AppState extends ChangeNotifier {
   bool isLargeTextMode = false;
 
   final List<MedicationItem> medications = [];
+  final List<Map<String, dynamic>> doseLogs = [];
+  final List<Map<String, dynamic>> sickPeriods = [];
+  final List<Map<String, dynamic>> sickDays = [];
   final List<Appointment> appointments = [];
   final List<FamilyMember> familyMembers = [];
   List<PendingFamilyInvite> pendingFamilyInvites = [];
@@ -598,6 +608,17 @@ class AppState extends ChangeNotifier {
     dietGoal = data['dietGoal'] as String? ?? 'maintain';
     dietStyle = data['dietStyle'] as String? ?? 'eggetarian';
     activityLevel = data['activityLevel'] as String? ?? 'moderate';
+    fitnessAim = data['fitnessAim'] as String? ?? '';
+    fitnessEvent = data['fitnessEvent'] as String? ?? '';
+    raceDateIso = data['raceDateIso'] as String?;
+    fitnessGoalStartedIso = data['fitnessGoalStartedIso'] as String?;
+    weeklyTrainingHours = (data['weeklyTrainingHours'] as num?)?.toInt() ?? 5;
+    waistCm = (data['waistCm'] as num?)?.toDouble();
+    weightLogs
+      ..clear()
+      ..addAll(_decodeMapList(data['weightLogs']));
+    biologicalSex = data['biologicalSex'] as String?;
+    dateOfBirth = data['dateOfBirth'] as String?;
     shareActivityForCompetition = data['shareActivityForCompetition'] as bool? ?? true;
     clubs
       ..clear()
@@ -648,6 +669,15 @@ class AppState extends ChangeNotifier {
     medications
       ..clear()
       ..addAll(UserDataService.medicationsFromJson(data['medications'] as List<dynamic>?));
+    doseLogs
+      ..clear()
+      ..addAll(_decodeMapList(data['doseLogs']));
+    sickPeriods
+      ..clear()
+      ..addAll(_decodeMapList(data['sickPeriods']));
+    sickDays
+      ..clear()
+      ..addAll(_decodeMapList(data['sickDays']));
 
     appointments
       ..clear()
@@ -741,6 +771,15 @@ class AppState extends ChangeNotifier {
     dietGoal = 'maintain';
     dietStyle = 'eggetarian';
     activityLevel = 'moderate';
+    fitnessAim = '';
+    fitnessEvent = '';
+    raceDateIso = null;
+    fitnessGoalStartedIso = null;
+    weeklyTrainingHours = 5;
+    waistCm = null;
+    weightLogs.clear();
+    biologicalSex = null;
+    dateOfBirth = null;
     shareActivityForCompetition = true;
     clubs.clear();
     journalEntries.clear();
@@ -780,6 +819,9 @@ class AppState extends ChangeNotifier {
     userHeightCm = null;
     userWeightKg = null;
     medications.clear();
+    doseLogs.clear();
+    sickPeriods.clear();
+    sickDays.clear();
     appointments.clear();
     familyMembers.clear();
     pendingFamilyInvites = [];
@@ -836,6 +878,15 @@ class AppState extends ChangeNotifier {
       'dietGoal': dietGoal,
       'dietStyle': dietStyle,
       'activityLevel': activityLevel,
+      'fitnessAim': fitnessAim,
+      'fitnessEvent': fitnessEvent,
+      'raceDateIso': raceDateIso,
+      'fitnessGoalStartedIso': fitnessGoalStartedIso,
+      'weeklyTrainingHours': weeklyTrainingHours,
+      'waistCm': waistCm,
+      'weightLogs': _encodeMapList(weightLogs),
+      'biologicalSex': biologicalSex,
+      'dateOfBirth': dateOfBirth,
       'shareActivityForCompetition': shareActivityForCompetition,
       'clubs': _encodeMapList(clubs),
       'menstrualCycleLogs': _encodeMapList(menstrualCycleLogs),
@@ -851,6 +902,9 @@ class AppState extends ChangeNotifier {
       'emergencyMedications': emergencyMedications,
       'emergencyContacts': emergencyContacts.map((c) => c.toJson()).toList(),
       'medications': UserDataService.medicationsToJson(medications),
+      'doseLogs': _encodeMapList(doseLogs),
+      'sickPeriods': _encodeMapList(sickPeriods),
+      'sickDays': _encodeMapList(sickDays),
       'appointments': appointments.map((a) => a.toJson()).toList(),
       'familyMembers': familyMembers.map((f) => f.toJson()).toList(),
       'prescriptions': UserDataService.prescriptionsToJson(prescriptions),
@@ -1314,6 +1368,7 @@ class AppState extends ChangeNotifier {
     });
     recalculateRecoveryEngine();
     _recalculateBalance();
+    _persistCurrentUserData();
     notifyListeners();
   }
 
@@ -1430,6 +1485,99 @@ class AppState extends ChangeNotifier {
   void toggleMedication(String id) {
     final med = medications.firstWhere((m) => m.id == id);
     med.isTaken = !med.isTaken;
+    _persistCurrentUserData();
+    notifyListeners();
+  }
+
+  Map<String, dynamic>? get openSickPeriod {
+    for (final period in sickPeriods) {
+      final ended = period['endedAt']?.toString() ?? '';
+      if (ended.isEmpty) return period;
+    }
+    return null;
+  }
+
+  String? logDose({
+    required String name,
+    required String amount,
+    String note = '',
+    DateTime? takenAt,
+  }) {
+    final cleaned = name.trim();
+    if (cleaned.isEmpty) return 'Enter the medicine name.';
+    doseLogs.insert(0, {
+      'id': 'dose-${DateTime.now().microsecondsSinceEpoch}',
+      'name': cleaned,
+      'amount': amount.trim(),
+      'note': note.trim(),
+      'takenAt': (takenAt ?? DateTime.now()).toIso8601String(),
+    });
+    _persistCurrentUserData();
+    notifyListeners();
+    return null;
+  }
+
+  void deleteDose(String id) {
+    doseLogs.removeWhere((dose) => dose['id'] == id);
+    _persistCurrentUserData();
+    notifyListeners();
+  }
+
+  String? startSickPeriod(String label) {
+    if (openSickPeriod != null) return 'Close the current sick week before starting another.';
+    sickPeriods.insert(0, {
+      'id': 'sick-${DateTime.now().microsecondsSinceEpoch}',
+      'label': label.trim().isEmpty ? 'Sick week' : label.trim(),
+      'startedAt': DateTime.now().toIso8601String(),
+      'endedAt': '',
+      'noteForDoctor': '',
+    });
+    _persistCurrentUserData();
+    notifyListeners();
+    return null;
+  }
+
+  void setSickPeriodNote(String id, String note) {
+    final period = sickPeriods.cast<Map<String, dynamic>?>().firstWhere(
+          (item) => item?['id'] == id,
+          orElse: () => null,
+        );
+    if (period == null) return;
+    period['noteForDoctor'] = note.trim();
+    _persistCurrentUserData();
+    notifyListeners();
+  }
+
+  void endSickPeriod(String id) {
+    final period = sickPeriods.cast<Map<String, dynamic>?>().firstWhere(
+          (item) => item?['id'] == id,
+          orElse: () => null,
+        );
+    if (period == null || (period['endedAt']?.toString().isNotEmpty ?? false)) return;
+    period['endedAt'] = DateTime.now().toIso8601String();
+    _persistCurrentUserData();
+    notifyListeners();
+  }
+
+  void saveSickDay({
+    required String periodId,
+    required DateTime day,
+    required String feeling,
+    required double? temperatureC,
+    required String question,
+    required List<Map<String, dynamic>> items,
+  }) {
+    final key = '${day.year.toString().padLeft(4, '0')}-${day.month.toString().padLeft(2, '0')}-${day.day.toString().padLeft(2, '0')}';
+    sickDays.removeWhere((entry) => entry['periodId'] == periodId && entry['day'] == key);
+    sickDays.insert(0, {
+      'id': 'sickday-${DateTime.now().microsecondsSinceEpoch}',
+      'periodId': periodId,
+      'day': key,
+      'feeling': feeling.trim(),
+      'temperatureC': temperatureC,
+      'question': question.trim(),
+      'items': items,
+    });
     _persistCurrentUserData();
     notifyListeners();
   }
@@ -1937,6 +2085,71 @@ class AppState extends ChangeNotifier {
 
   void setDietGoal(String goal) {
     dietGoal = goal;
+    _persistCurrentUserData();
+    notifyListeners();
+  }
+
+  void saveBodyProfile({
+    double? heightCm,
+    double? weightKg,
+    String? sex,
+    String? dobIso,
+  }) {
+    if (heightCm != null && heightCm >= 120 && heightCm <= 230) userHeightCm = heightCm;
+    if (weightKg != null && weightKg >= 30 && weightKg <= 300) {
+      final previous = userWeightKg;
+      userWeightKg = weightKg;
+      if (previous == null || (previous - weightKg).abs() >= 0.05) {
+        weightLogs.insert(0, {'kg': weightKg, 'at': DateTime.now().toIso8601String()});
+      }
+    }
+    if (sex != null && sex.trim().isNotEmpty) biologicalSex = sex.trim();
+    if (dobIso != null && DateTime.tryParse(dobIso) != null) dateOfBirth = dobIso;
+    _persistCurrentUserData();
+    notifyListeners();
+  }
+
+  void saveFitnessGoal({
+    required String aim,
+    String event = '',
+    String? raceDateIso,
+    int weeklyHours = 5,
+    String? activity,
+  }) {
+    const allowed = {'lose', 'gain', 'maintain', 'recomp', 'ironman', 'hyrox', 'running'};
+    if (!allowed.contains(aim)) return;
+    if (fitnessAim != aim || fitnessGoalStartedIso == null) {
+      fitnessGoalStartedIso = DateTime.now().toIso8601String();
+    }
+    fitnessAim = aim;
+    fitnessEvent = event;
+    this.raceDateIso = raceDateIso;
+    weeklyTrainingHours = weeklyHours.clamp(2, 14);
+    if (activity != null && const {'sedentary', 'light', 'moderate', 'very'}.contains(activity)) {
+      activityLevel = activity;
+    }
+    dietGoal = switch (aim) {
+      'lose' => 'deficit',
+      'gain' => 'surplus',
+      'recomp' => 'recomp',
+      _ => 'maintain',
+    };
+    _persistCurrentUserData();
+    notifyListeners();
+  }
+
+  void logBodyWeight(double kg) {
+    if (kg < 30 || kg > 300) return;
+    userWeightKg = kg;
+    weightLogs.insert(0, {'kg': kg, 'at': DateTime.now().toIso8601String()});
+    if (weightLogs.length > 180) weightLogs.removeRange(180, weightLogs.length);
+    _persistCurrentUserData();
+    notifyListeners();
+  }
+
+  void saveWaist(double cm) {
+    if (cm < 40 || cm > 200) return;
+    waistCm = cm;
     _persistCurrentUserData();
     notifyListeners();
   }
