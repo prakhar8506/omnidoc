@@ -59,6 +59,14 @@ Future<void> main() async {
         options.dsn = AppEnv.sentryDsn;
         options.environment = kReleaseMode ? 'production' : 'debug';
         options.tracesSampleRate = 0.2;
+        options.sendDefaultPii = false;
+        options.beforeSend = (event, hint) {
+          event.user = null;
+          event.request = null;
+          event.breadcrumbs = null;
+          event.extra = null;
+          return event;
+        };
       },
       appRunner: start,
     );

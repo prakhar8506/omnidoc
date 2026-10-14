@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/charts/charts.dart';
+import '../../../core/widgets/ai_draft_notice.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/state/app_state.dart';
@@ -893,10 +894,16 @@ class _LabReportsScreenState extends State<LabReportsScreen> {
                                 ],
                               ),
                               const SizedBox(height: 6),
+                              const Text(
+                                'AI draft. Review this with your doctor.',
+                                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+                              ),
+                              const SizedBox(height: 6),
                               Text(
                                 bm.plainSummary,
                                 style: TextStyle(fontSize: 12, color: AppColors.onSurfaceVariant, height: 1.4),
                               ),
+                              AiDraftNotice(draft: bm.plainSummary),
                               if (bm.whatItMeans.isNotEmpty || bm.clinicalContext.isNotEmpty) ...[
                                 const SizedBox(height: 10),
                                 Text('What your number means', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Theme.of(context).colorScheme.onSurface)),

@@ -166,6 +166,9 @@ Deno.serve(async (req: Request) => {
     if (!body.storage_path.startsWith(`${user.id}/`)) {
       return jsonResponse({ error: "storage_path must be under your user folder" }, 403);
     }
+    if (body.image_base64 && body.image_base64.length > 8_000_000) {
+      return jsonResponse({ error: "file is too large" }, 413);
+    }
 
     const openaiKey = Deno.env.get("OPENAI_API_KEY");
     const geminiKey = Deno.env.get("GEMINI_API_KEY");

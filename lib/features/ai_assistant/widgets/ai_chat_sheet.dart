@@ -3,6 +3,7 @@ import 'package:speech_to_text/speech_to_text.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/state/app_state.dart';
+import '../../../core/widgets/ai_draft_notice.dart';
 import '../../../core/widgets/avatar_image.dart';
 import '../../premium/premium_screen.dart';
 import '../models/ai_message.dart';
@@ -572,6 +573,11 @@ class _AiChatSheetState extends State<AiChatSheet> with SingleTickerProviderStat
                       ),
                     ),
                   ],
+                  const Text(
+                    'AI draft. Educational only, not a diagnosis.',
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: 6),
                   Text(
                     message.text,
                     style: TextStyle(
@@ -580,6 +586,7 @@ class _AiChatSheetState extends State<AiChatSheet> with SingleTickerProviderStat
                       height: 1.45,
                     ),
                   ),
+                  AiDraftNotice(draft: message.text),
                   if (message.bulletPoints != null && message.bulletPoints!.isNotEmpty) ...[
                     const SizedBox(height: 10),
                     ...message.bulletPoints!.map(
