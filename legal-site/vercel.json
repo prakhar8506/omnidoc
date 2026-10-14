@@ -4,6 +4,7 @@
     { "source": "/terms", "destination": "/terms.html" },
     { "source": "/about", "destination": "/about.html" },
     { "source": "/contact", "destination": "/contact.html" },
+    { "source": "/delete", "destination": "/delete.html" },
     { "source": "/pricing", "destination": "/pricing.html" },
     { "source": "/refunds", "destination": "/refunds.html" },
     { "source": "/shipping", "destination": "/shipping.html" }

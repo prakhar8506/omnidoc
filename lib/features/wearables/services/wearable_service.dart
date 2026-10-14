@@ -80,14 +80,8 @@ class WearableService {
 
   /// Types a watch may or may not share. A failed request here must not
   /// block heart rate, steps, or sleep.
+  /// Covered by the Health Connect permissions already in the manifest.
   static const List<HealthDataType> extraTypes = [
-    HealthDataType.RESPIRATORY_RATE,
-    HealthDataType.SKIN_TEMPERATURE,
-    HealthDataType.BODY_TEMPERATURE,
-    HealthDataType.ELECTROCARDIOGRAM,
-    HealthDataType.ATRIAL_FIBRILLATION_BURDEN,
-    HealthDataType.BLOOD_GLUCOSE,
-    HealthDataType.WORKOUT,
     HealthDataType.SLEEP_AWAKE,
     HealthDataType.HEART_RATE_VARIABILITY_RMSSD,
     HealthDataType.WALKING_HEART_RATE,
@@ -381,11 +375,6 @@ class WearableService {
     addNumber('Heart-rate variability', await read(HealthDataType.HEART_RATE_VARIABILITY_SDNN), 'ms');
     addNumber('Steps', await read(HealthDataType.STEPS), 'steps');
     addNumber('Blood oxygen', await read(HealthDataType.BLOOD_OXYGEN), '%', percent: true);
-    addNumber('Respiratory rate', await read(HealthDataType.RESPIRATORY_RATE), 'breaths/min');
-    addNumber('Skin temperature', await read(HealthDataType.SKIN_TEMPERATURE), '°C');
-    addNumber('Body temperature', await read(HealthDataType.BODY_TEMPERATURE), '°C');
-    addNumber('Blood glucose', await read(HealthDataType.BLOOD_GLUCOSE), 'mg/dL');
-
     final systolic = _lastNumber(await read(HealthDataType.BLOOD_PRESSURE_SYSTOLIC));
     final diastolic = _lastNumber(await read(HealthDataType.BLOOD_PRESSURE_DIASTOLIC));
     if (systolic == null || diastolic == null) {
@@ -398,26 +387,6 @@ class WearableService {
       ));
     }
 
-    final ecg = await read(HealthDataType.ELECTROCARDIOGRAM);
-    out.add(ecg.isEmpty
-        ? WatchSignal(name: 'ECG', detail: missing('an ECG tracing'), available: false)
-        : const WatchSignal(
-            name: 'ECG',
-            detail: 'Your watch stored an ECG tracing. Cura shows that it exists and does not turn it into a diagnosis.',
-            available: true,
-          ));
-
-    addNumber('Atrial fibrillation burden', await read(HealthDataType.ATRIAL_FIBRILLATION_BURDEN), '%', percent: true);
-
-    final workouts = await read(HealthDataType.WORKOUT);
-    out.add(workouts.isEmpty
-        ? WatchSignal(name: 'Workouts', detail: missing('workouts'), available: false)
-        : WatchSignal(
-            name: 'Workouts',
-            detail: '${workouts.length} workout${workouts.length == 1 ? '' : 's'} recorded by your watch in the last 36 hours.',
-            available: true,
-          ));
-
     final hrvOnFile = out.any((s) => s.name == 'Heart-rate variability' && s.available);
     final rhrOnFile = out.any((s) => s.name == 'Resting heart rate' && s.available);
     out.add(WatchSignal(
@@ -429,13 +398,12 @@ class WearableService {
     ));
 
     final stepsOnFile = out.any((s) => s.name == 'Steps' && s.available);
-    final workoutsOnFile = out.any((s) => s.name == 'Workouts' && s.available);
     out.add(WatchSignal(
       name: 'Day strain',
-      detail: stepsOnFile || workoutsOnFile
-          ? 'Steps or workouts are on file. Cura does not convert them into a 0–21 strain score.'
-          : missing('steps or workouts for a strain view'),
-      available: stepsOnFile || workoutsOnFile,
+      detail: stepsOnFile
+          ? 'Steps are on file. Cura does not turn them into a strain score.'
+          : missing('steps for a strain view'),
+      available: stepsOnFile,
     ));
 
     out.add(const WatchSignal(
