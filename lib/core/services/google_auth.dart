@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 import '../env/app_env.dart';
@@ -48,8 +49,19 @@ class GoogleAuth {
     } on AuthException {
       rethrow;
     } on GoogleSignInException catch (e) {
+      final detail = (e.description ?? '').toLowerCase();
+      debugPrint('[GoogleAuth] ${e.code} ${e.description}');
+      final certificateMismatch = detail.contains('reauth') ||
+          detail.contains('not registered') ||
+          detail.contains('developer_error') ||
+          detail.contains('sha');
       switch (e.code) {
         case GoogleSignInExceptionCode.canceled:
+          if (certificateMismatch) {
+            throw AuthException(
+              'Google could not confirm this install. Wait a few minutes and try again.',
+            );
+          }
           throw AuthException('Google sign-in was cancelled.');
         case GoogleSignInExceptionCode.clientConfigurationError:
         case GoogleSignInExceptionCode.providerConfigurationError:
@@ -57,6 +69,11 @@ class GoogleAuth {
             'Google sign-in needs a Web client ID from Google Cloud before it can open.',
           );
         default:
+          if (certificateMismatch) {
+            throw AuthException(
+              'Google could not confirm this install. Wait a few minutes and try again.',
+            );
+          }
           throw AuthException('Could not sign in with Google. Please try again.');
       }
     }

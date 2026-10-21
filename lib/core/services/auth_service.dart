@@ -234,9 +234,16 @@ class AuthService {
         if (e is AuthException) rethrow;
         debugPrint('[AuthService] Remote signIn error: $e');
         if (kReleaseMode) {
-          throw AuthException(
-            'Could not sign in. Check your email, password, and connection, then try again.',
-          );
+          final text = e.toString().toLowerCase();
+          if (text.contains('invalid_credentials') || text.contains('invalid login')) {
+            throw AuthException(
+              'That email and password do not match an account. Create an account, or use Continue with Google.',
+            );
+          }
+          if (text.contains('email not confirmed')) {
+            throw AuthException('Confirm that email from your inbox, then sign in.');
+          }
+          throw AuthException('Could not reach the sign-in service. Check your connection and try again.');
         }
       }
     }

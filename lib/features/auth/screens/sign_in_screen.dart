@@ -181,17 +181,6 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
                           style: AppTypography.bodyMd,
                         ),
                         const SizedBox(height: 28),
-                        GoogleSignInButton(
-                          appState: widget.appState,
-                          enabled: !_isLoading && !_isDemoLoading,
-                          beforeStart: () => _termsAccepted
-                              ? null
-                              : 'Please confirm you are 18 or older and accept the Terms and Privacy Policy.',
-                          onError: (message) {
-                            if (mounted) setState(() => _errorText = message);
-                          },
-                        ),
-                        const SizedBox(height: 8),
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -223,6 +212,28 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
                             ),
                           ],
                         ),
+                        const SizedBox(height: 8),
+                        GoogleSignInButton(
+                          appState: widget.appState,
+                          enabled: !_isLoading && !_isDemoLoading,
+                          beforeStart: () => _termsAccepted
+                              ? null
+                              : 'Please confirm you are 18 or older and accept the Terms and Privacy Policy.',
+                          onError: (message) {
+                            if (mounted) setState(() => _errorText = message);
+                          },
+                        ),
+                        if (_errorText != null) ...[
+                          const SizedBox(height: 12),
+                          Text(
+                            _errorText!,
+                            style: TextStyle(
+                              color: AppColors.accentCoral,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
                         const SizedBox(height: 20),
                         Row(
                           children: [
@@ -349,17 +360,6 @@ class _SignInScreenState extends State<SignInScreen> with SingleTickerProviderSt
                             ),
                           ),
                         ),
-                        if (_errorText != null) ...[
-                          const SizedBox(height: 12),
-                          Text(
-                            _errorText!,
-                            style: TextStyle(
-                              color: AppColors.accentCoral,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
                         const SizedBox(height: 20),
                         SizedBox(
                           width: double.infinity,
