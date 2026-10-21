@@ -324,8 +324,8 @@ class HealthCompanionShell extends StatelessWidget {
                 // Hide FAB on Journal, Triage, and Labs where it overlaps content/CTAs.
                 if (currentTab != 1 && currentTab != 2 && currentTab != 4)
                   Positioned(
-                    right: 16,
-                    bottom: 108,
+                    right: 20,
+                    bottom: MediaQuery.paddingOf(context).bottom + 98,
                     child: FloatingAiButton(appState: appState),
                   ),
                 Positioned(

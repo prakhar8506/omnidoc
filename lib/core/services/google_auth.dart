@@ -23,13 +23,20 @@ class GoogleAuth {
 
   static Future<void> _ensureReady() async {
     if (_ready) return;
-    final clientId = AppEnv.googleWebClientId.trim();
-    if (clientId.isEmpty) {
+    final serverClientId = AppEnv.googleWebClientId.trim();
+    if (serverClientId.isEmpty) {
       throw AuthException(
         'Google sign-in needs a Web client ID from Google Cloud before it can open.',
       );
     }
-    await GoogleSignIn.instance.initialize(serverClientId: clientId);
+    final iosClientId = AppEnv.googleIosClientId.trim();
+    final useIosClient = !kIsWeb &&
+        defaultTargetPlatform == TargetPlatform.iOS &&
+        iosClientId.isNotEmpty;
+    await GoogleSignIn.instance.initialize(
+      clientId: useIosClient ? iosClientId : null,
+      serverClientId: serverClientId,
+    );
     _ready = true;
   }
 

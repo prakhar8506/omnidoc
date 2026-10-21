@@ -24,10 +24,17 @@ class AppEnv {
     defaultValue: '',
   );
 
-  /// Web OAuth client ID from Google Cloud. Used only by the Google Sign-In
-  /// SDK on Android. This is not a Supabase key.
+  /// Web OAuth client ID from Google Cloud. Android requires this. iOS uses
+  /// it as the server client. This is not a Supabase key.
   static const String googleWebClientId = String.fromEnvironment(
     'GOOGLE_WEB_CLIENT_ID',
+    defaultValue: '',
+  );
+
+  /// iOS OAuth client ID. Required on iPhone so Google can match the app.
+  /// Android ignores it and matches the install by package name and certificate.
+  static const String googleIosClientId = String.fromEnvironment(
+    'GOOGLE_IOS_CLIENT_ID',
     defaultValue: '',
   );
 
