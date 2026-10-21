@@ -12,6 +12,7 @@ import '../../appointments/widgets/book_appointment_modal.dart';
 import '../../wearables/widgets/wearable_permissions_sheet.dart';
 import '../../nutrition/screens/diet_plan_screen.dart';
 import '../../nutrition/screens/nutrition_hydration_screen.dart';
+import '../../trainers/screens/trainers_screen.dart';
 import '../../nutrition/widgets/log_meal_sheet.dart';
 import '../../premium/premium_screen.dart';
 import '../../womens_health/screens/womens_health_screen.dart';
@@ -1181,6 +1182,15 @@ class HomeScreen extends StatelessWidget {
   /// Quick Access Grid
   Widget _buildQuickActions(BuildContext context) {
     final actions = [
+      {
+        'title': 'Real trainer',
+        'icon': Icons.sports_gymnastics_rounded,
+        'color': const Color(0xFF7C3AED),
+        'action': () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => TrainersScreen(appState: appState)),
+        ),
+      },
       {
         'title': 'Nutrition & Hydration',
         'icon': Icons.local_drink_rounded,

@@ -24,16 +24,30 @@
 	<string>????</string>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
+	<key>GIDClientID</key>
+	<string>905990588601-dkksob79uovq0krshas5himpe42gccr1.apps.googleusercontent.com</string>
+	<key>GIDServerClientID</key>
+	<string>905990588601-fh0ge9ag2qgv2ep13jf9qgptioeurhkl.apps.googleusercontent.com</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
 			<key>CFBundleURLName</key>
-			<string>com.healthcompanion.health_companion</string>
+			<string>com.healthcompanion.health-companion</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>cura</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>google</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.905990588601-dkksob79uovq0krshas5himpe42gccr1</string>
 			</array>
 		</dict>
 	</array>
@@ -83,6 +97,8 @@
 	<string>Cura reads heart rate, HRV, steps, sleep, and oxygen saturation from Apple Health so you can track recovery trends. Data stays under your account controls.</string>
 	<key>NSHealthUpdateUsageDescription</key>
 	<string>Cura does not write clinical diagnoses to Apple Health. Write access is unused unless you explicitly enable a future sync feature.</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>

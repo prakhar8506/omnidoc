@@ -9,6 +9,7 @@ import '../../nutrition/widgets/log_meal_sheet.dart';
 import '../../premium/premium_screen.dart';
 import '../screens/coach_program_screen.dart';
 import '../screens/fitness_goal_screen.dart';
+import '../../trainers/screens/trainers_screen.dart';
 
 /// Goal, body size, food diary, and exercise diary. The multi-week coach stays premium.
 class FitnessHubPanel extends StatelessWidget {
@@ -66,6 +67,14 @@ class FitnessHubPanel extends StatelessWidget {
                   MaterialPageRoute(builder: (_) => FitnessGoalScreen(appState: appState)),
                 ),
                 child: Text(aim.isEmpty ? 'Set my goal' : 'Change goal'),
+              ),
+              FilledButton.tonalIcon(
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => TrainersScreen(appState: appState)),
+                ),
+                icon: const Icon(Icons.sports_gymnastics_rounded, size: 18),
+                label: const Text('Real trainer'),
               ),
               FilledButton.tonalIcon(
                 onPressed: () => PremiumAccess.require(

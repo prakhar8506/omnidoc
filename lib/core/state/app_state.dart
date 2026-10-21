@@ -261,6 +261,10 @@ class AppState extends ChangeNotifier {
   String? biologicalSex;
   String? dateOfBirth;
   final List<String> healthGoals = [];
+  bool trainerOptedIn = false;
+  final List<String> trainerTracks = [];
+  String trainerCity = '';
+  final List<Map<String, dynamic>> trainerRequests = [];
 
   // Chronic care — empty until user logs
   int bloodGlucoseMgDl = 0;
@@ -645,6 +649,14 @@ class AppState extends ChangeNotifier {
     allergies
       ..clear()
       ..addAll(List<String>.from(data['allergies'] as List? ?? const []));
+    trainerOptedIn = data['trainerOptedIn'] as bool? ?? false;
+    trainerTracks
+      ..clear()
+      ..addAll(List<String>.from(data['trainerTracks'] as List? ?? const []));
+    trainerCity = data['trainerCity'] as String? ?? '';
+    trainerRequests
+      ..clear()
+      ..addAll(_decodeMapList(data['trainerRequests']));
     chronicConditions
       ..clear()
       ..addAll(List<String>.from(data['chronicConditions'] as List? ?? const []));
@@ -799,6 +811,10 @@ class AppState extends ChangeNotifier {
     activeChallenges.clear();
     claims.clear();
     allergies.clear();
+    trainerOptedIn = false;
+    trainerTracks.clear();
+    trainerCity = '';
+    trainerRequests.clear();
     chronicConditions.clear();
     emergencyMedications.clear();
     emergencyContacts.clear();
@@ -893,6 +909,10 @@ class AppState extends ChangeNotifier {
       'bpHistory': _encodeMapList(bpHistory),
       'preventiveReminders': _encodeMapList(preventiveReminders),
       'allergies': allergies,
+      'trainerOptedIn': trainerOptedIn,
+      'trainerTracks': trainerTracks,
+      'trainerCity': trainerCity,
+      'trainerRequests': _encodeMapList(trainerRequests),
       'chronicConditions': chronicConditions,
       'emergencyMedications': emergencyMedications,
       'emergencyContacts': emergencyContacts.map((c) => c.toJson()).toList(),
@@ -905,6 +925,24 @@ class AppState extends ChangeNotifier {
       'prescriptions': UserDataService.prescriptionsToJson(prescriptions),
       'hasActiveReport': activeReport != null,
     });
+  }
+
+  void saveTrainerOptIn({required List<String> tracks, required String city}) {
+    trainerOptedIn = tracks.isNotEmpty;
+    trainerTracks
+      ..clear()
+      ..addAll(tracks);
+    trainerCity = city.trim();
+    _persistCurrentUserData();
+    notifyListeners();
+  }
+
+  void upsertTrainerRequest(Map<String, dynamic> request) {
+    final id = request['trainerId']?.toString() ?? '';
+    trainerRequests.removeWhere((row) => row['trainerId'] == id);
+    trainerRequests.insert(0, request);
+    _persistCurrentUserData();
+    notifyListeners();
   }
 
   void setTabIndex(int index) {
